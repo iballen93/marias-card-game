@@ -5,11 +5,13 @@ import { AppComponent } from './app.component';
 import { HttpClientModule } from '@angular/common/http';
 import { PointsComponent } from './points/points.component';
 import { CardPileComponent } from './components/card-pile/card-pile.component';
+import { TurnInfoComponent } from './components/turn-info/turn-info.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     CardPileComponent,
+    TurnInfoComponent,
     PointsComponent
   ],
   imports: [
