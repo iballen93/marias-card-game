@@ -10,11 +10,11 @@ export interface Card {
 }
 
 @Component({
-  selector: 'app-hand',
-  templateUrl: './hand.component.html',
-  styleUrls: ['./hand.component.less']
+  selector: 'app-card-pile',
+  templateUrl: './card-pile.component.html',
+  styleUrls: ['./card-pile.component.less']
 })
-export class HandComponent implements OnInit {
+export class CardPileComponent implements OnInit {
 
   @Input() cards: Card[];
   @Input() title: string;

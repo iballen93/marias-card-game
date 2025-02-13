@@ -40,5 +40,5 @@ CARD 3
 
 
 commands for http_parser is deprecated error when running 'ng s'
-* set NODE_OPTIONS=--openssl-legacy-provider
 * $env:NODE_OPTIONS="--openssl-legacy-provider"
+* $env:CAPACITOR_ANDROID_STUDIO_PATH="C:\Users\UltraMegaVIP\AppData\Local\Programs\Android Studio\bin\studio64.exe"

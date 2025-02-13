@@ -1,0 +1,13 @@
+<div style="display: flex; flex-direction: column; align-items: center; margin-top: 10px;">
+    <div style="display: flex; justify-content: center;">
+        <div *ngFor="let card of cards; let i = index" 
+             [ngStyle]="{'margin-left': (i === 0 ? '0px' : '-40px'), 'z-index': i}">
+            <img style="width: 100%; max-width: 90px;" 
+                 [src]="card.image" 
+                 (click)="selectCard(card)">
+        </div>
+    </div>
+    <div *ngIf="title && cards" style="text-align: center; color: white; font-weight: bold; margin-top: 10px;">
+        {{ title }}
+    </div>
+</div>

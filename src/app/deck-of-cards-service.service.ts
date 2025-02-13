@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {Card} from './hand/hand.component';
+import {Card} from './components/card-pile/card-pile.component';
 import {Observable} from 'rxjs';
 import {HttpClient} from '@angular/common/http';
 

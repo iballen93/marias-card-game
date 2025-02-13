@@ -1,9 +1,8 @@
 import {Component, OnInit} from '@angular/core';
 import {catchError, finalize, tap} from 'rxjs/operators';
 import {of} from 'rxjs';
-import {Card, HandComponent} from './hand/hand.component';
+import {Card} from './components/card-pile/card-pile.component';
 import {DeckOfCardsServiceService} from './deck-of-cards-service.service';
-import {Points} from './points/points.component';
 import {ValidationService} from './validation.service';
 import {PointsService} from './points.service';
 
