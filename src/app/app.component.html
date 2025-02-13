@@ -1,0 +1,91 @@
+<div>
+    <table>
+        <tr>
+            <td>
+                <h2 style="color: white">Player 2: {{ formatCurrency(playerToMoney.get('player2')) | currency:'USD':'symbol':'1.2-2' }}</h2>
+                <div style="display: flex; flex-direction: column; align-items: flex-start;">
+                    <app-hand title='Marriage' [cards]="allPiles.get('player2Marriage')" (cardSelected)="cardSelected($event)"></app-hand>
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: center;">
+                    <app-hand [cards]="allPiles.get('player2')" (cardSelected)="cardSelected($event)"></app-hand>
+                    <div style="display: flex; justify-content: space-between; width: 100%;">
+                        <app-hand title='Bury Pile' [cards]="allPiles.get('player2Bury')" (cardSelected)="cardSelected($event)"></app-hand>
+                        <app-hand title='Win Pile' [cards]="allPiles.get('player2Win')" (cardSelected)="cardSelected($event)"></app-hand>
+                    </div>
+                </div>
+            </td>
+            <td>
+                <div *ngIf="dealing==true" style="color:white; font-size: 30px;">
+                    D E A L I N G <br> C A R D S . . .
+                </div>
+                <div *ngIf="dealing==false">
+                    <div *ngIf="trump" style="color: white; display: flex; justify-content: space-between; padding-left: 100px; padding-right: 100px;">
+                        <span style="text-align: left; color: black; font-size: 22px; background-color: white; display: inline-block; padding: 10px; border-radius: 10px;">Trump: {{trump}}</span>
+                        <span style="text-align: right; color: black; font-size: 22px; background-color: white; display: inline-block; padding: 10px; border-radius: 10px;">Bid Multiplier: {{bidMultiplier}}</span>
+                    </div>
+
+                    <br>
+                    <div *ngIf="pickingTrump" style="color: green; font-size: 32px; background-color: white; display: inline-block; padding: 10px; border-radius: 10px; font-weight: bold;">
+                        Player {{activePlayer}} must pick Trump
+                    </div>
+                    <div *ngIf="buryingCards" style="color: green; font-size: 32px; background-color: white; display: inline-block; padding: 10px; border-radius: 10px; font-weight: bold;">
+                        Player {{activePlayer}} must Bury 2 Cards
+                    </div>
+
+                    <div *ngIf="canPlayAgain" style="color:white">
+                        <br>
+                        Game Over
+                        <br>
+                    </div>
+                    <div *ngIf="winMessage != ''" style="color: green; font-size: 18px; background-color: white; display: inline-block; padding: 10px; border-radius: 10px; font-weight: bold;">
+                        {{winMessage}}
+                    </div>
+                    
+                    <br>
+                    <div *ngIf="!canPlayAgain && !pickingTrump && !buryingCards" style="color: green; font-size: 32px; background-color: white; display: inline-block; padding: 10px; border-radius: 10px; font-weight: bold;">
+                        Player {{activePlayer}}'s Turn
+                    </div>
+
+                    <br>
+                    <div *ngIf="illegalMoveMessage" style="color: red; font-size: 22px; background-color: white; display: inline-block; padding: 10px; border-radius: 10px; font-weight: bold;">
+                        Illegal Move - {{illegalMoveMessage}}
+                    </div>
+                </div>
+                <button *ngIf="canPlayAgain" (click)="playAgain()">PLAY AGAIN BITCH</button>
+                <app-hand [cards]="this.allPiles.get('game')" (cardSelected)="cardSelected($event)"></app-hand>
+            </td>
+            <td>
+                <h2 style="color: white">Player 3: {{ formatCurrency(playerToMoney.get('player3')) | currency:'USD':'symbol':'1.2-2' }}</h2>
+                <div style="display: flex; flex-direction: column; align-items: flex-start;">
+                    <app-hand title='Marriage' [cards]="allPiles.get('player3Marriage')" (cardSelected)="cardSelected($event)"></app-hand>
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: center;">
+                    <app-hand [cards]="allPiles.get('player3')" (cardSelected)="cardSelected($event)"></app-hand>
+                    <div style="display: flex; justify-content: space-between; width: 100%;">
+                        <app-hand title='Bury Pile' [cards]="allPiles.get('player3Bury')" (cardSelected)="cardSelected($event)"></app-hand>
+                        <app-hand title='Win Pile' [cards]="allPiles.get('player3Win')" (cardSelected)="cardSelected($event)"></app-hand>
+                    </div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td>
+            </td>
+            <td>
+                <h2 style="color: white">Player 1: {{ formatCurrency(playerToMoney.get('player1')) | currency:'USD':'symbol':'1.2-2' }}</h2>
+                <div style="display: flex; flex-direction: column; align-items: flex-start;">
+                    <app-hand title='Marriage' [cards]="allPiles.get('player1Marriage')" (cardSelected)="cardSelected($event)"></app-hand>
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: center;">
+                    <app-hand [cards]="allPiles.get('player1')" (cardSelected)="cardSelected($event)"></app-hand>
+                    <div style="display: flex; justify-content: space-between; width: 100%;">
+                        <app-hand title='Bury Pile' [cards]="allPiles.get('player1Bury')" (cardSelected)="cardSelected($event)"></app-hand>
+                        <app-hand title='Win Pile' [cards]="allPiles.get('player1Win')" (cardSelected)="cardSelected($event)"></app-hand>
+                    </div>
+                </div>
+            </td>
+            <td>
+            </td>
+        </tr>
+    </table>
+</div>

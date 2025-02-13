@@ -1,0 +1,12 @@
+<div>
+    <table style="margin: 10px auto 0;">
+        <tr>
+            <td *ngFor="let card of cards;">
+                <img style="width: 100%; max-width: 90px" src="{{card.image}}" (click)="selectCard(card)">
+            </td>
+        </tr>
+    </table>
+    <div *ngIf="title && cards" style="text-align: center; color: white; font-weight: bold;">
+        {{title}}
+    </div>
+</div>
