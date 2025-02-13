@@ -3,6 +3,7 @@
 * Deck Hierarchy: A 10 K Q J 9 8 7
 * 3 Player turn based game where every player places a card sequentially with respect to the game rules. 
 * The winner of each hand keeps the cards then leads the next hand. Points are tallied at the end.
+* The main objective of the game is to win the point cards; Aces and 10s. Marriages give +2, if Trump +4.
 * Wikipedia Page: https://en.wikipedia.org/wiki/Mari%C3%A1%C5%A1
 
 ### TASKS FOR THE DEALT PLAYER
