@@ -2,19 +2,15 @@
     <table>
         <tr>
             <td>
-                <h2 style="color: white">Player 2: {{ formatCurrency(playerToMoney.get('player2')) | currency:'USD':'symbol':'1.2-2' }}</h2>
-                <div style="display: flex; flex-direction: column; align-items: flex-start;">
-                    <app-card-pile title='Marriage' [cards]="allPiles.get('player2Marriage')" (cardSelected)="cardSelected($event)"></app-card-pile>
-                </div>
-                <div style="display: flex; flex-direction: column; align-items: center;">
-                    <app-card-pile [cards]="allPiles.get('player2')" (cardSelected)="cardSelected($event)"></app-card-pile>
-                    <div style="display: flex; justify-content: space-between; width: 100%;">
-                        <app-card-pile title='Bury Pile' [cards]="allPiles.get('player2Bury')" (cardSelected)="cardSelected($event)"></app-card-pile>
-                        <app-card-pile title='Win Pile' [cards]="allPiles.get('player2Win')" (cardSelected)="cardSelected($event)"></app-card-pile>
-                    </div>
-                </div>
+                <app-hand playerTitle="Player 2"
+                          [playerMoney]="playerToMoney.get('player2')"
+                          [playerCards]="allPiles.get('player2')"
+                          [marriageCards]="allPiles.get('player2Marriage')"
+                          [buryCards]="allPiles.get('player2Bury')"
+                          [winCards]="allPiles.get('player2Win')"
+                          (cardSelected)="cardSelected($event)"></app-hand>
             </td>
-            <td>
+            <td style="display: flex; flex-direction: column; justify-content: space-between; height: 100%; align-items: center; padding-top: 30px; padding-bottom: 100px;">
                 <app-turn-info [winMessage]="winMessage"
                                [illegalMoveMessage]="illegalMoveMessage"
                                [trump]="trump"
@@ -24,38 +20,31 @@
                                [pickingTrump]="pickingTrump"
                                [buryingCards]="buryingCards"
                                [canPlayAgain]="canPlayAgain"></app-turn-info>
+
                 <button *ngIf="canPlayAgain" (click)="playAgain()">PLAY AGAIN BITCH</button>
                 <app-card-pile [cards]="this.allPiles.get('game')" (cardSelected)="cardSelected($event)"></app-card-pile>
             </td>
             <td>
-                <h2 style="color: white">Player 3: {{ formatCurrency(playerToMoney.get('player3')) | currency:'USD':'symbol':'1.2-2' }}</h2>
-                <div style="display: flex; flex-direction: column; align-items: flex-start;">
-                    <app-card-pile title='Marriage' [cards]="allPiles.get('player3Marriage')" (cardSelected)="cardSelected($event)"></app-card-pile>
-                </div>
-                <div style="display: flex; flex-direction: column; align-items: center;">
-                    <app-card-pile [cards]="allPiles.get('player3')" (cardSelected)="cardSelected($event)"></app-card-pile>
-                    <div style="display: flex; justify-content: space-between; width: 100%;">
-                        <app-card-pile title='Bury Pile' [cards]="allPiles.get('player3Bury')" (cardSelected)="cardSelected($event)"></app-card-pile>
-                        <app-card-pile title='Win Pile' [cards]="allPiles.get('player3Win')" (cardSelected)="cardSelected($event)"></app-card-pile>
-                    </div>
-                </div>
+                <app-hand playerTitle="Player 3"
+                          [playerMoney]="playerToMoney.get('player3')"
+                          [playerCards]="allPiles.get('player3')"
+                          [marriageCards]="allPiles.get('player3Marriage')"
+                          [buryCards]="allPiles.get('player3Bury')"
+                          [winCards]="allPiles.get('player3Win')"
+                          (cardSelected)="cardSelected($event)"></app-hand>
             </td>
         </tr>
         <tr>
             <td>
             </td>
             <td>
-                <h2 style="color: white">Player 1: {{ formatCurrency(playerToMoney.get('player1')) | currency:'USD':'symbol':'1.2-2' }}</h2>
-                <div style="display: flex; flex-direction: column; align-items: flex-start;">
-                    <app-card-pile title='Marriage' [cards]="allPiles.get('player1Marriage')" (cardSelected)="cardSelected($event)"></app-card-pile>
-                </div>
-                <div style="display: flex; flex-direction: column; align-items: center;">
-                    <app-card-pile [cards]="allPiles.get('player1')" (cardSelected)="cardSelected($event)"></app-card-pile>
-                    <div style="display: flex; justify-content: space-between; width: 100%;">
-                        <app-card-pile title='Bury Pile' [cards]="allPiles.get('player1Bury')" (cardSelected)="cardSelected($event)"></app-card-pile>
-                        <app-card-pile title='Win Pile' [cards]="allPiles.get('player1Win')" (cardSelected)="cardSelected($event)"></app-card-pile>
-                    </div>
-                </div>
+                <app-hand playerTitle="Player 1"
+                          [playerMoney]="playerToMoney.get('player1')"
+                          [playerCards]="allPiles.get('player1')"
+                          [marriageCards]="allPiles.get('player1Marriage')"
+                          [buryCards]="allPiles.get('player1Bury')"
+                          [winCards]="allPiles.get('player1Win')"
+                          (cardSelected)="cardSelected($event)"></app-hand>
             </td>
             <td>
             </td>

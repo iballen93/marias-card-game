@@ -1,0 +1,11 @@
+<h2 style="color: white">{{ playerTitle }}: {{ formatCurrency(playerMoney) | currency:'USD':'symbol':'1.2-2' }}</h2>
+<div style="display: flex; flex-direction: column; align-items: flex-start;">
+    <app-card-pile title='Marriage' [cards]="marriageCards" (cardSelected)="forwardCardSelected($event)"></app-card-pile>
+</div>
+<div style="display: flex; flex-direction: column; align-items: center;">
+    <app-card-pile [cards]="playerCards" (cardSelected)="forwardCardSelected($event)"></app-card-pile>
+    <div style="display: flex; justify-content: space-between; width: 100%;">
+        <app-card-pile title='Bury Pile' [cards]="buryCards" (cardSelected)="forwardCardSelected($event)"></app-card-pile>
+        <app-card-pile title='Win Pile' [cards]="winCards" (cardSelected)="forwardCardSelected($event)"></app-card-pile>
+    </div>
+</div>

@@ -1,21 +1,21 @@
-<div *ngIf="dealing==true" style="color:white; font-size: 30px;">
+<div *ngIf="dealing==true" style="color:white; font-size: 1.875rem;">
     D E A L I N G <br> C A R D S . . .
 </div>
 <div *ngIf="dealing==false">
     <div *ngIf="trump" style="color: white; display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                        <span style="color: black; font-size: 22px; background-color: white; padding: 10px; border-radius: 10px; flex-shrink: 0;">
-                            Trump: {{trump}}
-                        </span>
-        <span style="color: black; font-size: 22px; background-color: white; padding: 10px; border-radius: 10px; flex-shrink: 0;">
-                            Bid Multiplier: {{bidMultiplier}}
-                        </span>
+        <span style="color: black; font-size: 1.375rem; background-color: white; padding: 0.625rem; border-radius: 0.625rem; flex-shrink: 0;">
+            Trump: {{trump}}
+        </span>
+        <span style="color: black; font-size: 1.375rem; background-color: white; padding: 0.625rem; border-radius: 0.625rem; flex-shrink: 0;">
+            Bid Multiplier: {{bidMultiplier}}
+        </span>
     </div>
 
     <br>
-    <div *ngIf="pickingTrump" style="color: green; font-size: 32px; background-color: white; display: inline-block; padding: 10px; border-radius: 10px; font-weight: bold;">
+    <div *ngIf="pickingTrump" style="color: green; font-size: 2rem; background-color: white; display: inline-block; padding: 0.625rem; border-radius: 0.625rem; font-weight: bold;">
         Player {{activePlayer}} must pick Trump
     </div>
-    <div *ngIf="buryingCards" style="color: green; font-size: 32px; background-color: white; display: inline-block; padding: 10px; border-radius: 10px; font-weight: bold;">
+    <div *ngIf="buryingCards" style="color: green; font-size: 2rem; background-color: white; display: inline-block; padding: 0.625rem; border-radius: 0.625rem; font-weight: bold;">
         Player {{activePlayer}} must Bury 2 Cards
     </div>
 
@@ -24,17 +24,17 @@
         Game Over
         <br>
     </div>
-    <div *ngIf="winMessage != ''" style="color: green; font-size: 18px; background-color: white; display: inline-block; padding: 10px; border-radius: 10px; font-weight: bold;">
+    <div *ngIf="winMessage != ''" style="color: green; font-size: 1.125rem; background-color: white; display: inline-block; padding: 0.625rem; border-radius: 0.625rem; font-weight: bold;">
         {{winMessage}}
     </div>
 
     <br>
-    <div *ngIf="!canPlayAgain && !pickingTrump && !buryingCards" style="color: green; font-size: 32px; background-color: white; display: inline-block; padding: 10px; border-radius: 10px; font-weight: bold;">
+    <div *ngIf="!canPlayAgain && !pickingTrump && !buryingCards" style="color: green; font-size: 2rem; background-color: white; display: inline-block; padding: 0.625rem; border-radius: 0.625rem; font-weight: bold;">
         Player {{activePlayer}}'s Turn
     </div>
 
     <br>
-    <div *ngIf="illegalMoveMessage" style="color: red; font-size: 22px; background-color: white; display: inline-block; padding: 10px; border-radius: 10px; font-weight: bold;">
+    <div *ngIf="illegalMoveMessage" style="color: red; font-size: 1.375rem; background-color: white; display: inline-block; padding: 0.625rem; border-radius: 0.625rem; font-weight: bold;">
         Illegal Move - {{illegalMoveMessage}}
     </div>
 </div>

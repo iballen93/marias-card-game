@@ -6,12 +6,14 @@ import { HttpClientModule } from '@angular/common/http';
 import { PointsComponent } from './points/points.component';
 import { CardPileComponent } from './components/card-pile/card-pile.component';
 import { TurnInfoComponent } from './components/turn-info/turn-info.component';
+import { HandComponent } from 'src/app/components/hand/hand.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     CardPileComponent,
     TurnInfoComponent,
+    HandComponent,
     PointsComponent
   ],
   imports: [

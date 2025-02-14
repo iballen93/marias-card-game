@@ -9,6 +9,7 @@ TODO in priorityish order
 * Menu Navigation with Wiki page, How To Play, 3/4 Player Selection, Details on Game Modes
 * Computer opponents
 * Bidding system
+* Customize Back of Card
 * Online/Multiplayer
 * Other game modes (all tricks, no tricks, 100/40/7)
 * 4-Player Marias
