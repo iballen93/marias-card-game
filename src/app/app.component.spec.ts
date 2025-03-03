@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { AppComponent } from './app.component';
-import { HttpClient, HttpHandler } from '@angular/common/http';
+import {HttpClient, HttpHandler} from '@angular/common/http';
 
 describe('AppComponent', () => {
   let service: AppComponent;
