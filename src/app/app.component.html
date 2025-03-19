@@ -1,53 +1,7 @@
-<div>
-    <table>
-        <tr>
-            <td>
-                <app-hand playerTitle="Player 2"
-                          [playerMoney]="playerToMoney.get('player2')"
-                          [playerCards]="allPiles.get('player2')"
-                          [marriageCards]="allPiles.get('player2Marriage')"
-                          [buryCards]="allPiles.get('player2Bury')"
-                          [winCards]="allPiles.get('player2Win')"
-                          (cardSelected)="cardSelected($event)"></app-hand>
-            </td>
-            <td style="display: flex; flex-direction: column; justify-content: space-between; height: 100%; align-items: center; padding-top: 30px; padding-bottom: 100px;">
-                <app-turn-info [winMessage]="winMessage"
-                               [illegalMoveMessage]="illegalMoveMessage"
-                               [trump]="trump"
-                               [bidMultiplier]="bidMultiplier"
-                               [activePlayer]="activePlayer"
-                               [dealing]="dealing"
-                               [pickingTrump]="pickingTrump"
-                               [buryingCards]="buryingCards"
-                               [canPlayAgain]="canPlayAgain"></app-turn-info>
+<nav>
+    <a routerLink="/how-to-play">How To Play</a>
+    <a routerLink="/game">New Game</a>
+    <a (click)="goToWikiPage()">Mariáš Wiki Page</a>
+</nav>
 
-                <button *ngIf="canPlayAgain" (click)="playAgain()">PLAY AGAIN BITCH</button>
-                <app-card-pile [cards]="this.allPiles.get('game')" (cardSelected)="cardSelected($event)"></app-card-pile>
-            </td>
-            <td>
-                <app-hand playerTitle="Player 3"
-                          [playerMoney]="playerToMoney.get('player3')"
-                          [playerCards]="allPiles.get('player3')"
-                          [marriageCards]="allPiles.get('player3Marriage')"
-                          [buryCards]="allPiles.get('player3Bury')"
-                          [winCards]="allPiles.get('player3Win')"
-                          (cardSelected)="cardSelected($event)"></app-hand>
-            </td>
-        </tr>
-        <tr>
-            <td>
-            </td>
-            <td>
-                <app-hand playerTitle="Player 1"
-                          [playerMoney]="playerToMoney.get('player1')"
-                          [playerCards]="allPiles.get('player1')"
-                          [marriageCards]="allPiles.get('player1Marriage')"
-                          [buryCards]="allPiles.get('player1Bury')"
-                          [winCards]="allPiles.get('player1Win')"
-                          (cardSelected)="cardSelected($event)"></app-hand>
-            </td>
-            <td>
-            </td>
-        </tr>
-    </table>
-</div>
+<router-outlet></router-outlet>
