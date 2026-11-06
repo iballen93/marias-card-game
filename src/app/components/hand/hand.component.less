@@ -1,0 +1,15 @@
+// Outlines the player whose turn it is
+.seat {
+    display: flow-root;
+    // on every seat, not just the active one, so nothing moves when the turn changes
+    padding: var(--seat-padding) var(--seat-padding) 0;
+    border-radius: 0.75rem;
+    color: white;
+    transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.seat-active {
+    color: #ffd54a;
+    background-color: rgba(255, 213, 74, 0.14);
+    box-shadow: 0 0 0 2px #ffd54a, 0 0 16px 4px rgba(255, 213, 74, 0.6);
+}
