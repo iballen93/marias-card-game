@@ -3,6 +3,7 @@ import { Card } from 'src/app/components/card-pile/card-pile.component';
 import { DeckService } from 'src/app/deck.service';
 import { PointsService } from 'src/app/points.service';
 import { ValidationService } from 'src/app/validation.service';
+import { ComputerPlayerService } from 'src/app/computer-player.service';
 import { CardAnimationService } from 'src/app/card-animation.service';
 
 @Component({
@@ -45,6 +46,7 @@ export class GameComponent implements OnInit, OnDestroy {
     private isDestroyed = false;
     pickingTrump = false;
     buryingCards = false;
+    legalCards: string[] = [];
 
     BACK_CARD = 'assets/cards/back.png';
 
@@ -65,6 +67,7 @@ export class GameComponent implements OnInit, OnDestroy {
     constructor(private deckService: DeckService,
                 private pointsService: PointsService,
                 private validationService: ValidationService,
+                private computerPlayerService: ComputerPlayerService,
                 private cardAnimationService: CardAnimationService,
                 private changeDetector: ChangeDetectorRef) {
     }
@@ -94,8 +97,16 @@ export class GameComponent implements OnInit, OnDestroy {
 
         const positions = isNewDeal ? new Map() : this.cardAnimationService.capturePositions();
         change();
+        this.updateLegalCards();
         this.changeDetector.detectChanges();
         this.cardAnimationService.animateFrom(positions);
+    }
+
+    private updateLegalCards(): void {
+        const isCardToPlay = !this.pickingTrump && !this.buryingCards && !this.showingCompletedHand;
+        this.legalCards = isCardToPlay
+            ? this.computerPlayerService.getLegalCards(this.allPiles.get('game'), this.getActivePlayerPile(), this.trump)
+            : [];
     }
 
     private setCardPriority(): void {

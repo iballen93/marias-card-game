@@ -9,6 +9,7 @@ export class ValidationService {
     MUST_FOLLOW_SUIT: 'If possible, card must follow suit.',
     MUST_OVERRIDE: 'If possible, when following suit, card must be higher than previously played.',
     MUST_TRUMP: 'If possible, card must be trump when unable to follow suit.',
+    MUST_OVER_TRUMP: 'If possible, card must be higher than the trump already played.',
     BURY_POINTS: 'Point cards can not be buried.'
   };
 
@@ -66,9 +67,13 @@ export class ValidationService {
         } else {
           return this.illegalMoves.MUST_FOLLOW_SUIT;
         }
-      } else {
-        if (!this.isTrump(this.selectedCardCode) && this.hasTrump()) {
+      } else if (this.hasTrump()) {
+        if (!this.isTrump(this.selectedCardCode)) {
           return this.illegalMoves.MUST_TRUMP;
+        }
+        const trumpToBeat = this.gamePile.find(card => this.isTrump(card.code));
+        if (trumpToBeat && !this.isCardOverride(this.selectedCardCode, trumpToBeat.code) && this.canOverTrump(trumpToBeat.code)) {
+          return this.illegalMoves.MUST_OVER_TRUMP;
         }
       }
     }
@@ -91,6 +96,10 @@ export class ValidationService {
       }
     }
     return false;
+  }
+
+  canOverTrump(trumpCardCode: string): boolean {
+    return this.activePlayerPile.some(card => this.isTrump(card.code) && this.isCardOverride(card.code, trumpCardCode));
   }
 
   hasTrump(): boolean {

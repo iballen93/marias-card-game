@@ -21,6 +21,7 @@
                                [pickingTrump]="pickingTrump"
                                [buryingCards]="buryingCards"
                                [canPlayAgain]="canPlayAgain"
+                               [legalCards]="legalCards"
                                style="position: absolute; left: 50%; transform: translateX(-50%); padding-top: 50px"></app-turn-info>
 
                 <app-card-pile [cards]="this.allPiles.get('game')" (cardSelected)="cardSelected($event)"

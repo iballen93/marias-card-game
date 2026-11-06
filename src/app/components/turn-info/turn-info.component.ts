@@ -12,6 +12,7 @@ export class TurnInfoComponent implements OnInit {
     @Input() trump: string;
     @Input() bidMultiplier: number;
     @Input() activePlayer: number;
+    @Input() legalCards: string[];
 
     @Input() pickingTrump: boolean;
     @Input() buryingCards: boolean;
