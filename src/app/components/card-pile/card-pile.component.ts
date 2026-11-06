@@ -16,6 +16,7 @@ export class CardPileComponent implements OnInit {
 
   @Input() cards: Card[];
   @Input() title: string;
+  @Input() alwaysShowTitle = false;
   @Output() cardSelected = new EventEmitter<Card>();
 
   constructor() {

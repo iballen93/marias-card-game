@@ -18,7 +18,8 @@
         </app-card-pile>
 
         <app-card-pile
-                title="Win Pile"
+                [title]="getWinPileTitle()"
+                [alwaysShowTitle]="true"
                 [cards]="winCards"
                 (cardSelected)="forwardCardSelected($event)"
                 style="height: 150px; width: 33%; overflow: hidden; display: flex; align-items: center; justify-content: center;">

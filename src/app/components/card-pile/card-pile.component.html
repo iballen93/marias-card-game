@@ -8,7 +8,7 @@
                  (click)="selectCard(card)">
         </div>
     </div>
-    <div *ngIf="title && cards" style="text-align: center; color: white; font-weight: bold; margin-top: -5px;">
+    <div *ngIf="title && (cards || alwaysShowTitle)" style="text-align: center; color: white; font-weight: bold; margin-top: -5px;">
         {{ title }}
     </div>
 </div>

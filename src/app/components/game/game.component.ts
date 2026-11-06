@@ -95,6 +95,7 @@ export class GameComponent implements OnInit, OnDestroy {
         const positions = isNewDeal ? new Map() : this.cardAnimationService.capturePositions();
         change();
         this.updateLegalCards();
+        this.updateRoundPoints();
         this.changeDetector.detectChanges();
         this.cardAnimationService.animateFrom(positions);
     }
@@ -104,6 +105,14 @@ export class GameComponent implements OnInit, OnDestroy {
         this.legalCards = isCardToPlay
             ? this.computerPlayerService.getLegalCards(this.allPiles.get('game'), this.getActivePlayerPile(), this.trump)
             : [];
+    }
+
+    private updateRoundPoints(): void {
+        // whoever wins the latest hand only keeps the last trick point if that hand was the last one
+        const lastTrickPlayer = this.canPlayAgain ? this.lastTrickPlayer : undefined;
+        this.player1RoundPoints = this.pointsService.calculatePlayerPoints(this.allPiles, 1, lastTrickPlayer);
+        this.player2RoundPoints = this.pointsService.calculatePlayerPoints(this.allPiles, 2, lastTrickPlayer);
+        this.player3RoundPoints = this.pointsService.calculatePlayerPoints(this.allPiles, 3, lastTrickPlayer);
     }
 
     private setCardPriority(): void {
@@ -364,18 +373,11 @@ export class GameComponent implements OnInit, OnDestroy {
             this.winMessage = '';
             this.trump = '';
             this.bidMultiplier = 1;
-            this.resetRoundPoints();
             this.allPiles = new Map();
             this.setToNextDealer();
             this.activePlayer = this.currentCaller;
             this.shuffleDeck();
         }, true);
-    }
-
-    resetRoundPoints(): void {
-        this.player1RoundPoints = 0;
-        this.player2RoundPoints = 0;
-        this.player3RoundPoints = 0;
     }
 
     clearGamePile(): void {

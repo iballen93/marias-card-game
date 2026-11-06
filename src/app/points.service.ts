@@ -133,13 +133,11 @@ export class PointsService {
 
         // 1 point last trick
         if (player === lastTrickPlayer) {
-            console.log('player got last trick so adding points ' + player);
             points++;
         }
 
         // 4 points for trump marriage, 2 points for normal marriage
         if (allPiles.get('player' + player + 'Marriage')?.length > 0) {
-            console.log('we have detected marriage(s) for player ' + player);
             for (const marriageCard of allPiles.get('player' + player + 'Marriage')) {
                 if (this.validationService.isTrump(marriageCard.code)) {
                     points += 4;

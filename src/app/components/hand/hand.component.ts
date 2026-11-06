@@ -10,6 +10,7 @@ export class HandComponent implements OnInit {
 
     @Input() playerTitle: string;
     @Input() playerMoney: number;
+    @Input() playerPoints: number;
     @Input() playerCards: Card[];
     @Input() marriageCards: Card[];
     @Input() buryCards: Card[];
@@ -25,6 +26,10 @@ export class HandComponent implements OnInit {
 
     formatCurrency(value: number): string {
         return (value / 100).toFixed(2);
+    }
+
+    getWinPileTitle(): string {
+        return `Win Pile: ${this.playerPoints} ${this.playerPoints === 1 ? 'Point' : 'Points'}`;
     }
 
     forwardCardSelected(card: Card): void {

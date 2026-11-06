@@ -4,6 +4,7 @@
             <td>
                 <app-hand playerTitle="Player 2"
                           [playerMoney]="playerToMoney.get('player2')"
+                          [playerPoints]="player2RoundPoints"
                           [playerCards]="allPiles.get('player2')"
                           [marriageCards]="allPiles.get('player2Marriage')"
                           [buryCards]="allPiles.get('player2Bury')"
@@ -33,6 +34,7 @@
             <td>
                 <app-hand playerTitle="Player 3"
                           [playerMoney]="playerToMoney.get('player3')"
+                          [playerPoints]="player3RoundPoints"
                           [playerCards]="allPiles.get('player3')"
                           [marriageCards]="allPiles.get('player3Marriage')"
                           [buryCards]="allPiles.get('player3Bury')"
@@ -46,6 +48,7 @@
             <td>
                 <app-hand playerTitle="Player 1"
                           [playerMoney]="playerToMoney.get('player1')"
+                          [playerPoints]="player1RoundPoints"
                           [playerCards]="allPiles.get('player1')"
                           [marriageCards]="allPiles.get('player1Marriage')"
                           [buryCards]="allPiles.get('player1Bury')"

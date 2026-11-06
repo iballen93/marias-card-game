@@ -1,16 +1,36 @@
 import { TestBed } from '@angular/core/testing';
 
+import { Card } from './components/card-pile/card-pile.component';
 import { PointsService } from './points.service';
+import { ValidationService } from './validation.service';
 
 describe('PointsService', () => {
   let service: PointsService;
 
+  const cards = (...codes: string[]): Card[] => codes.map(code => ({ code, image: '', suit: '' }));
+
   beforeEach(() => {
     TestBed.configureTestingModule({});
     service = TestBed.inject(PointsService);
+    TestBed.inject(ValidationService).loadCards([], [], '', 'HEARTS');
   });
 
-  it('should be created', () => {
-    expect(service).toBeTruthy();
+  it('should start a player on 0 points', () => {
+    expect(service.calculatePlayerPoints(new Map(), 1, undefined)).toBe(0);
+  });
+
+  it('should count aces and 10s in the win pile', () => {
+    const piles = new Map([['player1Win', cards('AS', '0D', 'KC')]]);
+    expect(service.calculatePlayerPoints(piles, 1, undefined)).toBe(2);
+  });
+
+  it('should count 2 for a marriage and 4 for a trump marriage', () => {
+    const piles = new Map([['player1Marriage', cards('KS', 'QH')]]);
+    expect(service.calculatePlayerPoints(piles, 1, undefined)).toBe(6);
+  });
+
+  it('should only give the last trick point to the player who won it', () => {
+    expect(service.calculatePlayerPoints(new Map(), 1, 1)).toBe(1);
+    expect(service.calculatePlayerPoints(new Map(), 2, 1)).toBe(0);
   });
 });
