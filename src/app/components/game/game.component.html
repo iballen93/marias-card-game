@@ -10,7 +10,9 @@
                           [winCards]="allPiles.get('player2Win')"
                           (cardSelected)="cardSelected($event)"></app-hand>
             </td>
-            <td style="display: flex; flex-direction: column; justify-content: space-between; height: 100%; align-items: center; padding-top: 30px; padding-bottom: 100px;">
+            <td style="display: flex; flex-direction: column; align-items: flex-start; padding-top: 30px; padding-bottom: 100px; height: 100%; position: relative;">
+                <app-game-values [trump]="trump" [bidMultiplier]="bidMultiplier" style="width: 100%;"></app-game-values>
+
                 <app-turn-info [winMessage]="winMessage"
                                [illegalMoveMessage]="illegalMoveMessage"
                                [trump]="trump"
@@ -19,10 +21,14 @@
                                [dealing]="dealing"
                                [pickingTrump]="pickingTrump"
                                [buryingCards]="buryingCards"
-                               [canPlayAgain]="canPlayAgain"></app-turn-info>
+                               [canPlayAgain]="canPlayAgain"
+                               style="position: absolute; left: 50%; transform: translateX(-50%); padding-top: 50px"></app-turn-info>
 
-                <button *ngIf="canPlayAgain" (click)="playAgain()">PLAY AGAIN BITCH</button>
-                <app-card-pile [cards]="this.allPiles.get('game')" (cardSelected)="cardSelected($event)"></app-card-pile>
+                <app-card-pile [cards]="this.allPiles.get('game')" (cardSelected)="cardSelected($event)"
+                               style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); padding-top: 300px"></app-card-pile>
+
+                <button *ngIf="canPlayAgain" (click)="playAgain()"
+                        style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);">PLAY AGAIN BITCH</button>
             </td>
             <td>
                 <app-hand playerTitle="Player 3"
