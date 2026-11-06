@@ -47,6 +47,8 @@
   :root {
     --card-width: clamp(54px, calc((100vh - 141px) / 4.15), 90px);
     --side-pile-height: calc(var(--side-card-max) * 1.39 + 12px);
+    /* Whatever height is left over goes to the messages above the trick */
+    --message-space: calc(100vh - var(--hand-pile-height) * 2 - var(--side-pile-height) - var(--player-title-size) * 1.5 - 40px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
     --pile-title-size: clamp(0.5625rem, 2.4vh, 0.75rem);
     --player-title-size: clamp(0.875rem, 3.4vh, 1.125rem);
     --message-large: clamp(0.8125rem, 3.6vh, 1.125rem);

@@ -172,17 +172,22 @@ table {
         max-width: calc(33vw - env(safe-area-inset-left, 0px) - var(--corner-gap) * 2);
     }
 
+    // Messages sit at the top centre like the web view, with the trick below them
     .trick-pile {
         grid-column: 2;
         grid-row: 1;
+        align-self: start;
+        margin-top: var(--message-space);
+        // keeps its height when the table is empty, so Player 1 doesn't jump
+        min-height: var(--hand-pile-height);
     }
 
     .turn-status {
-        grid-column: 3;
-        grid-row: 2;
-        // stops above Fast Play, which sits in the corner below it
-        max-height: calc(var(--hand-pile-height) + var(--side-pile-height) - 24px);
-        padding: 4px 8px;
+        grid-column: 2;
+        grid-row: 1;
+        align-self: start;
+        max-height: var(--message-space);
+        padding: 0 8px;
         box-sizing: border-box;
     }
 }
