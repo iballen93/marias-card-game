@@ -13,6 +13,8 @@
         <app-card-pile
                 title="Bury Pile"
                 [cards]="buryCards"
+                [cardWidth]="getSideCardWidth()"
+                [cardOverlap]="getSideCardOverlap()"
                 (cardSelected)="forwardCardSelected($event)"
                 style="height: 150px; width: 33%; overflow: hidden; display: flex; align-items: center; justify-content: center;">
         </app-card-pile>
@@ -21,6 +23,8 @@
                 [title]="getWinPileTitle()"
                 [alwaysShowTitle]="true"
                 [cards]="winCards"
+                [cardWidth]="getSideCardWidth()"
+                [cardOverlap]="WIN_PILE_OVERLAP_PX + 'px'"
                 (cardSelected)="forwardCardSelected($event)"
                 style="height: 150px; width: 33%; overflow: hidden; display: flex; align-items: center; justify-content: center;">
         </app-card-pile>
@@ -28,6 +32,8 @@
         <app-card-pile
                 title="Marriage"
                 [cards]="marriageCards"
+                [cardWidth]="getSideCardWidth()"
+                [cardOverlap]="getSideCardOverlap()"
                 (cardSelected)="forwardCardSelected($event)"
                 style="height: 150px; width: 33%; overflow: hidden; display: flex; align-items: center; justify-content: center;">
         </app-card-pile>

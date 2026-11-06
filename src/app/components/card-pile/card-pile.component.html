@@ -1,10 +1,13 @@
-<div style="display: flex; flex-direction: column; align-items: center; margin-top: 10px;">
-    <div style="display: flex; justify-content: center;">
-        <div *ngFor="let card of cards; let i = index" 
-             [ngStyle]="{'margin-left': (i === 0 ? '0px' : '-40px'), 'z-index': i}">
-            <img style="width: 100%; max-width: 90px;" 
+<div style="display: flex; flex-direction: column; align-items: center; margin-top: 10px; width: 100%;">
+    <div style="display: flex; justify-content: center; width: 100%;">
+        <div *ngFor="let card of cards; let i = index; let isLast = last"
+             style="min-width: 0;"
+             [style.flex]="getCardFlex(isLast)"
+             [style.margin-left]="getCardMargin(i)"
+             [style.z-index]="i">
+            <img [style.width]="cardWidth ? '100%' : FULL_CARD_WIDTH"
                  [src]="card.image"
-                 [attr.data-card-key]="getCardKey(card)" 
+                 [attr.data-card-key]="getCardKey(card)"
                  (click)="selectCard(card)">
         </div>
     </div>
