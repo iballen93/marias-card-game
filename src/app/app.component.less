@@ -48,3 +48,28 @@ nav a:hover {
     white-space: nowrap;
   }
 }
+
+.rotate-notice {
+  display: none;
+}
+
+// Browsers can't lock the screen the way the Android app does, so phones in portrait are asked to rotate
+@media (max-width: 768px) and (orientation: portrait) and (pointer: coarse) {
+  .rotate-notice {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    color: white;
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-align: center;
+    background-color: #1c5a1c;
+  }
+}
