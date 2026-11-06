@@ -1,4 +1,4 @@
-<div style="display: flex; flex-direction: column; align-items: center; margin-top: 10px; width: 100%;">
+<div style="display: flex; flex-direction: column; align-items: center; margin-top: var(--pile-gap); width: 100%;">
     <div style="display: flex; justify-content: center; width: 100%;">
         <div *ngFor="let card of cards; let i = index; let isLast = last"
              style="min-width: 0;"
@@ -11,7 +11,7 @@
                  (click)="selectCard(card)">
         </div>
     </div>
-    <div *ngIf="title && (cards || alwaysShowTitle)" style="text-align: center; color: white; font-weight: bold; margin-top: -5px;">
+    <div *ngIf="title && (cards || alwaysShowTitle)" style="text-align: center; color: white; font-weight: bold; margin-top: -5px; font-size: var(--pile-title-size);">
         {{ title }}
     </div>
 </div>

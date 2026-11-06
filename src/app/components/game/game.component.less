@@ -14,3 +14,184 @@ table {
     border-collapse: collapse;
     table-layout: fixed;
 }
+
+.table-center {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding-top: 30px;
+    padding-bottom: 100px;
+    height: 100%;
+    position: relative;
+}
+
+.game-values {
+    width: 100%;
+}
+
+.turn-status {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    padding-top: 50px;
+}
+
+.trick-pile {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    padding-top: 300px;
+}
+
+.fast-play-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 10;
+    color: green;
+    font-family: inherit;
+    font-size: 1.125rem;
+    font-weight: bold;
+    background-color: white;
+    padding: 0.625rem;
+    border: none;
+    border-radius: 0.625rem;
+    cursor: pointer;
+}
+
+// Phones stack the players in full width rows, so each hand gets the whole screen width
+@media (max-width: 768px), (max-height: 500px) {
+    table {
+        display: flex;
+        flex-direction: column;
+        height: auto;
+    }
+
+    tr {
+        display: contents;
+    }
+
+    td {
+        display: block;
+        padding: 0 8px;
+    }
+
+    .seat-empty {
+        display: none;
+    }
+
+    .seat-player2 {
+        order: 1;
+    }
+
+    .seat-player3 {
+        order: 2;
+    }
+
+    .seat-player1 {
+        order: 4;
+    }
+
+    .table-center {
+        order: 3;
+        display: grid;
+        grid-template-columns: calc(var(--card-width) * 2.1) 1fr;
+        grid-template-rows: auto 1fr auto;
+        column-gap: 8px;
+        height: calc(var(--hand-pile-height) + 20px);
+        padding: 2px 8px;
+        overflow: hidden;
+        box-sizing: border-box;
+    }
+
+    .game-values {
+        grid-column: 2;
+        grid-row: 1;
+    }
+
+    .turn-status {
+        grid-column: 2;
+        grid-row: 2;
+        position: static;
+        transform: none;
+        padding: 0;
+        overflow-y: auto;
+    }
+
+    .trick-pile {
+        grid-column: 1;
+        grid-row: 1 / span 3;
+        position: static;
+        transform: none;
+        padding: 0;
+        align-self: center;
+    }
+
+    .fast-play-button {
+        grid-column: 2;
+        grid-row: 3;
+        position: static;
+        justify-self: end;
+        font-size: 0.6875rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.375rem;
+    }
+}
+
+// Sideways phones have the width for a table: Player 2 and 3 either side of the trick, Player 1 below it
+@media (max-height: 500px) and (orientation: landscape) {
+    table {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        height: auto;
+    }
+
+    .table-center {
+        display: contents;
+    }
+
+    .seat-player2 {
+        grid-column: 1;
+        grid-row: 1;
+    }
+
+    .seat-player3 {
+        grid-column: 3;
+        grid-row: 1;
+    }
+
+    .seat-player1 {
+        grid-column: 2;
+        grid-row: 2;
+    }
+
+    .trick-pile {
+        grid-column: 2;
+        grid-row: 1;
+    }
+
+    .game-values {
+        grid-column: 1;
+        grid-row: 2;
+        align-self: start;
+        padding: 4px 8px;
+        box-sizing: border-box;
+    }
+
+    .fast-play-button {
+        grid-column: 1;
+        grid-row: 2;
+        align-self: end;
+        justify-self: start;
+        margin: 0 0 6px 8px;
+    }
+
+    .turn-status {
+        grid-column: 3;
+        grid-row: 2;
+        max-height: calc(var(--hand-pile-height) + var(--side-pile-height));
+        padding: 4px 8px;
+        box-sizing: border-box;
+    }
+}

@@ -1,7 +1,7 @@
-<div *ngIf="pickingTrump" style="color: green; font-size: 2rem; background-color: white; display: inline-block; padding: 0.625rem; border-radius: 0.625rem; font-weight: bold;">
+<div *ngIf="pickingTrump" style="color: green; font-size: var(--message-large); background-color: white; display: inline-block; padding: var(--message-padding); border-radius: 0.625rem; font-weight: bold;">
     Player {{activePlayer}} must pick Trump
 </div>
-<div *ngIf="buryingCards" style="color: green; font-size: 2rem; background-color: white; display: inline-block; padding: 0.625rem; border-radius: 0.625rem; font-weight: bold;">
+<div *ngIf="buryingCards" style="color: green; font-size: var(--message-large); background-color: white; display: inline-block; padding: var(--message-padding); border-radius: 0.625rem; font-weight: bold;">
     Player {{activePlayer}} must Bury 2 Cards
 </div>
 
@@ -10,20 +10,20 @@
     Game Over
     <br>
 </div>
-<div *ngIf="winMessage != ''" style="color: green; font-size: 1.125rem; background-color: white; display: inline-block; padding: 0.625rem; border-radius: 0.625rem; font-weight: bold;">
+<div *ngIf="winMessage != ''" style="color: green; font-size: var(--message-small); background-color: white; display: inline-block; padding: var(--message-padding); border-radius: 0.625rem; font-weight: bold;">
     {{winMessage}}
 </div>
 
 <br>
-<div *ngIf="legalCards.length > 0" style="color: green; font-size: 1.5rem; background-color: white; display: inline-block; padding: 0.625rem; border-radius: 0.625rem; font-weight: bold;">
+<div *ngIf="legalCards.length > 0" style="color: green; font-size: var(--message-medium); background-color: white; display: inline-block; padding: var(--message-padding); border-radius: 0.625rem; font-weight: bold;">
     Legal Cards: {{legalCards.toString()}}
 </div>
 <br>
-<div *ngIf="!canPlayAgain && !pickingTrump && !buryingCards" style="color: green; font-size: 2rem; background-color: white; display: inline-block; padding: 0.625rem; border-radius: 0.625rem; font-weight: bold;">
+<div *ngIf="!canPlayAgain && !pickingTrump && !buryingCards" style="color: green; font-size: var(--message-large); background-color: white; display: inline-block; padding: var(--message-padding); border-radius: 0.625rem; font-weight: bold;">
     Player {{activePlayer}}'s Turn
 </div>
 
 <br>
-<div *ngIf="illegalMoveMessage" style="color: red; font-size: 1.3rem; background-color: white; display: inline-block; padding: 0.625rem; border-radius: 0.625rem; font-weight: bold;">
+<div *ngIf="illegalMoveMessage" style="color: red; font-size: var(--message-illegal); background-color: white; display: inline-block; padding: var(--message-padding); border-radius: 0.625rem; font-weight: bold;">
     Illegal Move - {{illegalMoveMessage}}
 </div>

@@ -23,8 +23,8 @@ export class CardPileComponent implements OnInit {
   @Input() cardOverlap: string;
   @Output() cardSelected = new EventEmitter<Card>();
 
-  readonly FULL_CARD_WIDTH = '90px';
-  private readonly FULL_CARD_SPACING = '50px';
+  readonly FULL_CARD_WIDTH = 'var(--card-width)';
+  private readonly FULL_CARD_SPACING = 'var(--card-spacing)';
 
   constructor() {
   }
