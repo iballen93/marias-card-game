@@ -42,6 +42,7 @@ export class GameComponent implements OnInit, OnDestroy {
     lastTrickPlayer: number;
     canPlayAgain = false;
     showingCompletedHand = false;
+    private isFastPlaying = false;
     private isDestroyed = false;
     pickingTrump = false;
     buryingCards = false;
@@ -190,6 +191,36 @@ export class GameComponent implements OnInit, OnDestroy {
         this.animateCardMoves(() => this.handleCardSelected($event));
     }
 
+    // For testing: plays by the rules for every player until only the last hand is left
+    fastPlayToLastHand(): void {
+        this.animateCardMoves(() => {
+            this.isFastPlaying = true;
+            while (!this.isOnLastHand()) {
+                this.handleCardSelected(this.getFastPlayCard());
+                this.updateLegalCards();
+            }
+            this.isFastPlaying = false;
+        });
+    }
+
+    canFastPlay(): boolean {
+        return !this.showingCompletedHand && !this.isOnLastHand();
+    }
+
+    private isOnLastHand(): boolean {
+        return [1, 2, 3].every(player => (this.allPiles.get('player' + player) || []).length <= 1);
+    }
+
+    private getFastPlayCard(): Card {
+        let choices: Card[] = this.getActivePlayerPile();
+        if (this.buryingCards) {
+            choices = choices.filter(card => this.validationService.validateBuryCard(card.code) === '');
+        } else if (!this.pickingTrump) {
+            choices = choices.filter(card => this.legalCards.includes(card.code));
+        }
+        return choices[Math.floor(Math.random() * choices.length)];
+    }
+
     private handleCardSelected($event: Card): void {
         // the completed hand is still on the table, so ignore input until it is collected
         if (this.showingCompletedHand) {
@@ -245,9 +276,13 @@ export class GameComponent implements OnInit, OnDestroy {
                 this.activePlayer = winningPlayer;
                 this.lastTrickPlayer = winningPlayer;
 
-                // leave the completed hand on the table long enough to see the third card
-                this.showingCompletedHand = true;
-                setTimeout(() => this.animateCardMoves(() => this.collectCompletedHand(winningPlayer)), this.HAND_DISPLAY_MS);
+                if (this.isFastPlaying) {
+                    this.collectCompletedHand(winningPlayer);
+                } else {
+                    // leave the completed hand on the table long enough to see the third card
+                    this.showingCompletedHand = true;
+                    setTimeout(() => this.animateCardMoves(() => this.collectCompletedHand(winningPlayer)), this.HAND_DISPLAY_MS);
+                }
             }
         }
     }
