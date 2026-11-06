@@ -11,6 +11,7 @@ export class HandComponent implements OnInit {
     @Input() playerTitle: string;
     @Input() playerMoney: number;
     @Input() playerPoints: number;
+    @Input() isCaller = false;
     @Input() playerCards: Card[];
     @Input() marriageCards: Card[];
     @Input() buryCards: Card[];

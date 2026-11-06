@@ -2,10 +2,10 @@
 :root {
   --card-width: 90px;
   --card-spacing: 50px;
-  --side-card-max: 90px;
-  --win-pile-overlap: 40px;
+  --side-card-max: 63px;
+  --win-pile-overlap: 28px;
   --hand-pile-height: 150px;
-  --side-pile-height: 150px;
+  --side-pile-height: 130px;
   --pile-gap: 10px;
   --pile-title-size: 1rem;
   --player-title-size: 1.5em;
@@ -25,7 +25,7 @@
     /* Escaped because Less would otherwise work out min() itself instead of leaving it to the browser */
     --card-width: ~"clamp(62px, min(calc((100vh - 378px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) / 6.2), 24vw), 110px)";
     --card-spacing: calc(var(--card-width) * 0.52);
-    --side-card-max: calc(var(--card-width) * 0.48);
+    --side-card-max: calc(var(--card-width) * 0.336);
     --win-pile-overlap: calc(var(--side-card-max) * 0.66);
     --hand-pile-height: calc(var(--card-width) * 1.39 + 4px);
     --side-pile-height: calc(var(--side-card-max) * 1.39 + 16px);
