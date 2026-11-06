@@ -5,6 +5,13 @@ Initial Release
 * Points are determined by number of Aces + 10s + Marriage(s) + Last Trick
 * Money is tracked with a bid of 2 cents per game (doubled when Spades is Trump). Each player starts with $1.28
 
+Offline Play and Animations
+* The deck is shuffled in the app and all card images are bundled, so no card server or internet connection is needed
+* Cards animate between piles, and a completed hand stays on the table for a second before it is collected
+* Legal cards are shown for every turn
+* The third card must go over a trump played second, when possible
+* New Game now works every time it is clicked
+
 TODO in priorityish order
 * Menu Navigation with Wiki page, How To Play, 3/4 Player Selection, Details on Game Modes
 * Computer opponents

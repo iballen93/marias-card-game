@@ -14,7 +14,6 @@ import { CardAnimationService } from 'src/app/card-animation.service';
 export class GameComponent implements OnInit, OnDestroy {
 
 
-    private readonly CARDS_TO_DEAL = [7, 5, 5, 5, 5, 5];
     private readonly PLAYER_COUNT = 3;
     private readonly DEFAULT_MONEY_CENTS = 128;
     private readonly HAND_DISPLAY_MS = 1000;
@@ -57,7 +56,6 @@ export class GameComponent implements OnInit, OnDestroy {
 
     // Pile Types include: Game, Player, Win, Bury, Marriage
     allPiles: Map<string, Card[]>;
-    allPoints: Map<string, number>;
     playerToMoney: Map<string, number>;
 
     player1RoundPoints = 0;
@@ -74,7 +72,6 @@ export class GameComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.allPiles = new Map();
-        this.allPoints = new Map();
         this.playerToMoney = new Map();
         this.playerToMoney.set('player1', this.DEFAULT_MONEY_CENTS);
         this.playerToMoney.set('player2', this.DEFAULT_MONEY_CENTS);

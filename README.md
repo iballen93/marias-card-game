@@ -39,6 +39,10 @@ CARD 3
 
 
 
-commands for http_parser is deprecated error when running 'ng s'
+### RUNNING THE APP
+* Angular 11 needs Node 20. Newer versions fail with 'No such module: http_parser'
 * $env:NODE_OPTIONS="--openssl-legacy-provider"
+* ng s
+
+### BUILDING FOR ANDROID
 * $env:CAPACITOR_ANDROID_STUDIO_PATH="C:\Users\UltraMegaVIP\AppData\Local\Programs\Android Studio\bin\studio64.exe"
