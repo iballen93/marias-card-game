@@ -1,17 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { Card } from 'src/app/components/card-pile/card-pile.component';
-import { DeckOfCardsServiceService } from 'src/app/deck-of-cards-service.service';
+import { DeckService } from 'src/app/deck.service';
 import { PointsService } from 'src/app/points.service';
 import { ValidationService } from 'src/app/validation.service';
-import { catchError, finalize, tap } from 'rxjs/operators';
-import { of } from 'rxjs';
-
-export interface Deck {
-    deck_id: string;
-    remaining: number;
-    success: boolean;
-    shuffled: boolean;
-}
+import { CardAnimationService } from 'src/app/card-animation.service';
 
 @Component({
     selector: 'app-game',
@@ -23,8 +15,8 @@ export class GameComponent implements OnInit {
 
     private readonly CARDS_TO_DEAL = [7, 5, 5, 5, 5, 5];
     private readonly PLAYER_COUNT = 3;
-    private readonly DECK_DEFINITION = 'AS,KS,QS,JS,0S,9S,8S,7S,' + 'AD,KD,QD,JD,0D,9D,8D,7D,' + 'AC,KC,QC,JC,0C,9C,8C,7C,' + 'AH,KH,QH,JH,0H,9H,8H,7H';
     private readonly DEFAULT_MONEY_CENTS = 128;
+    private readonly HAND_DISPLAY_MS = 1000;
 
     versusComputer = false;
 
@@ -49,17 +41,16 @@ export class GameComponent implements OnInit {
     currentCaller = 1;
     lastTrickPlayer: number;
     canPlayAgain = false;
+    showingCompletedHand = false;
     pickingTrump = false;
     buryingCards = false;
 
-    BACK_CARD = 'https://deckofcardsapi.com/static/img/back.png';
+    BACK_CARD = 'assets/cards/back.png';
 
-    deck: Deck;
+    deck: Card[];
     trump = '';
     cardPriority: Map<string, number>;
     suitPriority: Map<string, number>;
-
-    dealing = false;
 
     // Pile Types include: Game, Player, Win, Bury, Marriage
     allPiles: Map<string, Card[]>;
@@ -70,27 +61,31 @@ export class GameComponent implements OnInit {
     player2RoundPoints = 0;
     player3RoundPoints = 0;
 
-    player1DeckId: string;
-    player2DeckId: string;
-    player3DeckId: string;
-    gamePileDeckId: string;
-
-    constructor(private deckOfCardsServiceService: DeckOfCardsServiceService,
+    constructor(private deckService: DeckService,
                 private pointsService: PointsService,
-                private validationService: ValidationService) {
+                private validationService: ValidationService,
+                private cardAnimationService: CardAnimationService,
+                private changeDetector: ChangeDetectorRef) {
     }
 
     ngOnInit(): void {
-        this.dealing = true;
         this.allPiles = new Map();
         this.allPoints = new Map();
         this.playerToMoney = new Map();
         this.playerToMoney.set('player1', this.DEFAULT_MONEY_CENTS);
         this.playerToMoney.set('player2', this.DEFAULT_MONEY_CENTS);
         this.playerToMoney.set('player3', this.DEFAULT_MONEY_CENTS);
-        this.shuffleDeck();
         this.setCardPriority();
         this.setSuitPriority();
+        this.deckService.preloadCardImages().then(() => this.animateCardMoves(() => this.shuffleDeck(), true));
+    }
+
+    // Runs a change to the piles, then animates each card from where it was to where it ended up
+    private animateCardMoves(change: () => void, isNewDeal = false): void {
+        const positions = isNewDeal ? new Map() : this.cardAnimationService.capturePositions();
+        change();
+        this.changeDetector.detectChanges();
+        this.cardAnimationService.animateFrom(positions);
     }
 
     private setCardPriority(): void {
@@ -114,51 +109,18 @@ export class GameComponent implements OnInit {
     }
 
     shuffleDeck(): void {
-        this.deckOfCardsServiceService.getDeck(this.DECK_DEFINITION).pipe(
-            tap((response: any) => {
-                console.log('got deck' + response);
-                this.deck = response;
-                console.log(this.deck);
-                this.deal([7, 5, 5]);
-                this.pickingTrump = true;
-            }),
-            catchError((response: any) => {
-                return of({});
-            }),
-            finalize(() => {
-
-            })
-        ).subscribe();
+        this.deck = this.deckService.createShuffledDeck();
+        this.deal([7, 5, 5]);
+        this.pickingTrump = true;
     }
 
-    async deal(cardsToDeal: number[]): Promise<void> {
-        for (let i = 0; i < 3; i++) {
-            const newCards = await this.deckOfCardsServiceService.drawCards(this.deck.deck_id, String(cardsToDeal[i]));
-            let playerPile = this.allPiles.get('player' + this.activePlayer);
-            if (!playerPile) {
-                this.allPiles.set('player' + this.activePlayer, newCards);
-            } else {
-                playerPile = playerPile.concat(newCards);
-                this.allPiles.set('player' + this.activePlayer, playerPile);
-            }
-            this.sortHand(this.allPiles.get('player' + this.activePlayer));
+    deal(cardsToDeal: number[]): void {
+        for (let i = 0; i < this.PLAYER_COUNT; i++) {
+            const newCards = this.deck.splice(0, cardsToDeal[i]);
+            const playerPile = this.allPiles.get('player' + this.activePlayer) || [];
+            this.allPiles.set('player' + this.activePlayer, this.sortHand(playerPile.concat(newCards)));
             this.setToNextActivePlayer();
         }
-
-        for (let i = 1; i <= this.PLAYER_COUNT; i++) {
-            // tslint:disable-next-line:max-line-length
-            await this.deckOfCardsServiceService.addToPile(this.deck.deck_id, 'player' + i, this.allPiles.get('player' + i).map(playerCard => playerCard.code).toString());
-        }
-
-        const player1Pile = await this.deckOfCardsServiceService.listPile(this.deck.deck_id, 'player1');
-        const player2Pile = await this.deckOfCardsServiceService.listPile(this.deck.deck_id, 'player2');
-        const player3Pile = await this.deckOfCardsServiceService.listPile(this.deck.deck_id, 'player3');
-
-        this.player1DeckId = player1Pile.deck_id;
-        this.player2DeckId = player2Pile.deck_id;
-        this.player3DeckId = player3Pile.deck_id;
-
-        this.dealing = false;
     }
 
     private compareCards(card1: Card, card2: Card): number {
@@ -197,17 +159,21 @@ export class GameComponent implements OnInit {
         return false;
     }
 
-    async cardSelected($event: Card): Promise<any> {
+    cardSelected($event: Card): void {
+        this.animateCardMoves(() => this.handleCardSelected($event));
+    }
+
+    private handleCardSelected($event: Card): void {
+        // the completed hand is still on the table, so ignore input until it is collected
+        if (this.showingCompletedHand) {
+            return;
+        }
+
         console.log('all piles HERE');
         console.log(this.allPiles);
 
         this.winMessage = '';
         this.illegalMoveMessage = '';
-
-        // if dealing, ignore any input
-        if (this.dealing) {
-            return;
-        }
 
         this.validationService.loadCards(this.allPiles.get('game'), this.getActivePlayerPile(), $event.code, this.trump);
 
@@ -217,13 +183,13 @@ export class GameComponent implements OnInit {
         }
 
         if (this.pickingTrump) {
-            await this.pickTrump($event.suit);
+            this.pickTrump($event.suit);
             this.buryingCards = true;
             return;
         }
 
         if (this.buryingCards && this.canBuryCard()) {
-            await this.buryCard($event);
+            this.buryCard($event);
             return;
         }
 
@@ -234,10 +200,10 @@ export class GameComponent implements OnInit {
             if (this.isCardInMarriage($event.code)) {
                 this.removeFromPlayerPile($event.code);
                 this.addToPlayerMarriagePile($event);
-                await this.addToGamePile($event);
+                this.addToGamePile($event);
             } else {
                 this.removeFromPlayerPile($event.code);
-                await this.addToGamePile($event);
+                this.addToGamePile($event);
             }
 
             this.setToNextActivePlayer();
@@ -248,28 +214,33 @@ export class GameComponent implements OnInit {
 
                 this.winMessage = 'Player ' + winningPlayer + ' Wins the Hand';
 
-                // add to player win pile (which removes from game pile)
-                await this.addGamePileToPlayerWinPile(winningPlayer);
-
-                // set player win UI cards
-                await this.setPlayerWinCards(winningPlayer);
-
                 // player that wins the hand leads the next hand
                 this.activePlayer = winningPlayer;
                 this.lastTrickPlayer = winningPlayer;
+
+                // leave the completed hand on the table long enough to see the third card
+                this.showingCompletedHand = true;
+                setTimeout(() => this.animateCardMoves(() => this.collectCompletedHand(winningPlayer)), this.HAND_DISPLAY_MS);
+            }
+        }
+    }
+
+    private collectCompletedHand(winningPlayer: number): void {
+        // add to player win pile (which removes from game pile)
+        this.addGamePileToPlayerWinPile(winningPlayer);
+        this.showingCompletedHand = false;
+
+        if (this.isRoundComplete()) {
+            // TODO implement earningsMultiplier
+            const { earnings, winMessage } = this.pointsService.calculateEarnings(
+                this.allPiles, this.currentCaller, this.lastTrickPlayer, this.bidMultiplier);
+            for (let player = 1; player <= 3; player++) {
+                const currentMoney = this.playerToMoney.get('player' + player);
+                this.playerToMoney.set('player' + player, currentMoney + earnings.get('player' + player));
             }
 
-            if (this.isRoundComplete()) {
-                // TODO implement earningsMultiplier
-                const playerRoundEarnings = this.pointsService.calculateEarnings(this.allPiles, this.currentCaller, this.lastTrickPlayer, this.bidMultiplier).earnings;
-                for (let player = 1; player <= 3; player++) {
-                    const currentMoney = this.playerToMoney.get('player' + player);
-                    this.playerToMoney.set('player' + player, currentMoney + playerRoundEarnings.get('player' + player));
-                }
-
-                this.winMessage = this.pointsService.calculateEarnings(this.allPiles, this.currentCaller, this.lastTrickPlayer, this.bidMultiplier).winMessage;
-                this.canPlayAgain = true;
-            }
+            this.winMessage = winMessage;
+            this.canPlayAgain = true;
         }
     }
 
@@ -277,17 +248,16 @@ export class GameComponent implements OnInit {
     //  Game mode is decided after dealing is finished and every player starting with the caller passes (meaning normal tricks)
     //  OR a player calls no-tricks or all-tricks. Anyone is welcome to any mode. (normal tricks < no-tricks < all-tricks)
     // TODO after the game mode is decided, betting can commence. After betting is complete, the game can start.
-    async pickTrump(suit: string): Promise<void> {
+    pickTrump(suit: string): void {
         if (suit === 'SPADES') {
             this.bidMultiplier++;
         }
         this.trump = suit;
         this.pickingTrump = false;
-        this.dealing = true;
-        await this.deal([5, 5, 5]);
+        this.deal([5, 5, 5]);
     }
 
-    async buryCard($event: Card): Promise<void> {
+    buryCard($event: Card): void {
         this.illegalMoveMessage = this.validationService.validateBuryCard($event.code);
         if (this.illegalMoveMessage !== '') {
             return;
@@ -300,7 +270,6 @@ export class GameComponent implements OnInit {
             this.allPiles.set('player' + this.activePlayer + 'Bury', playerBuryPile);
         }
         this.removeFromPlayerPile($event.code);
-        await this.deckOfCardsServiceService.addToPile(this.deck.deck_id, 'player' + this.activePlayer + 'Bury', this.allPiles.get('player' + this.activePlayer + 'Bury').map(playerCard => playerCard.code).toString());
         console.log(this.allPiles);
         if (this.allPiles.get('player' + this.activePlayer + 'Bury').length === 2) {
             this.buryingCards = false;
@@ -310,21 +279,6 @@ export class GameComponent implements OnInit {
     canBuryCard(): boolean {
         return !this.allPiles.get('player' + this.activePlayer + 'Bury')
             || this.allPiles.get('player' + this.activePlayer + 'Bury').length < 2;
-    }
-
-    private async setPlayerWinCards(winningPlayer: number): Promise<void> {
-        const playerWin = await this.deckOfCardsServiceService.listPile(this.deck.deck_id, 'player' + winningPlayer + 'Win');
-        switch (winningPlayer) {
-            case 1:
-                this.allPiles.set('player' + winningPlayer + 'Win', playerWin.piles.player1Win.cards);
-                break;
-            case 2:
-                this.allPiles.set('player' + winningPlayer + 'Win', playerWin.piles.player2Win.cards);
-                break;
-            case 3:
-                this.allPiles.set('player' + winningPlayer + 'Win', playerWin.piles.player3Win.cards);
-                break;
-        }
     }
 
     determineRoundWinningCard(): number {
@@ -387,15 +341,17 @@ export class GameComponent implements OnInit {
     }
 
     playAgain(): void {
-        this.canPlayAgain = false;
-        this.dealing = true;
-        this.winMessage = '';
-        this.bidMultiplier = 1;
-        this.resetRoundPoints();
-        this.allPiles = new Map();
-        this.setToNextDealer();
-        this.activePlayer = this.currentCaller;
-        this.shuffleDeck();
+        this.animateCardMoves(() => {
+            this.canPlayAgain = false;
+            this.winMessage = '';
+            this.trump = '';
+            this.bidMultiplier = 1;
+            this.resetRoundPoints();
+            this.allPiles = new Map();
+            this.setToNextDealer();
+            this.activePlayer = this.currentCaller;
+            this.shuffleDeck();
+        }, true);
     }
 
     resetRoundPoints(): void {
@@ -422,7 +378,7 @@ export class GameComponent implements OnInit {
         }
     }
 
-    async addToGamePile($event: Card): Promise<void> {
+    addToGamePile($event: Card): void {
         const gamePile = this.allPiles.get('game');
         if (!gamePile) {
             this.allPiles.set('game', [$event]);
@@ -430,13 +386,11 @@ export class GameComponent implements OnInit {
             gamePile.push($event);
             this.allPiles.set('game', gamePile);
         }
-        // tslint:disable-next-line:max-line-length
-        await this.deckOfCardsServiceService.addToPile(this.deck.deck_id, 'game', this.allPiles.get('game').map(game => game.code).toString());
     }
 
-    async addGamePileToPlayerWinPile(winningPlayer: number): Promise<void> {
-        // tslint:disable-next-line:max-line-length
-        await this.deckOfCardsServiceService.addToPile(this.deck.deck_id, 'player' + winningPlayer + 'Win', this.allPiles.get('game').map(game => game.code).toString());
+    addGamePileToPlayerWinPile(winningPlayer: number): void {
+        const winPile = this.allPiles.get('player' + winningPlayer + 'Win') || [];
+        this.allPiles.set('player' + winningPlayer + 'Win', winPile.concat(this.allPiles.get('game')));
         this.clearGamePile();
     }
 

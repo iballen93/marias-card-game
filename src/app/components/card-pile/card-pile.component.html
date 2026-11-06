@@ -3,7 +3,8 @@
         <div *ngFor="let card of cards; let i = index" 
              [ngStyle]="{'margin-left': (i === 0 ? '0px' : '-40px'), 'z-index': i}">
             <img style="width: 100%; max-width: 90px;" 
-                 [src]="card.image" 
+                 [src]="card.image"
+                 [attr.data-card-key]="getCardKey(card)" 
                  (click)="selectCard(card)">
         </div>
     </div>

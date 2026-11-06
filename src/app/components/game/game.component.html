@@ -18,7 +18,6 @@
                                [trump]="trump"
                                [bidMultiplier]="bidMultiplier"
                                [activePlayer]="activePlayer"
-                               [dealing]="dealing"
                                [pickingTrump]="pickingTrump"
                                [buryingCards]="buryingCards"
                                [canPlayAgain]="canPlayAgain"
@@ -28,7 +27,7 @@
                                style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); padding-top: 300px"></app-card-pile>
 
                 <button *ngIf="canPlayAgain" (click)="playAgain()"
-                        style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);">PLAY AGAIN BITCH</button>
+                        style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10; color: green; font-family: inherit; font-size: 2rem; font-weight: bold; background-color: white; padding: 0.625rem 1.25rem; border: none; border-radius: 0.625rem; cursor: pointer;">PLAY AGAIN</button>
             </td>
             <td>
                 <app-hand playerTitle="Player 3"

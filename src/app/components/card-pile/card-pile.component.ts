@@ -1,12 +1,10 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
+import {MARRIAGE_CARD_KEY_PREFIX} from 'src/app/card-animation.service';
 
 export interface Card {
   code: string;
   image: string;
-  images: any;
-  value: string;
   suit: string;
-  title: string;
 }
 
 @Component({
@@ -28,5 +26,10 @@ export class CardPileComponent implements OnInit {
 
   selectCard(card: Card): void {
     this.cardSelected.emit(card);
+  }
+
+  // A marriage card is shown twice, in the marriage pile and wherever it was played
+  getCardKey(card: Card): string {
+    return this.title === 'Marriage' ? MARRIAGE_CARD_KEY_PREFIX + card.code : card.code;
   }
 }

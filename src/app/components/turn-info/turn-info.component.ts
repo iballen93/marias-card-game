@@ -13,7 +13,6 @@ export class TurnInfoComponent implements OnInit {
     @Input() bidMultiplier: number;
     @Input() activePlayer: number;
 
-    @Input() dealing: boolean;
     @Input() pickingTrump: boolean;
     @Input() buryingCards: boolean;
     @Input() canPlayAgain: boolean;
