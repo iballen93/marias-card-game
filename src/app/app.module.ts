@@ -6,7 +6,6 @@ import { PointsComponent } from './points/points.component';
 import { CardPileComponent } from './components/card-pile/card-pile.component';
 import { TurnInfoComponent } from './components/turn-info/turn-info.component';
 import { HandComponent } from 'src/app/components/hand/hand.component';
-import { RouterModule } from '@angular/router';
 import { GameComponent } from 'src/app/components/game/game.component';
 import { AppRoutingModule } from 'src/app/app-routing.module';
 import { HowToPlayComponent } from 'src/app/components/how-to-play/how-to-play.component';
@@ -24,7 +23,7 @@ import { GameValuesComponent } from 'src/app/components/game-values/game-values.
     PointsComponent
   ],
   imports: [
-    AppRoutingModule, BrowserModule, RouterModule.forRoot([]),
+    AppRoutingModule, BrowserModule,
   ],
   providers: [],
   bootstrap: [AppComponent]

@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { Card } from 'src/app/components/card-pile/card-pile.component';
 import { DeckService } from 'src/app/deck.service';
 import { PointsService } from 'src/app/points.service';
@@ -10,7 +10,7 @@ import { CardAnimationService } from 'src/app/card-animation.service';
     templateUrl: './game.component.html',
     styleUrls: ['./game.component.less']
 })
-export class GameComponent implements OnInit {
+export class GameComponent implements OnInit, OnDestroy {
 
 
     private readonly CARDS_TO_DEAL = [7, 5, 5, 5, 5, 5];
@@ -42,6 +42,7 @@ export class GameComponent implements OnInit {
     lastTrickPlayer: number;
     canPlayAgain = false;
     showingCompletedHand = false;
+    private isDestroyed = false;
     pickingTrump = false;
     buryingCards = false;
 
@@ -80,8 +81,17 @@ export class GameComponent implements OnInit {
         this.deckService.preloadCardImages().then(() => this.animateCardMoves(() => this.shuffleDeck(), true));
     }
 
+    ngOnDestroy(): void {
+        this.isDestroyed = true;
+    }
+
     // Runs a change to the piles, then animates each card from where it was to where it ended up
     private animateCardMoves(change: () => void, isNewDeal = false): void {
+        // the first deal and collecting a hand both run later, by which time this game may have been left
+        if (this.isDestroyed) {
+            return;
+        }
+
         const positions = isNewDeal ? new Map() : this.cardAnimationService.capturePositions();
         change();
         this.changeDetector.detectChanges();
