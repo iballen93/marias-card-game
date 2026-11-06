@@ -16,18 +16,19 @@
   --message-illegal: 1.3rem;
   --message-padding: 0.625rem;
   --value-size: 1.375rem;
+  --corner-gap: 20px;
 }
 
 /* On phones everything is sized from --card-width, which is as large as the screen allows */
 @media (max-width: 768px), (max-height: 500px) {
   :root {
     /* Escaped because Less would otherwise work out min() itself instead of leaving it to the browser */
-    --card-width: ~"clamp(62px, min(calc((100vh - 336px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) / 6.2), 24vw), 110px)";
+    --card-width: ~"clamp(62px, min(calc((100vh - 378px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) / 6.2), 24vw), 110px)";
     --card-spacing: calc(var(--card-width) * 0.52);
     --side-card-max: calc(var(--card-width) * 0.48);
     --win-pile-overlap: calc(var(--side-card-max) * 0.66);
     --hand-pile-height: calc(var(--card-width) * 1.39 + 4px);
-    --side-pile-height: calc(var(--side-card-max) * 1.39 + 14px);
+    --side-pile-height: calc(var(--side-card-max) * 1.39 + 16px);
     --pile-gap: 0px;
     --pile-title-size: clamp(0.6875rem, 2.8vw, 0.875rem);
     --player-title-size: clamp(0.875rem, 3.6vw, 1.125rem);
@@ -38,6 +39,7 @@
     --message-illegal: clamp(0.6875rem, 2.8vw, 0.875rem);
     --message-padding: 0.1875rem 0.375rem;
     --value-size: clamp(0.75rem, 3vw, 1rem);
+    --corner-gap: 8px;
   }
 }
 

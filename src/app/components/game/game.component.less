@@ -25,8 +25,14 @@ table {
     position: relative;
 }
 
+// These two stay in the same corners in every layout
 .game-values {
-    width: 100%;
+    position: fixed;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + var(--corner-gap));
+    left: calc(env(safe-area-inset-left, 0px) + var(--corner-gap));
+    z-index: 10;
+    // long trump names wrap rather than reaching Player 1's piles
+    max-width: calc(33vw - env(safe-area-inset-left, 0px) - var(--corner-gap) * 2);
 }
 
 .turn-status {
@@ -46,8 +52,8 @@ table {
 
 .fast-play-button {
     position: fixed;
-    bottom: 20px;
-    right: 20px;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + var(--corner-gap));
+    right: calc(env(safe-area-inset-right, 0px) + var(--corner-gap));
     z-index: 10;
     color: green;
     font-family: inherit;
@@ -66,6 +72,8 @@ table {
         display: flex;
         flex-direction: column;
         height: auto;
+        // keeps Player 1's piles clear of the two corner items
+        padding-bottom: 72px;
     }
 
     tr {
@@ -97,7 +105,6 @@ table {
         order: 3;
         display: grid;
         grid-template-columns: calc(var(--card-width) * 2.1) 1fr;
-        grid-template-rows: auto 1fr auto;
         column-gap: 8px;
         height: calc(var(--hand-pile-height) + 20px);
         padding: 2px 8px;
@@ -105,14 +112,8 @@ table {
         box-sizing: border-box;
     }
 
-    .game-values {
-        grid-column: 2;
-        grid-row: 1;
-    }
-
     .turn-status {
         grid-column: 2;
-        grid-row: 2;
         position: static;
         transform: none;
         padding: 0;
@@ -121,18 +122,18 @@ table {
 
     .trick-pile {
         grid-column: 1;
-        grid-row: 1 / span 3;
         position: static;
         transform: none;
         padding: 0;
         align-self: center;
     }
 
+    // Player 1's piles are above the corners here, so only Fast Play limits the width
+    .game-values {
+        max-width: 55vw;
+    }
+
     .fast-play-button {
-        grid-column: 2;
-        grid-row: 3;
-        position: static;
-        justify-self: end;
         font-size: 0.6875rem;
         padding: 0.25rem 0.5rem;
         border-radius: 0.375rem;
@@ -145,6 +146,7 @@ table {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
         height: auto;
+        padding-bottom: 0;
     }
 
     .table-center {
@@ -166,31 +168,20 @@ table {
         grid-row: 2;
     }
 
+    .game-values {
+        max-width: calc(33vw - env(safe-area-inset-left, 0px) - var(--corner-gap) * 2);
+    }
+
     .trick-pile {
         grid-column: 2;
         grid-row: 1;
     }
 
-    .game-values {
-        grid-column: 1;
-        grid-row: 2;
-        align-self: start;
-        padding: 4px 8px;
-        box-sizing: border-box;
-    }
-
-    .fast-play-button {
-        grid-column: 1;
-        grid-row: 2;
-        align-self: end;
-        justify-self: start;
-        margin: 0 0 6px 8px;
-    }
-
     .turn-status {
         grid-column: 3;
         grid-row: 2;
-        max-height: calc(var(--hand-pile-height) + var(--side-pile-height));
+        // stops above Fast Play, which sits in the corner below it
+        max-height: calc(var(--hand-pile-height) + var(--side-pile-height) - 24px);
         padding: 4px 8px;
         box-sizing: border-box;
     }
