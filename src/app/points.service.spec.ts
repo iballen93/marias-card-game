@@ -29,6 +29,16 @@ describe('PointsService', () => {
     expect(service.calculatePlayerPoints(piles, 1, undefined)).toBe(6);
   });
 
+  it('should show both team scores when the caller wins', () => {
+    const piles = new Map([['player1Win', cards('AS', '0S', 'AD')], ['player2Win', cards('0D')]]);
+    expect(service.calculateEarnings(piles, 1, 1, 1).winMessage).toBe('Player 1 Wins the Round 4 to 1!');
+  });
+
+  it('should show both team scores when the opponents win', () => {
+    const piles = new Map([['player1Win', cards('AS')], ['player2Win', cards('AD')], ['player3Win', cards('0D')]]);
+    expect(service.calculateEarnings(piles, 1, 3, 1).winMessage).toBe('Players 2 and 3 Win the Round 3 to 1!');
+  });
+
   it('should only give the last trick point to the player who won it', () => {
     expect(service.calculatePlayerPoints(new Map(), 1, 1)).toBe(1);
     expect(service.calculatePlayerPoints(new Map(), 2, 1)).toBe(0);

@@ -71,7 +71,7 @@ export class PointsService {
 
         let winMessage = '';
         if (this.callerWins(callerPoints, opponentPoints)) {
-            winMessage = 'Player ' + callerPlayer + ' Wins the Round!';
+            winMessage = 'Player ' + callerPlayer + ' Wins the Round ' + callerPoints + ' to ' + opponentPoints + '!';
             earnings.set('player' + callerPlayer, moneyWon * 2);
             let opponent1 = callerPlayer + 1;
             if (opponent1 === 4) {
@@ -95,7 +95,7 @@ export class PointsService {
                 opponent2 = 1;
             }
             earnings.set('player' + opponent2, moneyWon);
-            winMessage = 'Players ' + opponent1 + ' and ' + opponent2 + ' Win the Round!';
+            winMessage = 'Players ' + opponent1 + ' and ' + opponent2 + ' Win the Round ' + opponentPoints + ' to ' + callerPoints + '!';
         }
 
         console.log('earnings');
