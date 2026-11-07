@@ -153,14 +153,15 @@ table {
         display: contents;
     }
 
+    // Players 2 and 3 can grow down the sides, into the space beside Player 1
     .seat-player2 {
         grid-column: 1;
-        grid-row: 1;
+        grid-row: 1 / span 2;
     }
 
     .seat-player3 {
         grid-column: 3;
-        grid-row: 1;
+        grid-row: 1 / span 2;
     }
 
     .seat-player1 {

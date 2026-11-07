@@ -3,7 +3,6 @@
   --card-width: 90px;
   --card-spacing: 50px;
   --side-card-max: 63px;
-  --win-pile-overlap: 28px;
   --hand-pile-height: 150px;
   --side-pile-height: 130px;
   --pile-gap: 10px;
@@ -18,6 +17,8 @@
   --value-size: 1.375rem;
   --corner-gap: 20px;
   --seat-padding: 12px;
+  /* Room for a hand's piles: a third of the page, less the padding and a scrollbar */
+  --seat-width: calc(100vw / 3 - 22px - var(--seat-padding) * 2);
 }
 
 /* On phones everything is sized from --card-width, which is as large as the screen allows */
@@ -27,7 +28,6 @@
     --card-width: ~"clamp(62px, min(calc((100vh - 396px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) / 6.2), 24vw), 110px)";
     --card-spacing: calc(var(--card-width) * 0.52);
     --side-card-max: calc(var(--card-width) * 0.336);
-    --win-pile-overlap: calc(var(--side-card-max) * 0.66);
     --hand-pile-height: calc(var(--card-width) * 1.39 + 4px);
     --side-pile-height: calc(var(--side-card-max) * 1.39 + 16px);
     --pile-gap: 0px;
@@ -42,15 +42,18 @@
     --value-size: clamp(0.75rem, 3vw, 1rem);
     --corner-gap: 8px;
     --seat-padding: 6px;
+    --seat-width: calc(100vw - 32px - var(--seat-padding) * 2);
   }
 }
 
 @media (max-height: 500px) and (orientation: landscape) {
   :root {
     --card-width: clamp(54px, calc((100vh - 141px) / 4.15), 90px);
+    --side-card-max: calc(var(--card-width) * 0.62);
+    --seat-width: calc((100vw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)) / 3 - 16px - var(--seat-padding) * 2);
     --side-pile-height: calc(var(--side-card-max) * 1.39 + 12px);
     /* Whatever height is left over goes to the messages above the trick */
-    --message-space: calc(100vh - var(--hand-pile-height) * 2 - var(--side-pile-height) - var(--player-title-size) * 1.5 - var(--seat-padding) - 40px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+    --message-space: calc(100vh - var(--hand-pile-height) * 2 - var(--side-pile-height) - var(--player-title-size) * 1.5 - var(--seat-padding) - 32px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
     --pile-title-size: clamp(0.5625rem, 2.4vh, 0.75rem);
     --player-title-size: clamp(0.875rem, 3.4vh, 1.125rem);
     --message-large: clamp(0.8125rem, 3.6vh, 1.125rem);

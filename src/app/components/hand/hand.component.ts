@@ -20,8 +20,13 @@ export class HandComponent implements OnInit {
 
     @Output() cardSelected = new EventEmitter<Card>();
 
-    readonly WIN_PILE_OVERLAP = 'var(--win-pile-overlap)';
     private readonly SIDE_PILE_OVERLAP_RATIO = 0.44;
+    // How much of each win pile card shows: the least still shows its number and suit
+    private readonly WIN_PILE_MAX_PEEK = 0.34;
+    private readonly WIN_PILE_MIN_PEEK = 0.2;
+    private readonly PILE_ROOM = '(var(--seat-width) - 8px)';
+    private readonly SIDE_LABEL_WIDTH = 'var(--pile-title-size) * 5';
+    private readonly WIN_LABEL_WIDTH = 'var(--pile-title-size) * 8.5';
 
     constructor() {
     }
@@ -35,15 +40,64 @@ export class HandComponent implements OnInit {
 
     // One size for all three side piles: the largest that lets every one of them fit
     getSideCardWidth(): string {
-        const winCount = Math.max(this.winCards?.length || 0, 1);
-        const sideCount = Math.max(this.buryCards?.length || 0, this.marriageCards?.length || 0, 1);
-        const winPileFit = `(100% + ${winCount - 1} * ${this.WIN_PILE_OVERLAP}) / ${winCount}`;
-        const sidePileFit = `100% / ${sideCount - (sideCount - 1) * this.SIDE_PILE_OVERLAP_RATIO}`;
-        return `min(var(--side-card-max), ${winPileFit}, ${sidePileFit})`;
+        const winSpan = 1 + (this.getWinCount() - 1) * this.WIN_PILE_MIN_PEEK;
+        const sideSpan = this.getPileSpan(this.buryCards) + this.getPileSpan(this.marriageCards);
+        const labelCount = [this.isBuryShown(), this.isMarriageShown()].filter(isShown => isShown).length;
+        const allPilesFit = `${this.PILE_ROOM} / ${winSpan + sideSpan}`;
+        const labelsFit = `(${this.PILE_ROOM} - ${labelCount} * ${this.SIDE_LABEL_WIDTH}) / ${winSpan}`;
+        return `min(var(--side-card-max), ${allPilesFit}, ${labelsFit})`;
     }
 
     getSideCardOverlap(): string {
-        return `calc(${this.getSideCardWidth()} * ${this.SIDE_PILE_OVERLAP_RATIO})`;
+        return `calc(var(--side-card) * ${this.SIDE_PILE_OVERLAP_RATIO})`;
+    }
+
+    getBuryPileWidth(): string {
+        return this.isBuryShown() ? this.getSidePileWidth(this.buryCards) : '0px';
+    }
+
+    getMarriagePileWidth(): string {
+        return this.isMarriageShown() ? this.getSidePileWidth(this.marriageCards) : '0px';
+    }
+
+    // As the win pile grows it takes the room left by the other two, then overlaps more, then shrinks
+    getWinCardPeek(): string {
+        const gapCount = this.getWinCount() - 1;
+        if (gapCount === 0) {
+            return '0px';
+        }
+        const spareRoom = `${this.PILE_ROOM} - var(--bury-width) - var(--marriage-width) - var(--side-card)`;
+        return `min(var(--side-card) * ${this.WIN_PILE_MAX_PEEK}, (${spareRoom}) / ${gapCount})`;
+    }
+
+    getWinPileWidth(): string {
+        const cardsWidth = `var(--side-card) + ${this.getWinCount() - 1} * var(--win-peek)`;
+        return `max(${this.WIN_LABEL_WIDTH}, ${cardsWidth})`;
+    }
+
+    getWinCardOverlap(): string {
+        return 'calc(var(--side-card) - var(--win-peek))';
+    }
+
+    private getWinCount(): number {
+        return Math.max(this.winCards?.length || 0, 1);
+    }
+
+    private getPileSpan(cards: Card[]): number {
+        const count = cards?.length || 0;
+        return count === 0 ? 0 : 1 + (count - 1) * (1 - this.SIDE_PILE_OVERLAP_RATIO);
+    }
+
+    private getSidePileWidth(cards: Card[]): string {
+        return `max(${this.SIDE_LABEL_WIDTH}, var(--side-card) * ${this.getPileSpan(cards)})`;
+    }
+
+    private isBuryShown(): boolean {
+        return this.isCaller || !!this.buryCards?.length;
+    }
+
+    private isMarriageShown(): boolean {
+        return !!this.marriageCards?.length;
     }
 
     getWinPileTitle(): string {

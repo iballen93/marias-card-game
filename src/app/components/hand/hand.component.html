@@ -1,42 +1,46 @@
 <div class="seat" [class.seat-active]="isActive">
-    <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+    <!-- The outer columns share what the win pile leaves, so bury and marriage move out as it grows -->
+    <div style="display: grid; grid-template-columns: 1fr auto 1fr; column-gap: 4px; justify-items: center; width: 100%;"
+         [style.--side-card]="getSideCardWidth()"
+         [style.--bury-width]="getBuryPileWidth()"
+         [style.--marriage-width]="getMarriagePileWidth()"
+         [style.--win-peek]="getWinCardPeek()">
         <app-card-pile
-                [cards]="playerCards"
+                title="Bury Pile"
+                [alwaysShowTitle]="isCaller"
+                [cards]="buryCards"
+                cardWidth="var(--side-card)"
+                [cardOverlap]="getSideCardOverlap()"
                 (cardSelected)="forwardCardSelected($event)"
-                style="height: var(--hand-pile-height); width: 100%; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                style="height: var(--side-pile-height); width: var(--bury-width); overflow: hidden; display: flex; align-items: center; justify-content: center;">
         </app-card-pile>
 
-        <div style="display: flex; justify-content: space-between; width: 100%;">
-            <app-card-pile
-                    title="Bury Pile"
-                    [alwaysShowTitle]="isCaller"
-                    [cards]="buryCards"
-                    [cardWidth]="getSideCardWidth()"
-                    [cardOverlap]="getSideCardOverlap()"
-                    (cardSelected)="forwardCardSelected($event)"
-                    style="height: var(--side-pile-height); width: 33%; overflow: hidden; display: flex; align-items: center; justify-content: center;">
-            </app-card-pile>
+        <app-card-pile
+                [title]="getWinPileTitle()"
+                [alwaysShowTitle]="true"
+                [cards]="winCards"
+                cardWidth="var(--side-card)"
+                [cardOverlap]="getWinCardOverlap()"
+                [style.width]="getWinPileWidth()"
+                (cardSelected)="forwardCardSelected($event)"
+                style="height: var(--side-pile-height); overflow: hidden; display: flex; align-items: center; justify-content: center;">
+        </app-card-pile>
 
-            <app-card-pile
-                    [title]="getWinPileTitle()"
-                    [alwaysShowTitle]="true"
-                    [cards]="winCards"
-                    [cardWidth]="getSideCardWidth()"
-                    [cardOverlap]="WIN_PILE_OVERLAP"
-                    (cardSelected)="forwardCardSelected($event)"
-                    style="height: var(--side-pile-height); width: 33%; overflow: hidden; display: flex; align-items: center; justify-content: center;">
-            </app-card-pile>
-
-            <app-card-pile
-                    title="Marriage"
-                    [cards]="marriageCards"
-                    [cardWidth]="getSideCardWidth()"
-                    [cardOverlap]="getSideCardOverlap()"
-                    (cardSelected)="forwardCardSelected($event)"
-                    style="height: var(--side-pile-height); width: 33%; overflow: hidden; display: flex; align-items: center; justify-content: center;">
-            </app-card-pile>
-        </div>
+        <app-card-pile
+                title="Marriage"
+                [cards]="marriageCards"
+                cardWidth="var(--side-card)"
+                [cardOverlap]="getSideCardOverlap()"
+                (cardSelected)="forwardCardSelected($event)"
+                style="height: var(--side-pile-height); width: var(--marriage-width); overflow: hidden; display: flex; align-items: center; justify-content: center;">
+        </app-card-pile>
     </div>
+
+    <app-card-pile
+            [cards]="playerCards"
+            (cardSelected)="forwardCardSelected($event)"
+            style="height: var(--hand-pile-height); width: 100%; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+    </app-card-pile>
 
     <h2 style="font-size: var(--player-title-size); margin: var(--player-title-margin);">
         {{ playerTitle }}: {{ formatCurrency(playerMoney) | currency:'USD':'symbol':'1.2-2' }}
