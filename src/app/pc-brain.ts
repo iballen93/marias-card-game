@@ -46,7 +46,7 @@ function seatAfter(seat: number, steps: number): number {
 }
 
 // What this seat can work out from the table
-class Knowledge {
+export class Knowledge {
     readonly unseen: string[];
     private readonly voids = new Map<number, Set<string>>();
 
@@ -104,6 +104,21 @@ class Knowledge {
     // How many cards of a suit it hasn't seen: in the other hands, or buried by the caller
     outInSuit(suit: string): number {
         return this.unseen.filter(card => suitOf(card) === suit).length;
+    }
+
+    // Who could be holding a card it hasn't seen: each other player who hasn't shown they're out of its suit, and the
+    // caller's bury. The bury can't hold an A or 10, and when this seat is the caller it already knows its own bury.
+    // With only two other players, one running out of a suit means the rest of that suit is with the other one.
+    holders(card: string): (number | 'bury')[] {
+        const players: (number | 'bury')[] = [1, 2, 3].filter(player => player !== this.view.seat && !this.isVoid(player, suitOf(card)));
+        const mayBeBuried = this.view.caller !== this.view.seat && !isPointCard(card);
+        return mayBeBuried ? players.concat('bury') : players;
+    }
+
+    // The player who must be holding this card, when everyone else has been ruled out
+    holder(card: string): number | undefined {
+        const holders = this.holders(card);
+        return holders.length === 1 && holders[0] !== 'bury' ? holders[0] as number : undefined;
     }
 
     // Cards of the same suit still out that would beat this one
@@ -332,6 +347,14 @@ function playSecond(view: BrainView, knowledge: Knowledge, legal: string[]): Bra
         if (point) {
             return { card: point, reason: 'won with the ' + cardName(point) + ': only partner Player ' + last + ' plays after, so the point is safe' };
         }
+        // partner has run out of the suit that was led, so it will most likely trump: give it a point to take
+        if (!isTrump(leadCard, view.trump) && knowledge.mayTrump(last, suitOf(leadCard))) {
+            const gift = weakestPoint(legal.filter(option => !isTrump(option, view.trump)));
+            if (gift) {
+                return { card: gift, reason: 'gave the ' + cardName(gift) + ' to partner Player ' + last + ', who has shown they have no '
+                    + suitName(suitOf(leadCard)).toLowerCase() + ' and can most likely trump the trick' };
+            }
+        }
         const cheapWinner = winners.length ? cheapest(winners, view) : undefined;
         if (cheapWinner && (trickPoints(view) || cost(cheapWinner, view) < 30)) {
             return { card: cheapWinner, reason: 'took the lead with the ' + cardName(cheapWinner) + ', with partner Player ' + last + ' still to play' };
@@ -404,6 +427,24 @@ function lead(view: BrainView, knowledge: Knowledge, legal: string[]): BrainChoi
                     + 'so it plays it now while it most likely still wins'
                 : highest + ' and nobody has shown they can trump it, so it should win';
         return { card, reason: 'led the ' + cardName(card) + reason };
+    }
+
+    // A defender leads a suit its partner has run out of, so the partner can trump it. The partner being out of it also
+    // tells it the rest of that suit is with the caller (or buried), so the caller has to follow suit and can't trump.
+    const partner = view.seat === view.caller ? undefined : others.find(player => player !== view.caller);
+    const partnerTrumps = legal.filter(card => partner && !isTrump(card, view.trump) && knowledge.mayTrump(partner, suitOf(card))
+        && !knowledge.isVoid(view.caller, suitOf(card)) && out(card) > 0);
+    if (partnerTrumps.length) {
+        const pointsWithCaller = (ofSuit: string) => knowledge.unseen.filter(other => suitOf(other) === ofSuit && isPointCard(other)
+            && knowledge.holder(other) === view.caller);
+        // the suit where the caller holds the most points to lose, then its lowest card
+        const card = bestOf(partnerTrumps, option => cost(option, view) - pointsWithCaller(suitOf(option)).length * 1000);
+        const suit = suitOf(card);
+        const caught = pointsWithCaller(suit);
+        return { card, reason: 'led the ' + cardName(card) + ' so partner Player ' + partner + ' can trump it: Player ' + partner
+            + ' has shown they have no ' + suitName(suit).toLowerCase() + ', so any ' + suitName(suit).toLowerCase()
+            + ' still out that weren\'t buried are with Player ' + view.caller
+            + (caught.length ? ', including the ' + caught.map(cardName).join(' and ') : '') };
     }
 
     // Holding the 10 but not the A: lead the card just under the A to force it out. Whoever holds the A and still has

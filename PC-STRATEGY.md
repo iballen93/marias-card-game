@@ -24,7 +24,9 @@ From this it works out two things:
 
 A count is not a split. If 2 clubs are still out, one player may hold both while the other has none and can trump. So the PC only says a point is **safe** when that's certain, for example when nobody has trumps left or only its partner plays after it. Otherwise its explanation says the card *should* win or *most likely* wins.
 
-It does **not** look at the other hands, even though they're face up in Learning Mode. The game only hands it its own cards, and a test checks this. So it never knows **who** holds a missing card, such as the A of a suit. It only knows the card hasn't appeared yet, and it learns more as players fail to follow suit or play trumps.
+It does **not** look at the other hands, even though they're face up in Learning Mode. The game only hands it its own cards, and a test checks this. So it doesn't start out knowing **who** holds a missing card, such as the A of a suit. It only knows the card hasn't appeared yet, and it learns more as players fail to follow suit or play trumps.
+
+**Working out who holds a card.** There are only two other players. Once one of them shows they're out of a suit, the rest of that suit must be with the other one, or in the caller's bury. An A or 10 can never be buried, so for those it knows exactly who has them. For example, if Player 3 trumped a heart, the A♥ and 10♥ still out are with Player 1.
 
 ## Variety
 
@@ -114,6 +116,7 @@ One player still plays after it.
 | partner led a card the last player could still beat, and it holds a point card that is the highest left in that suit (and the last player hasn't shown they can trump it) | **takes over** with it, banking the point now. It doesn't know who holds the cards still out: if its partner has the 10, the partner can bank it in a later trick, and if the opponent has it, the opponent may lose it to a trump | took over partner Player *N*'s *card* with the *card*: it's the highest *suit* left, so it banks its point now, while Player *N* most likely still has to follow suit |
 | partner led, and every legal card goes over it | plays its lowest card that does | had to go over partner Player *N*'s *card*, so it played its lowest card that does, the *card* |
 | partner led, otherwise | plays low under partner | played low with the *card* under partner Player *N*'s lead |
+| an opponent led and its partner plays last, and partner has shown they're out of the led suit (and may still have trumps) | gives partner a 10 or A that doesn't win on its own, since partner will most likely trump | gave the *card* to partner Player *N*, who has shown they have no *suit* and can most likely trump the trick |
 | an opponent led and its partner plays last, and it can win with a point card that could be lost later | wins with it. Only its partner plays after, so the point is safe | won with the *card*: only partner Player *N* plays after, so the point is safe |
 | same, and the trick has points or it can win cheaply | takes the lead | took the lead with the *card*, with partner Player *N* still to play |
 | same, otherwise | plays low and leaves it to partner | played low with the *card* and leaves the trick to partner Player *N* |
@@ -128,6 +131,7 @@ One player still plays after it.
 | 1 | it is the caller, holds 2 or more trumps, and holds **more trumps than are still out** | leads its top trump, if it's the highest left, to draw out the others' trumps | led the *card* to draw out the other players' trumps |
 | 2 | it holds a 10 or A that is the highest left in its suit, but **2 or fewer** cards of that suit are still out, so someone has probably run out. It is the caller and holds at least as many trumps as are still out | draws trumps first, so the point card can't be trumped | led the *card* to draw out trumps first: only *N* *suit* are still out, so its *card* could be trumped |
 | 3 | it holds a 10 or A that is the highest left in its suit, and no opponent has shown they can trump that suit | leads it to bank the point, from the suit with the **fewest cards still out** first, since that's the next one someone will run out of | led the *card*: it's the highest *suit* left and nobody has shown they can trump it, so it should win. When 3 or fewer are out: … With only *N* *suit* still out, someone may already have none and trump it, so it plays it now while it most likely still wins. When nobody has trumps left: … so its point is safe |
+| 3b | it's a defender, and its partner has shown they're out of a suit (and may still have trumps) while the caller hasn't | leads its lowest card in that suit, so partner can trump it. The caller still has that suit, so has to follow instead of trumping. It prefers the suit where it knows the caller holds the A or 10 | led the *card* so partner Player *N* can trump it: Player *N* has shown they have no *suit*, so any *suit* still out that weren't buried are with Player *N*, including the *A and 10* |
 | 4 | it holds a 10 but not the A, and the only card still out above one of its cards is the A. Nobody has shown they're out of that suit, and enough of the suit is still out | leads that card, usually the K, to **force out the A** (see below) | led the *card* to force out the A: whoever holds it has to go over, and then its 10 is the highest *suit* left |
 | 5 | it has a low card (not trump, not a point card) in a suit no opponent has shown they can trump | leads one of its lowest, avoiding a suit with 2 or fewer cards out. Ties are chosen at random | led the *card* to keep its high cards for later |
 | 6 | it holds a non-point card that is the highest left in its suit | leads it | led the *card*, the highest *suit* left |
@@ -167,6 +171,8 @@ Over 6,000 rounds for each pairing, simulated with the same rules as the game:
 | **PC** | random | **62.5%** | 6.8 |
 | random | **PC** | **16.4%** | 3.8 |
 | PC | PC | 52.0% | 6.2 |
+
+Working out who holds a card, and using it to set up partner's trumps, made the defenders a little stronger. Over the same 20,000 deals, the caller wins 52.8% against the new defenders against 53.5% before.
 
 Adding the long-suit and lone-10 lead rules, plus variety, barely changed the totals. Over 20,000 rounds, the new rules keep slightly more lone 10s (65.9% against 65.7%), and the caller's win rate stays within a few tenths of a percent of the earlier PC. That's expected: these situations only come up now and then, and it's how a real player would play them.
 

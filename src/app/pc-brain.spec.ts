@@ -1,4 +1,4 @@
-import { BrainView, cardName, chooseBury, choosePlay, chooseTrump } from './pc-brain';
+import { BrainView, cardName, chooseBury, choosePlay, chooseTrump, Knowledge } from './pc-brain';
 import { getLegalCards, isPointCard, isTrump } from './rules';
 import { seededRandom } from './regression/seeded-random';
 
@@ -108,6 +108,14 @@ describe('PC brain', () => {
       expect(choice.reason).toContain('had to go over partner Player 2\'s 7♥');
     });
 
+    it('should give a point when its partner plays last and has shown it can trump the lead', () => {
+      // Player 1 called. Earlier, partner Player 3 had no diamonds and trumped; now Player 1 leads the A♦
+      const tricks = [{ plays: [{ player: 1, card: 'KD' }, { player: 2, card: '7D' }, { player: 3, card: '7C' }] }];
+      const choice = choosePlay(view({ seat: 2, caller: 1, trump: 'CLUBS', trick: ['AD'], hand: ['0D', '8D', '9S'], tricks }));
+      expect(choice.card).toBe('0D');
+      expect(choice.reason).toContain('can most likely trump the trick');
+    });
+
     it('should not give a point when the caller has shown it can trump the lead', () => {
       // earlier, Player 3 had no spades and played a trump
       const tricks = [{ plays: [{ player: 1, card: 'KS' }, { player: 2, card: 'QS' }, { player: 3, card: '7H' }] }];
@@ -153,6 +161,34 @@ describe('PC brain', () => {
       const choice = choosePlay(view({ seat: 2, caller: 1, hand: ['0D', 'KD', '7S', '8S', '9C'] }));
       expect(choice.card).toBe('KD');
       expect(choice.reason).toContain('force out the A♦');
+    });
+
+    it('should lead a suit its partner can trump, knowing the caller holds the rest of it', () => {
+      // Clubs are trump and Player 1 called. Partner Player 3 had no hearts and trumped, so the A♥ and 10♥ are with Player 1
+      const tricks = [{ plays: [{ player: 1, card: '8H' }, { player: 2, card: '9H' }, { player: 3, card: '7C' }] }];
+      const choice = choosePlay(view({ seat: 2, caller: 1, trump: 'CLUBS', hand: ['7H', 'KD', '8S', '9S'], tricks }));
+      expect(choice.card).toBe('7H');
+      expect(choice.reason).toContain('so partner Player 3 can trump it');
+      expect(choice.reason).toContain('are with Player 1, including the');
+      expect(choice.reason).toContain('A♥');
+      expect(choice.reason).toContain('10♥');
+    });
+
+    it('should not lead a suit for its partner to trump when the caller is out of it too', () => {
+      const tricks = [
+        { plays: [{ player: 1, card: '8H' }, { player: 2, card: '9H' }, { player: 3, card: '7C' }] },
+        { plays: [{ player: 3, card: 'JH' }, { player: 1, card: '8C' }, { player: 2, card: 'QH' }] }
+      ];
+      expect(choosePlay(view({ seat: 2, caller: 1, trump: 'CLUBS', hand: ['7H', 'KD', '8S', '9S'], tricks })).card).not.toBe('7H');
+    });
+
+    it('should work out who holds a card once the other player runs out of its suit', () => {
+      const tricks = [{ plays: [{ player: 1, card: '8H' }, { player: 2, card: '9H' }, { player: 3, card: '7C' }] }];
+      const knowledge = new Knowledge(view({ seat: 2, caller: 1, trump: 'CLUBS', hand: ['7H'], tricks }));
+      expect(knowledge.holder('0H')).toBe(1);
+      // a K could also have been buried by the caller, so it can't be sure
+      expect(knowledge.holder('KH')).toBeUndefined();
+      expect(knowledge.holder('0D')).toBeUndefined();
     });
 
     it('should not lead the K into a suit an opponent has shown it can trump', () => {
