@@ -1,6 +1,14 @@
 <nav>
     <a routerLink="/how-to-play">How To Play</a>
-    <a routerLink="/game">New Game</a>
+    <div class="new-game">
+        <button type="button" class="menu-toggle" aria-haspopup="true" [attr.aria-expanded]="isNewGameMenuOpen"
+                (click)="toggleNewGameMenu()">New Game ▾</button>
+        <div *ngIf="isNewGameMenuOpen" class="new-game-menu" role="menu">
+            <a routerLink="/game/learning-solo" role="menuitem" (click)="closeNewGameMenu()">New Game (Learning Mode Solo)</a>
+            <a routerLink="/game/learning-pc" role="menuitem" (click)="closeNewGameMenu()">New Game (Learning Mode vs PC)</a>
+            <span class="menu-disabled" role="menuitem" aria-disabled="true">New Game (Standard) <small>Coming soon</small></span>
+        </div>
+    </div>
     <a (click)="goToWikiPage()">Mariáš Wiki Page</a>
 </nav>
 

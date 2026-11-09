@@ -1,5 +1,6 @@
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { ActivatedRoute } from '@angular/router';
 import { DeckService } from 'src/app/deck.service';
 import { GameComponent } from './game.component';
 
@@ -19,9 +20,15 @@ describe('GameComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [GameComponent],
+      providers: [{ provide: ActivatedRoute, useValue: { snapshot: { data: { mode: 'learning-pc' } } } }],
       schemas: [NO_ERRORS_SCHEMA]
     }).compileComponents();
     component = TestBed.createComponent(GameComponent).componentInstance;
+  });
+
+  it('should take the game mode from the route', async () => {
+    await startGame();
+    expect(component.gameMode).toEqual('learning-pc');
   });
 
   it('should determine the winning player for card 1 when activePlayer is 1', () => {

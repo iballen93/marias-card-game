@@ -5,6 +5,8 @@ import { PointsService } from 'src/app/points.service';
 import { ValidationService } from 'src/app/validation.service';
 import { ComputerPlayerService } from 'src/app/computer-player.service';
 import { CardAnimationService } from 'src/app/card-animation.service';
+import { ActivatedRoute } from '@angular/router';
+import { DEFAULT_GAME_MODE, GameMode } from 'src/app/game-mode';
 
 @Component({
     selector: 'app-game',
@@ -18,7 +20,7 @@ export class GameComponent implements OnInit, OnDestroy {
     private readonly DEFAULT_MONEY_CENTS = 128;
     private readonly HAND_DISPLAY_MS = 1000;
 
-    versusComputer = false;
+    gameMode: GameMode = DEFAULT_GAME_MODE;
 
     bidMultiplier = 1;
     // game modes                   = bid
@@ -68,10 +70,12 @@ export class GameComponent implements OnInit, OnDestroy {
                 private validationService: ValidationService,
                 private computerPlayerService: ComputerPlayerService,
                 private cardAnimationService: CardAnimationService,
-                private changeDetector: ChangeDetectorRef) {
+                private changeDetector: ChangeDetectorRef,
+                private route: ActivatedRoute) {
     }
 
     ngOnInit(): void {
+        this.gameMode = this.route.snapshot.data.mode || DEFAULT_GAME_MODE;
         this.allPiles = new Map();
         this.playerToMoney = new Map();
         this.playerToMoney.set('player1', this.DEFAULT_MONEY_CENTS);
