@@ -63,6 +63,7 @@
 // The caller's choice: Game, or Game and the 7 of trump
 .announce-buttons {
     display: flex;
+    flex-wrap: wrap;
     justify-content: center;
     gap: 0.5rem;
     margin-top: 0.375rem;
@@ -90,4 +91,17 @@
     background-color: white;
     padding: var(--message-padding);
     border-radius: 0.625rem;
+}
+
+@media (max-width: 768px), (max-height: 500px) {
+    .announce-buttons {
+        gap: 0.25rem;
+        margin-top: 2px;
+
+        button {
+            font-size: var(--message-small);
+            padding: 0.1875rem 0.5rem;
+            border-radius: 0.375rem;
+        }
+    }
 }

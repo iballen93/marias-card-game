@@ -30,12 +30,21 @@ describe('PointsService', () => {
 
   it('should show both team scores when the caller wins', () => {
     const piles = new Map([['player1Win', cards('AS', '0S', 'AD')], ['player2Win', cards('0D')]]);
-    expect(service.calculateEarnings(piles, 1, 1, 1, 'HEARTS').winMessage).toBe('Player 1 Wins the Round 4 to 1!');
+    expect(service.calculateEarnings(piles, 1, 1, 'HEARTS').winMessage).toBe('Player 1 Wins the Round 4 to 1!');
   });
 
   it('should show both team scores when the opponents win', () => {
     const piles = new Map([['player1Win', cards('AS')], ['player2Win', cards('AD')], ['player3Win', cards('0D')]]);
-    expect(service.calculateEarnings(piles, 1, 3, 1, 'HEARTS').winMessage).toBe('Players 2 and 3 Win the Round 3 to 1!');
+    expect(service.calculateEarnings(piles, 1, 3, 'HEARTS').winMessage).toBe('Players 2 and 3 Win the Round 3 to 1!');
+  });
+
+  it('should say whether a called 100 was made or missed, and pay it instead of the Game', () => {
+    const made = new Map([['player1Win', cards('AS', '0S', 'AD', '0D', 'AC', '0C', 'AH', '0H')], ['player1Marriage', cards('KS')]]);
+    const result = service.calculateEarnings(made, 1, 1, 'HEARTS', true);
+    expect(result.winMessage).toBe('Player 1 Makes the Called 100, 11 to 0!');
+    expect([1, 2, 3].map(player => result.earnings.get('player' + player))).toEqual([32, -16, -16]);
+    const missed = new Map([['player1Win', cards('AS', '0S')], ['player2Win', cards('AD')]]);
+    expect(service.calculateEarnings(missed, 1, 1, 'HEARTS', true).winMessage).toBe('Player 1 Misses the Called 100, 3 to 1!');
   });
 
   it('should only give the last trick point to the player who won it', () => {

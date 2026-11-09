@@ -1,5 +1,6 @@
 import {
-  completesMarriage, getLegalCards, isHigherRank, isPointCard, isTrump, marriagePoints, sevenOnLastTrick, trickWinnerIndex, validateBury
+  completesMarriage, contractCents, getLegalCards, isHigherRank, isPointCard, isTrump, marriagePoints, sevenOnLastTrick, trickWinnerIndex,
+  validateBury
 } from './rules';
 
 // Hearts are trump in every test; the move rules themselves are covered in validation.service.spec.ts
@@ -85,6 +86,33 @@ describe('rules', () => {
     it('should count a called 7 that was played before the last trick as lost', () => {
       expect(sevenOnLastTrick(lastTrick(1, 'AH', '8H', 'KS'), 'SPADES', 1, true))
         .toEqual({ card: '7S', player: 1, won: false, called: true, playedLast: false, cents: 8 });
+    });
+  });
+
+  describe('the Game and the 100', () => {
+    it('should pay the Game at 2 cents, doubled in spades', () => {
+      expect(contractCents(6, 3, 'HEARTS', false)).toBe(2);
+      expect(contractCents(3, 6, 'HEARTS', false)).toBe(-2);
+      expect(contractCents(6, 3, 'SPADES', false)).toBe(4);
+    });
+
+    it('should double the Game for a silent 100, and again for every 10 over it, for either side', () => {
+      expect(contractCents(10, 3, 'HEARTS', false)).toBe(4);
+      expect(contractCents(11, 2, 'HEARTS', false)).toBe(8);
+      expect(contractCents(12, 1, 'SPADES', false)).toBe(32);
+      expect(contractCents(3, 10, 'HEARTS', false)).toBe(-4);
+    });
+
+    it('should replace the Game with a called 100 worth 8 cents, doubling for every 10 over 100', () => {
+      expect(contractCents(10, 3, 'HEARTS', true)).toBe(8);
+      expect(contractCents(12, 3, 'HEARTS', true)).toBe(32);
+      expect(contractCents(10, 3, 'SPADES', true)).toBe(16);
+    });
+
+    it('should lose a called 100 that falls short by its 8 cents once, however far short', () => {
+      expect(contractCents(9, 4, 'HEARTS', true)).toBe(-8);
+      expect(contractCents(2, 9, 'HEARTS', true)).toBe(-8);
+      expect(contractCents(9, 4, 'SPADES', true)).toBe(-16);
     });
   });
 });

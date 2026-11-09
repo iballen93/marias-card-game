@@ -1,4 +1,4 @@
-import { BrainView, cardName, chooseAnnouncement, chooseBury, choosePlay, chooseTrump, Knowledge } from './pc-brain';
+import { BrainView, cardName, chooseAnnouncement, chooseBury, choosePlay, chooseTrump, expectedPoints, Knowledge } from './pc-brain';
 import { getLegalCards, isPointCard, isTrump } from './rules';
 import { seededRandom } from './regression/seeded-random';
 
@@ -237,7 +237,7 @@ describe('PC brain', () => {
     it('should call the 7 with 5 or more trumps, and keep it silent with fewer', () => {
       const called = chooseAnnouncement(['7H', '8H', '9H', 'KH', 'AH', '7S'], 'HEARTS');
       expect(called.callSeven).toBeTrue();
-      expect(called.reason).toContain('called the 7♥');
+      expect(called.reason).toContain('It called the 7♥ too');
       expect(chooseAnnouncement(['7H', '8H', 'KH', 'AH', '7S'], 'HEARTS').callSeven).toBeFalse();
     });
 
@@ -248,6 +248,23 @@ describe('PC brain', () => {
 
     it('should play its 7 of trump when it is the last card', () => {
       expect(choosePlay(view({ seat: 3, caller: 3, trick: ['KS', 'QS'], hand: ['7H'] })).card).toBe('7H');
+    });
+  });
+
+  describe('the 100', () => {
+    it('should count marriages, point cards, and the last trick when it holds 5 trumps', () => {
+      // a trump marriage (4), a marriage in spades (2), 3 point cards, and 5 trumps for the last trick
+      expect(expectedPoints(['KH', 'QH', '7H', '8H', '9H', 'KS', 'QS', 'AS', '0S', 'AD'], 'HEARTS')).toBe(10);
+      expect(expectedPoints(['KH', '7H', 'AS'], 'HEARTS')).toBe(1);
+    });
+
+    it('should call the 100 on a hand already worth about 9 points, and play the Game otherwise', () => {
+      const strong = chooseAnnouncement(['KH', 'QH', 'AH', '0H', 'JH', 'KS', 'QS', 'AS', '0S', 'AD'], 'HEARTS');
+      expect(strong.callHundred).toBeTrue();
+      expect(strong.reason).toContain('called the 100');
+      const weak = chooseAnnouncement(['KH', 'QH', 'AH', '8H', '7S', '8S', '9D', 'JD', 'QC', '7C'], 'HEARTS');
+      expect(weak.callHundred).toBeFalse();
+      expect(weak.reason).toContain('played the Game');
     });
   });
 });

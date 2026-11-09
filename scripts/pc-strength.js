@@ -44,7 +44,8 @@ const matchups = [
 fs.writeFileSync(reportSpec, [
   '// Written and deleted by scripts/pc-strength.js',
   "import * as pc from '../pc-brain';",
-  against ? "import * as before from './pc-brain-against.tmp';" : '',
+  // an older PC may answer some questions differently, or not at all, so it isn't held to today's types
+  against ? "import * as beforeBrain from './pc-brain-against.tmp';\nconst before: any = beforeBrain;" : '',
   "import { measure, RANDOM_BRAIN } from './pc-strength';",
   "import { seededRandom } from './seeded-random';",
   '',
@@ -85,10 +86,12 @@ if (!match) {
 }
 const rows = JSON.parse(match[1]);
 const pad = (text, width) => String(text).padEnd(width);
+const cents = value => (value >= 0 ? '+' : '') + value.toFixed(3) + '¢';
 console.log('\n' + pad('Caller', 14) + pad('Defenders', 14) + pad('Caller wins', 13) + pad('Caller points', 15)
-  + pad('Defender points', 17) + 'Caller 7 of trump');
+  + pad('Defender points', 17) + pad('Caller ¢', 11) + pad('from the 7', 12) + '100 called (made)');
 rows.forEach(row => console.log(pad(row.caller, 14) + pad(row.defenders, 14) + pad(row.callerWinPercent.toFixed(2) + '%', 13)
   + pad(row.callerAveragePoints.toFixed(2), 15) + pad(row.defenderAveragePoints.toFixed(2), 17)
-  + (row.callerAverageSevenCents >= 0 ? '+' : '') + row.callerAverageSevenCents.toFixed(3) + '¢'));
-console.log(`\n${rounds} rounds per row, the same deals in every row. The 7 of trump column is what it paid the caller per round,`
-  + ' from both defenders together.');
+  + pad(cents(row.callerAverageCents), 11) + pad(cents(row.callerAverageSevenCents), 12)
+  + row.hundredsCalledPercent.toFixed(2) + '% (' + row.hundredsMadePercent.toFixed(1) + '%)'));
+console.log(`\n${rounds} rounds per row, the same deals in every row. Caller ¢ is everything the caller collected per round from`
+  + ' both defenders together: the Game or the 100, and the 7 of trump (also shown on its own).');

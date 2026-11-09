@@ -12,7 +12,10 @@ describe('GameComponent', () => {
 
   const handSizes = () => [1, 2, 3].map(player => component.allPiles.get('player' + player).length);
   // the deal may give the caller the 7 of trump, which brings the Game or Game + 7 question before the first card
-  const announceIfAsked = () => component.announcing && component.announceFromButton(false);
+  // the caller's announcement buttons
+  const GAME = { seven: false, hundred: false };
+  const GAME_AND_SEVEN = { seven: true, hundred: false };
+  const announceIfAsked = () => component.announcing && component.announceFromButton(GAME);
 
   const startGame = async () => {
     const fixture = TestBed.createComponent(GameComponent);
@@ -162,7 +165,7 @@ describe('GameComponent', () => {
     const playRoundAsPlayer1 = () => {
       for (let step = 0; step < 500 && !component.canPlayAgain; step++) {
         if (component.announcing && component.activePlayer === 1) {
-          component.announceFromButton(false);
+          component.announceFromButton(GAME);
         } else if (component.activePlayer === 1 && !component.showingCompletedHand) {
           const card = component.buryingCards || component.pickingTrump
             ? hand(1).find(c => !'A0'.includes(c.code.charAt(0)))
@@ -180,7 +183,7 @@ describe('GameComponent', () => {
         if (component.waitingForNext && (component.showingCompletedHand || component.activePlayer !== 1)) {
           component.next();
         } else if (component.announcing && component.activePlayer === 1) {
-          component.announceFromButton(false);
+          component.announceFromButton(GAME);
         } else if (component.activePlayer === 1 && !component.showingCompletedHand) {
           const card = component.buryingCards || component.pickingTrump
             ? hand(1).find(c => !'A0'.includes(c.code.charAt(0)))
@@ -224,11 +227,11 @@ describe('GameComponent', () => {
       tick(PC_MOVE_MS * 2);
       expect(pile('player2Bury').length).toBe(2);
       expect(pile('player2Bury').some(card => 'A0'.includes(card.code.charAt(0)))).toBeFalse();
+      // it announces the Game or the 100 before leading
       tick(PC_MOVE_MS);
-      if (!pile('game').length) {
-        // the deal gave the PC the 7 of trump, so it announced first
-        tick(PC_MOVE_MS);
-      }
+      expect(component.announcing).toBeFalse();
+      expect(pile('game').length).toBe(0);
+      tick(PC_MOVE_MS);
       expect(pile('game').length).toBe(1);
       fixture.destroy();
     }));
@@ -340,12 +343,11 @@ describe('GameComponent', () => {
       component.next();
       expect(pile('player2Bury').length).toBe(2);
       expect(pile('game').length).toBe(0);
+      // it announces the Game or the 100, then leads: one Next each
       component.next();
-      if (!pile('game').length) {
-        // the deal gave the PC the 7 of trump, so it announced Game or Game + 7 first: one more Next
-        expect(component.pcExplanation).toContain('the 7');
-        component.next();
-      }
+      expect(pile('game').length).toBe(0);
+      expect(component.pcExplanation).toMatch(/the Game|the 100/);
+      component.next();
       expect(pile('game').length).toBe(1);
       fixture.destroy();
       tick(PC_MOVE_MS);
@@ -402,19 +404,22 @@ describe('GameComponent', () => {
         component.cardSelected(hand(1)[0]);
         expect(pile('game').length).toBe(0);
 
-        component.announceFromButton(true);
+        component.announceFromButton(GAME_AND_SEVEN);
         expect(component.announcing).toBeFalse();
         expect(component.sevenCalled).toBeTrue();
         expect(component.legalCards.length).toBeGreaterThan(0);
         fixture.destroy();
       }));
 
-      it('should skip the question when the caller doesn\'t hold the 7 of trump', fakeAsync(() => {
+      it('should ask every caller about the 100, but only offer the 7 to a caller holding it', fakeAsync(() => {
         startPcGame();
         component.cardSelected(hand(1)[0]);
         giveSeven(1, false);
         buryLow(1);
-        expect(component.announcing).toBeFalse();
+        expect(component.announcing).toBeTrue();
+        expect(component.holdsSevenOfTrump()).toBeFalse();
+        component.announceFromButton({ seven: true, hundred: true });
+        expect(component.hundredCalled).toBeTrue();
         expect(component.sevenCalled).toBeFalse();
         fixture.destroy();
       }));
@@ -428,7 +433,7 @@ describe('GameComponent', () => {
         tick(PC_MOVE_MS * 2);
         expect(component.announcing).toBeTrue();
         // your buttons don't answer for the PC
-        component.announceFromButton(true);
+        component.announceFromButton(GAME_AND_SEVEN);
         expect(component.announcing).toBeTrue();
         tick(PC_MOVE_MS);
         expect(component.announcing).toBeFalse();
@@ -440,10 +445,12 @@ describe('GameComponent', () => {
       it('should start the next round without a called 7', fakeAsync(() => {
         startPcGame();
         component.sevenCalled = true;
+        component.hundredCalled = true;
         component.sevenMessage = 'something';
         playRoundAsPlayer1();
         component.playAgain();
         expect(component.sevenCalled).toBeFalse();
+        expect(component.hundredCalled).toBeFalse();
         expect(component.sevenMessage).toBe('');
         fixture.destroy();
         tick(PC_MOVE_MS * 4);

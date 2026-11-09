@@ -10,6 +10,7 @@ export class GameValuesComponent implements OnInit {
     @Input() trump: string;
     @Input() bidMultiplier: number;
     @Input() sevenCalled = false;
+    @Input() hundredCalled = false;
 
     constructor() {
     }

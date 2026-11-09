@@ -107,6 +107,30 @@ export function marriagePoints(card: string, trump: string): number {
     return isTrump(card, trump) ? 4 : 2;
 }
 
+// The game and the 100 are one contract: the caller either plays the Game, or calls the 100, which replaces it.
+// Each is paid by every defender to the caller (or by the caller to every defender), and spades doubles either.
+export const GAME_CENTS = 2;
+export const HUNDRED_CENTS = 8;
+// 100 in the usual counting, where each A, 10 and the last trick are 10; here they are 1
+export const HUNDRED_POINTS = 10;
+
+// What each defender pays the caller; negative when the caller pays each defender.
+// The Game: whoever has more points wins it. A side reaching 100 without calling it (a silent 100) doubles the Game,
+// and it doubles again for every 10 over 100. A called 100: the caller alone must reach 100, and the win doubles for
+// every 10 over 100; a miss loses the 100's value once.
+export function contractCents(callerPoints: number, defenderPoints: number, trump: string, hundredCalled: boolean): number {
+    const spades = trump === 'SPADES' ? 2 : 1;
+    if (hundredCalled) {
+        return callerPoints >= HUNDRED_POINTS
+            ? HUNDRED_CENTS * spades * 2 ** (callerPoints - HUNDRED_POINTS)
+            : -HUNDRED_CENTS * spades;
+    }
+    const best = Math.max(callerPoints, defenderPoints);
+    // 100 doubles the Game, 110 doubles it again, and so on
+    const silentHundred = best >= HUNDRED_POINTS ? 2 ** (best - HUNDRED_POINTS + 1) : 1;
+    return (callerPoints > defenderPoints ? 1 : -1) * GAME_CENTS * spades * silentHundred;
+}
+
 // The 7 of trump scores when it is played in the last trick: won if it takes that trick, lost if it is beaten.
 // It is worth 2 cents from each opponent, doubled when the caller called it, and doubled again in spades.
 export const SEVEN_CENTS = 2;

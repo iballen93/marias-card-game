@@ -3,7 +3,8 @@
 // and the caller wins with more points than the two defenders together. See "Measuring strength" in PC-STRATEGY.md.
 import { AnnouncementChoice, BrainChoice, BrainView } from '../pc-brain';
 import {
-    completesMarriage, getLegalCards, isPointCard, marriagePoints, sevenOfTrump, sevenOnLastTrick, trickWinnerIndex, validateBury
+    completesMarriage, contractCents, getLegalCards, HUNDRED_POINTS, isPointCard, marriagePoints, sevenOfTrump, sevenOnLastTrick,
+    trickWinnerIndex, validateBury
 } from '../rules';
 import { seededRandom } from './seeded-random';
 
@@ -22,6 +23,8 @@ export interface RoundResult {
     callerWins: boolean;
     // what the 7 of trump paid the caller in cents, from both defenders together (negative when the caller paid)
     callerSevenCents: number;
+    callerCents: number;
+    hundredCalled: boolean;
 }
 
 export interface Matchup {
@@ -32,6 +35,10 @@ export interface Matchup {
     callerAveragePoints: number;
     defenderAveragePoints: number;
     callerAverageSevenCents: number;
+    callerAverageCents: number;
+    // how often the caller called the 100, and how often it made it
+    hundredsCalledPercent: number;
+    hundredsMadePercent: number;
 }
 
 const SUITS = { S: 'SPADES', D: 'DIAMONDS', C: 'CLUBS', H: 'HEARTS' };
@@ -71,9 +78,10 @@ export function playRound(dealSeed: number, callerBrain: Brain, defenderBrain: B
         hands[caller] = hands[caller].filter(other => other !== card);
     }
 
-    // a caller holding the 7 of trump plays the Game or calls the 7 too
-    const sevenCalled = hands[caller].includes(sevenOfTrump(trump)) && !!callerBrain.chooseAnnouncement
-        && callerBrain.chooseAnnouncement(hands[caller], trump).callSeven;
+    // the caller plays the Game or calls the 100, and calls the 7 of trump too when holding it
+    const announcement = callerBrain.chooseAnnouncement ? callerBrain.chooseAnnouncement(hands[caller], trump) : undefined;
+    const sevenCalled = !!announcement?.callSeven && hands[caller].includes(sevenOfTrump(trump));
+    const hundredCalled = !!announcement?.callHundred;
     const points = { 1: 0, 2: 0, 3: 0 };
     const tricks = [];
     let leader = caller;
@@ -106,7 +114,9 @@ export function playRound(dealSeed: number, callerBrain: Brain, defenderBrain: B
     const defenderPoints = [1, 2, 3].filter(seat => seat !== caller).reduce((total, seat) => total + points[seat], 0);
     const seven = sevenOnLastTrick(tricks[tricks.length - 1], trump, caller, sevenCalled);
     const callerSevenCents = !seven ? 0 : ((seven.player === caller) === seven.won ? 2 : -2) * seven.cents;
-    return { callerPoints, defenderPoints, callerWins: callerPoints > defenderPoints, callerSevenCents };
+    // everything the caller collected this round from both defenders together: the Game or the 100, and the 7
+    const callerCents = 2 * contractCents(callerPoints, defenderPoints, trump, hundredCalled) + callerSevenCents;
+    return { callerPoints, defenderPoints, callerWins: callerPoints > defenderPoints, callerSevenCents, callerCents, hundredCalled };
 }
 
 // Plays the same deals for a caller and defenders, and sums up how the caller did
@@ -115,12 +125,18 @@ export function measure(callerName: string, callerBrain: Brain, defenderName: st
     let callerTotal = 0;
     let defenderTotal = 0;
     let sevenTotal = 0;
+    let centsTotal = 0;
+    let hundreds = 0;
+    let hundredsMade = 0;
     for (let round = 0; round < rounds; round++) {
         const result = playRound(round, callerBrain, defenderBrain);
         wins += result.callerWins ? 1 : 0;
         callerTotal += result.callerPoints;
         defenderTotal += result.defenderPoints;
         sevenTotal += result.callerSevenCents;
+        centsTotal += result.callerCents;
+        hundreds += result.hundredCalled ? 1 : 0;
+        hundredsMade += result.hundredCalled && result.callerPoints >= HUNDRED_POINTS ? 1 : 0;
     }
     const round2 = (value: number) => Math.round(value * 100) / 100;
     return {
@@ -130,6 +146,9 @@ export function measure(callerName: string, callerBrain: Brain, defenderName: st
         callerWinPercent: round2(100 * wins / rounds),
         callerAveragePoints: round2(callerTotal / rounds),
         defenderAveragePoints: round2(defenderTotal / rounds),
-        callerAverageSevenCents: Math.round(sevenTotal / rounds * 1000) / 1000
+        callerAverageSevenCents: Math.round(sevenTotal / rounds * 1000) / 1000,
+        callerAverageCents: Math.round(centsTotal / rounds * 1000) / 1000,
+        hundredsCalledPercent: round2(100 * hundreds / rounds),
+        hundredsMadePercent: hundreds ? round2(100 * hundredsMade / hundreds) : 0
     };
 }

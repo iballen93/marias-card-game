@@ -1,5 +1,6 @@
 <div *ngIf="trump" style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.5rem;">
     <div class="value">Trump: {{ trump }}</div>
     <div class="value">Bid Multiplier: {{ bidMultiplier }}</div>
+    <div *ngIf="hundredCalled" class="value">100: Called</div>
     <div *ngIf="sevenCalled" class="value">7 of Trump: Called</div>
 </div>

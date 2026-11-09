@@ -67,6 +67,8 @@ export class GameComponent implements OnInit, OnDestroy {
     // after burying, a caller holding the 7 of trump plays the Game or calls the 7 as well
     announcing = false;
     sevenCalled = false;
+    // the 100 replaces the Game: the caller alone must reach 100
+    hundredCalled = false;
     // what the 7 of trump scored on the last trick, if it was played there
     sevenMessage = '';
     legalCards: string[] = [];
@@ -188,7 +190,7 @@ export class GameComponent implements OnInit, OnDestroy {
             const announcement = this.computerPlayerService.chooseAnnouncement(this.getPcView());
             this.pcExplanation = this.isStandard() ? '' : this.getPlayerTitle(this.activePlayer) + ' ' + announcement.reason;
             this.waitingForNext = this.gameMode === 'learning-pc-slow';
-            this.animateCardMoves(() => this.announce(announcement.callSeven));
+            this.animateCardMoves(() => this.announce(announcement.callSeven, announcement.callHundred));
             return;
         }
         const { card, reason } = this.choosePcCard();
@@ -352,7 +354,8 @@ export class GameComponent implements OnInit, OnDestroy {
             while (!this.isOnLastHand()) {
                 if (this.announcing) {
                     const isPc = this.isPcSeat(this.activePlayer);
-                    this.announce(isPc && this.computerPlayerService.chooseAnnouncement(this.getPcView()).callSeven);
+                    const choice = isPc ? this.computerPlayerService.chooseAnnouncement(this.getPcView()) : undefined;
+                    this.announce(!!choice?.callSeven, !!choice?.callHundred);
                     this.updateLegalCards();
                     continue;
                 }
@@ -467,7 +470,7 @@ export class GameComponent implements OnInit, OnDestroy {
         if (this.isRoundComplete()) {
             // TODO implement earningsMultiplier
             const { earnings, winMessage } = this.pointsService.calculateEarnings(
-                this.allPiles, this.currentCaller, this.lastTrickPlayer, this.bidMultiplier, this.trump);
+                this.allPiles, this.currentCaller, this.lastTrickPlayer, this.trump, this.hundredCalled);
             for (let player = 1; player <= 3; player++) {
                 const currentMoney = this.playerToMoney.get('player' + player);
                 this.playerToMoney.set('player' + player, currentMoney + earnings.get('player' + player));
@@ -508,8 +511,8 @@ export class GameComponent implements OnInit, OnDestroy {
         console.log(this.allPiles);
         if (this.allPiles.get('player' + this.activePlayer + 'Bury').length === 2) {
             this.buryingCards = false;
-            // the 7 of trump can only be called by the caller holding it
-            this.announcing = this.getActivePlayerPile().some(card => card.code === sevenOfTrump(this.trump));
+            // the caller chooses the Game or the 100, and the 7 of trump too when holding it
+            this.announcing = true;
         }
     }
 
@@ -526,21 +529,27 @@ export class GameComponent implements OnInit, OnDestroy {
         this.sevenMessage = message;
     }
 
-    // Game, or Game and the 7 of trump. Called by the caller's buttons, or by the PC.
-    announce(callSeven: boolean): void {
+    // The Game or the 100, each with or without the 7 of trump. Called by the caller's buttons, or by the PC.
+    announce(callSeven: boolean, callHundred = false): void {
         if (!this.announcing) {
             return;
         }
-        this.sevenCalled = callSeven;
+        // only a caller holding the 7 of trump can call it
+        this.sevenCalled = callSeven && this.holdsSevenOfTrump();
+        this.hundredCalled = callHundred;
         this.announcing = false;
     }
 
     // The buttons only work for a caller you are playing
-    announceFromButton(callSeven: boolean): void {
+    announceFromButton(choice: { seven: boolean; hundred: boolean }): void {
         if (this.isPcSeat(this.activePlayer)) {
             return;
         }
-        this.animateCardMoves(() => this.announce(callSeven));
+        this.animateCardMoves(() => this.announce(choice.seven, choice.hundred));
+    }
+
+    holdsSevenOfTrump(): boolean {
+        return !!this.trump && (this.getActivePlayerPile() || []).some(card => card.code === sevenOfTrump(this.trump));
     }
 
     // the 7 of trump as players say it, such as 7♥
@@ -580,6 +589,7 @@ export class GameComponent implements OnInit, OnDestroy {
             this.pcExplanation = '';
             this.announcing = false;
             this.sevenCalled = false;
+            this.hundredCalled = false;
             this.sevenMessage = '';
             this.waitingForNext = false;
             this.trickWinnerToCollect = null;

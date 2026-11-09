@@ -18,9 +18,9 @@
                           (cardSelected)="cardSelected($event)"></app-hand>
             </td>
             <td class="table-center">
-                <app-game-values class="game-values" [trump]="trump" [bidMultiplier]="bidMultiplier" [sevenCalled]="sevenCalled"></app-game-values>
+                <app-game-values class="game-values" [trump]="trump" [bidMultiplier]="bidMultiplier" [sevenCalled]="sevenCalled" [hundredCalled]="hundredCalled"></app-game-values>
 
-                <app-turn-info class="turn-status" [class.round-over]="canPlayAgain"
+                <app-turn-info class="turn-status" [class.expanded]="canPlayAgain || announcing"
                                [winMessage]="winMessage"
                                [illegalMoveMessage]="illegalMoveMessage"
                                [trump]="trump"
@@ -34,6 +34,7 @@
                                (playAgain)="playAgain()"
                                [announcing]="announcing"
                                [canAnnounce]="announcing && !isPcSeat(activePlayer)"
+                               [canCallSeven]="announcing && holdsSevenOfTrump()"
                                [sevenName]="getSevenName()"
                                (announce)="announceFromButton($event)"
                                [sevenMessage]="sevenMessage"

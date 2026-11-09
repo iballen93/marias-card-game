@@ -24,7 +24,7 @@ describe('Game regression', () => {
     while (!game.canPlayAgain) {
       game.updateLegalCards();
       if (game.announcing && !game.isPcSeat(game.activePlayer)) {
-        // a seat played at random never calls the 7, so the rest of the round uses the same random numbers as before
+        // a seat played at random plays the Game and never calls the 7, so no random numbers are used here
         game.announce(false);
         continue;
       }

@@ -18,11 +18,12 @@ export class TurnInfoComponent implements OnInit {
     @Output() next = new EventEmitter<void>();
     // shown right under the round's result
     @Input() canPlayAgain: boolean;
-    // the caller holding the 7 of trump chooses Game, or Game and the 7
+    // the caller chooses the Game or the 100, and the 7 of trump too when holding it
     @Input() announcing: boolean;
     @Input() canAnnounce: boolean;
+    @Input() canCallSeven: boolean;
     @Input() sevenName: string;
-    @Output() announce = new EventEmitter<boolean>();
+    @Output() announce = new EventEmitter<{ seven: boolean; hundred: boolean }>();
     @Input() sevenMessage: string;
     @Output() playAgain = new EventEmitter<void>();
 
