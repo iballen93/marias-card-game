@@ -88,6 +88,28 @@ describe('GameComponent', () => {
     expect(component.canFastPlay()).toBe(false);
   });
 
+  it('should record who played each card and who won every trick', async () => {
+    await startGame();
+    component.fastPlayToLastHand();
+
+    expect(component.trickHistory.length).toBe(9);
+    component.trickHistory.forEach((trick, index) => {
+      const players = trick.plays.map(play => play.player);
+      expect([...players].sort()).toEqual([1, 2, 3]);
+      // each player follows the one before them, and the winner leads the next trick
+      expect(players[1]).toBe(players[0] % 3 + 1);
+      const next = component.trickHistory[index + 1];
+      if (next) {
+        expect(next.plays[0].player).toBe(trick.winner);
+      }
+    });
+    expect(component.activePlayer).toBe(component.trickHistory[8].winner);
+    const recorded = [].concat(...component.trickHistory.map(trick => trick.plays.map(play => play.card.code))).sort();
+    const winPile = (player: number) => (component.allPiles.get('player' + player + 'Win') || []).map(card => card.code);
+    const won = [].concat(...[1, 2, 3].map(winPile)).sort();
+    expect(recorded).toEqual(won);
+  });
+
   it('should offer fast play until the last hand', async () => {
     await startGame();
     expect(component.canFastPlay()).toBe(true);

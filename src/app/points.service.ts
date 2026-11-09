@@ -1,6 +1,6 @@
 import {Injectable} from '@angular/core';
 import {Card} from './components/card-pile/card-pile.component';
-import {ValidationService} from './validation.service';
+import {isPointCard, marriagePoints} from './rules';
 
 export interface Points {
     totalTricks: string;
@@ -23,11 +23,11 @@ export class PointsService {
 
     playerPoints: Map<string, number>;
 
-    constructor(private validationService: ValidationService) {
+    constructor() {
         this.playerPoints = new Map();
     }
 
-    calculateEarnings(allPiles: Map<string, Card[]>, callerPlayer: number, lastTrickPlayer: number, bidMultiplier: number): {
+    calculateEarnings(allPiles: Map<string, Card[]>, callerPlayer: number, lastTrickPlayer: number, bidMultiplier: number, trump: string): {
         earnings: Map<string, number>;
         winMessage: string
     } {
@@ -39,7 +39,7 @@ export class PointsService {
 
         // for each player, calculate points
         for (let player = 1; player <= 3; player++) {
-            this.playerPoints.set('player' + player, this.calculatePlayerPoints(allPiles, player, lastTrickPlayer));
+            this.playerPoints.set('player' + player, this.calculatePlayerPoints(allPiles, player, lastTrickPlayer, trump));
         }
 
         let callerPoints = 0;
@@ -118,7 +118,7 @@ export class PointsService {
         return earningsMultiplier;
     }
 
-    calculatePlayerPoints(allPiles: Map<string, Card[]>, player: number, lastTrickPlayer: number): number {
+    calculatePlayerPoints(allPiles: Map<string, Card[]>, player: number, lastTrickPlayer: number, trump: string): number {
         let points = 0;
         const playerWinPile = allPiles.get('player' + player + 'Win');
 
@@ -139,11 +139,7 @@ export class PointsService {
         // 4 points for trump marriage, 2 points for normal marriage
         if (allPiles.get('player' + player + 'Marriage')?.length > 0) {
             for (const marriageCard of allPiles.get('player' + player + 'Marriage')) {
-                if (this.validationService.isTrump(marriageCard.code)) {
-                    points += 4;
-                } else {
-                    points += 2;
-                }
+                points += marriagePoints(marriageCard.code, trump);
             }
         }
 
@@ -152,7 +148,7 @@ export class PointsService {
 
     // Ace and 10 is worth points
     isCardPoint(cardCode: string): boolean {
-        return cardCode.charAt(0) === 'A' || cardCode.charAt(0) === '0';
+        return isPointCard(cardCode);
     }
 
     isEnoughTricksToMultiplyBid(callerPoints: number, opponentPoints: number): boolean {

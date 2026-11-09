@@ -7,6 +7,13 @@ import { ComputerPlayerService } from 'src/app/computer-player.service';
 import { CardAnimationService } from 'src/app/card-animation.service';
 import { ActivatedRoute } from '@angular/router';
 import { DEFAULT_GAME_MODE, GameMode } from 'src/app/game-mode';
+import { completesMarriage, trickWinnerIndex, validateBury } from 'src/app/rules';
+
+// One finished trick: who played each card, in order, and who won it
+export interface Trick {
+    plays: { player: number; card: Card }[];
+    winner: number;
+}
 
 @Component({
     selector: 'app-game',
@@ -56,6 +63,9 @@ export class GameComponent implements OnInit, OnDestroy {
     trump = '';
     cardPriority: Map<string, number>;
     suitPriority: Map<string, number>;
+
+    // Every finished trick this round, so the PC can see who played what
+    trickHistory: Trick[] = [];
 
     // Pile Types include: Game, Player, Win, Bury, Marriage
     allPiles: Map<string, Card[]>;
@@ -115,9 +125,9 @@ export class GameComponent implements OnInit, OnDestroy {
     private updateRoundPoints(): void {
         // whoever wins the latest hand only keeps the last trick point if that hand was the last one
         const lastTrickPlayer = this.canPlayAgain ? this.lastTrickPlayer : undefined;
-        this.player1RoundPoints = this.pointsService.calculatePlayerPoints(this.allPiles, 1, lastTrickPlayer);
-        this.player2RoundPoints = this.pointsService.calculatePlayerPoints(this.allPiles, 2, lastTrickPlayer);
-        this.player3RoundPoints = this.pointsService.calculatePlayerPoints(this.allPiles, 3, lastTrickPlayer);
+        this.player1RoundPoints = this.pointsService.calculatePlayerPoints(this.allPiles, 1, lastTrickPlayer, this.trump);
+        this.player2RoundPoints = this.pointsService.calculatePlayerPoints(this.allPiles, 2, lastTrickPlayer, this.trump);
+        this.player3RoundPoints = this.pointsService.calculatePlayerPoints(this.allPiles, 3, lastTrickPlayer, this.trump);
     }
 
     private setCardPriority(): void {
@@ -176,19 +186,7 @@ export class GameComponent implements OnInit, OnDestroy {
     }
 
     isCardInMarriage(cardCode: string): boolean {
-        if (cardCode.charAt(0) === 'K' || cardCode.charAt(0) === 'Q') {
-            // then check if they have the marriage
-            for (const activePlayerCardCode of this.getActivePlayerPile().map(activePlayerCard => activePlayerCard.code)) {
-                if (this.isMatchingSuit(activePlayerCardCode, cardCode)) {
-                    if ((cardCode.charAt(0) === 'Q' && activePlayerCardCode.charAt(0) === 'K')
-                        || (cardCode.charAt(0) === 'K' && activePlayerCardCode.charAt(0) === 'Q')) {
-                        console.log('this card is in marriage');
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
+        return completesMarriage(cardCode, this.getActivePlayerPile().map(card => card.code));
     }
 
     cardSelected($event: Card): void {
@@ -218,7 +216,7 @@ export class GameComponent implements OnInit, OnDestroy {
     private getFastPlayCard(): Card {
         let choices: Card[] = this.getActivePlayerPile();
         if (this.buryingCards) {
-            choices = choices.filter(card => this.validationService.validateBuryCard(card.code) === '');
+            choices = choices.filter(card => validateBury(card.code) === '');
         } else if (!this.pickingTrump) {
             choices = choices.filter(card => this.legalCards.includes(card.code));
         }
@@ -273,6 +271,11 @@ export class GameComponent implements OnInit, OnDestroy {
             if (this.isHandComplete()) {
                 const winningCard = this.determineRoundWinningCard();
                 const winningPlayer = this.determineRoundWinningPlayer(winningCard);
+                // all three have played, so the active player is back to the one who led
+                this.trickHistory.push({
+                    plays: this.allPiles.get('game').map((card, index) => ({ player: (this.activePlayer + index - 1) % 3 + 1, card })),
+                    winner: winningPlayer
+                });
 
                 this.winMessage = 'Player ' + winningPlayer + ' Wins the Hand';
 
@@ -299,7 +302,7 @@ export class GameComponent implements OnInit, OnDestroy {
         if (this.isRoundComplete()) {
             // TODO implement earningsMultiplier
             const { earnings, winMessage } = this.pointsService.calculateEarnings(
-                this.allPiles, this.currentCaller, this.lastTrickPlayer, this.bidMultiplier);
+                this.allPiles, this.currentCaller, this.lastTrickPlayer, this.bidMultiplier, this.trump);
             for (let player = 1; player <= 3; player++) {
                 const currentMoney = this.playerToMoney.get('player' + player);
                 this.playerToMoney.set('player' + player, currentMoney + earnings.get('player' + player));
@@ -347,52 +350,9 @@ export class GameComponent implements OnInit, OnDestroy {
             || this.allPiles.get('player' + this.activePlayer + 'Bury').length < 2;
     }
 
+    // 1, 2 or 3: the position in the trick of the winning card
     determineRoundWinningCard(): number {
-        // assume the first cards wins
-        let winningCard = 1;
-
-        // if the first card is not trump, and one of the other two are, then check trump priority
-        if (!this.validationService.isTrump(this.allPiles.get('game')[0].code)
-            && (this.validationService.isTrump(this.allPiles.get('game')[1].code)
-                || this.validationService.isTrump(this.allPiles.get('game')[2].code))) {
-            // if the second card is trump, assume it wins until we check the third
-            if (this.validationService.isTrump(this.allPiles.get('game')[1].code)) {
-                winningCard = 2;
-            }
-            // if the third card is trump, check if the second card is trump
-            if (this.validationService.isTrump(this.allPiles.get('game')[2].code)) {
-                // if the third and second cards are trump, then compare priority, else, third card wins
-                if (this.validationService.isTrump(this.allPiles.get('game')[1].code)) {
-                    if (this.isCardHigherPriority(this.allPiles.get('game')[2].code, this.allPiles.get('game')[1].code)) {
-                        winningCard = 3;
-                    }
-                } else {
-                    winningCard = 3;
-                }
-            }
-            // if trump was played as second or third card, then return winning card, no need to check additional priorities
-            return winningCard;
-        }
-
-        // if the first card is trump or no trump cards were played, assume normal logic from below
-        // compare first and second cards if same suit
-        if (this.isMatchingSuit(this.allPiles.get('game')[0].code, this.allPiles.get('game')[1].code)) {
-            if (this.isCardHigherPriority(this.allPiles.get('game')[1].code, this.allPiles.get('game')[0].code)) {
-                winningCard = 2;
-            }
-            // if third card is same suit, then compare to the current winningCard (could be 1 or 2)
-            if (this.isMatchingSuit(this.allPiles.get('game')[0].code, this.allPiles.get('game')[2].code)) {
-                if (this.isCardHigherPriority(this.allPiles.get('game')[2].code, this.allPiles.get('game')[winningCard - 1].code)) {
-                    winningCard = 3;
-                }
-            }
-            // if the second card isn't able to win, and third card matches suit of first, then compare first and third
-        } else if (this.isMatchingSuit(this.allPiles.get('game')[0].code, this.allPiles.get('game')[2].code)) {
-            if (this.isCardHigherPriority(this.allPiles.get('game')[2].code, this.allPiles.get('game')[0].code)) {
-                winningCard = 3;
-            }
-        }
-        return winningCard;
+        return trickWinnerIndex(this.allPiles.get('game').map(card => card.code), this.trump) + 1;
     }
 
     determineRoundWinningPlayer(winningCard: number): number {
@@ -413,6 +373,7 @@ export class GameComponent implements OnInit, OnDestroy {
             this.trump = '';
             this.bidMultiplier = 1;
             this.allPiles = new Map();
+            this.trickHistory = [];
             this.setToNextDealer();
             this.activePlayer = this.currentCaller;
             this.shuffleDeck();
@@ -467,14 +428,6 @@ export class GameComponent implements OnInit, OnDestroy {
         } else {
             this.currentCaller++;
         }
-    }
-
-    isMatchingSuit(cardCode1: string, cardCode2: string): boolean {
-        return cardCode1.charAt(1) === cardCode2.charAt(1);
-    }
-
-    isCardHigherPriority(cardCode: string, previousPlayedCardCode: string): boolean {
-        return this.cardPriority.get(cardCode.charAt(0)) < this.cardPriority.get(previousPlayedCardCode.charAt(0));
     }
 
     getActivePlayerPile(): any[] {
