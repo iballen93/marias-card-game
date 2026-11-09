@@ -86,7 +86,7 @@ export class HandComponent implements OnInit {
     }
 
     private getWinCount(): number {
-        return Math.max(this.winCards?.length || 0, 1);
+        return Math.max(this.getShownWinCards()?.length || 0, 1);
     }
 
     private getPileSpan(cards: Card[]): number {
@@ -104,6 +104,11 @@ export class HandComponent implements OnInit {
 
     private isMarriageShown(): boolean {
         return !!this.marriageCards?.length;
+    }
+
+    // Face down, the win pile is one neat stack: you can see a player has won a trick, but not how many
+    getShownWinCards(): Card[] {
+        return this.hideWin && this.winCards?.length ? this.winCards.slice(-1) : this.winCards;
     }
 
     getWinPileTitle(): string {
