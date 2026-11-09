@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Card } from 'src/app/components/card-pile/card-pile.component';
 import { GameComponent } from 'src/app/components/game/game.component';
 import { DeckService } from 'src/app/deck.service';
-import { REGRESSION_BASELINE } from './regression-baseline';
+import { REGRESSION_BASELINE, REGRESSION_BASELINE_PC } from './regression-baseline';
 import { fingerprint, seededRandom } from './seeded-random';
 
 // Plays the same seeded random games every run, through the real game, and compares every round with a saved baseline.
@@ -12,6 +12,7 @@ import { fingerprint, seededRandom } from './seeded-random';
 // fingerprint the same. See REGRESSION-TESTING.md for when and how to update the baseline.
 describe('Game regression', () => {
   const GAMES = 1000;
+  const PC_GAMES = 500;
   const ROUNDS_PER_GAME = 3; // one round with each player as caller
   const START_MONEY = 128;
 
@@ -22,7 +23,12 @@ describe('Game regression', () => {
     game.isFastPlaying = true;
     while (!game.canPlayAgain) {
       game.updateLegalCards();
-      game.handleCardSelected(game.getFastPlayCard());
+      if (game.isPcSeat(game.activePlayer)) {
+        // the PC's own move, exactly as its timer would make it
+        game.playPcTurn();
+      } else {
+        game.handleCardSelected(game.getFastPlayCard());
+      }
     }
     game.isFastPlaying = false;
     const piles: Map<string, Card[]> = game.allPiles;
@@ -59,7 +65,8 @@ describe('Game regression', () => {
     spyOn(TestBed.inject(DeckService), 'preloadCardImages').and.returnValue(new Promise(() => {}));
   });
 
-  it('should play every seeded game exactly as the baseline recorded it', async () => {
+  // Plays the seeded games for one mode; your seat always plays a random legal card
+  const playGames = async (mode: string, games: number, baseline: string[], logName: string) => {
     // the game logs every move; keep the console for this test's own report
     const log = console.log.bind(console);
     spyOn(console, 'log');
@@ -67,11 +74,12 @@ describe('Game regression', () => {
     const hashes: string[] = [];
     const gameLines: string[][] = [];
 
-    for (let seed = 1; seed <= GAMES; seed++) {
+    for (let seed = 1; seed <= games; seed++) {
       random.and.callFake(seededRandom(seed));
       const fixture = TestBed.createComponent(GameComponent);
       const game: any = fixture.componentInstance;
       fixture.detectChanges();
+      game.gameMode = mode;
 
       const plays: string[] = [];
       const addToGamePile = game.addToGamePile.bind(game);
@@ -97,17 +105,25 @@ describe('Game regression', () => {
     }
 
     // read by scripts/regression-baseline.js to save a new baseline
-    log('REGRESSION_HASHES=' + JSON.stringify(hashes));
+    log(logName + '=' + JSON.stringify(hashes));
 
-    if (!REGRESSION_BASELINE.length) {
+    if (!baseline.length) {
       fail('No regression baseline yet. Run: npm run regression:baseline');
       return;
     }
-    expect(hashes.length).toBe(REGRESSION_BASELINE.length);
-    const changed = hashes.map((hash, index) => hash === REGRESSION_BASELINE[index] ? 0 : index + 1).filter(seed => seed);
+    expect(hashes.length).toBe(baseline.length);
+    const changed = hashes.map((hash, index) => hash === baseline[index] ? 0 : index + 1).filter(seed => seed);
     if (changed.length) {
-      log('REGRESSION first changed game, seed ' + changed[0] + ':\n' + gameLines[changed[0] - 1].join('\n'));
+      log('REGRESSION ' + mode + ' first changed game, seed ' + changed[0] + ':\n' + gameLines[changed[0] - 1].join('\n'));
     }
-    expect(changed).withContext(changed.length + ' of ' + GAMES + ' games played differently (seeds)').toEqual([]);
+    expect(changed).withContext(changed.length + ' of ' + games + ' ' + mode + ' games played differently (seeds)').toEqual([]);
+  };
+
+  it('should play every seeded Solo game exactly as the baseline recorded it', async () => {
+    await playGames('learning-solo', GAMES, REGRESSION_BASELINE, 'REGRESSION_HASHES');
+  }, 10 * 60 * 1000);
+
+  it('should play every seeded vs PC game exactly as the baseline recorded it', async () => {
+    await playGames('learning-pc', PC_GAMES, REGRESSION_BASELINE_PC, 'REGRESSION_HASHES_PC');
   }, 10 * 60 * 1000);
 });

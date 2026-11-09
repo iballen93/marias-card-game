@@ -3,17 +3,12 @@ import { Card } from 'src/app/components/card-pile/card-pile.component';
 import { DeckService } from 'src/app/deck.service';
 import { PointsService } from 'src/app/points.service';
 import { ValidationService } from 'src/app/validation.service';
-import { ComputerPlayerService } from 'src/app/computer-player.service';
+import { ComputerPlayerService, PcView } from 'src/app/computer-player.service';
 import { CardAnimationService } from 'src/app/card-animation.service';
 import { ActivatedRoute } from '@angular/router';
 import { DEFAULT_GAME_MODE, GameMode } from 'src/app/game-mode';
 import { completesMarriage, trickWinnerIndex, validateBury } from 'src/app/rules';
-
-// One finished trick: who played each card, in order, and who won it
-export interface Trick {
-    plays: { player: number; card: Card }[];
-    winner: number;
-}
+import { Trick } from 'src/app/trick';
 
 @Component({
     selector: 'app-game',
@@ -26,6 +21,10 @@ export class GameComponent implements OnInit, OnDestroy {
     private readonly PLAYER_COUNT = 3;
     private readonly DEFAULT_MONEY_CENTS = 128;
     private readonly HAND_DISPLAY_MS = 1000;
+    // how long the PC waits before each move, so you can follow it
+    private readonly PC_MOVE_MS = 900;
+    // in vs PC you are always Player 1
+    private readonly HUMAN_SEAT = 1;
 
     gameMode: GameMode = DEFAULT_GAME_MODE;
 
@@ -53,6 +52,7 @@ export class GameComponent implements OnInit, OnDestroy {
     showingCompletedHand = false;
     private isFastPlaying = false;
     private isDestroyed = false;
+    private pcTimer: ReturnType<typeof setTimeout>;
     pickingTrump = false;
     buryingCards = false;
     legalCards: string[] = [];
@@ -98,6 +98,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         this.isDestroyed = true;
+        clearTimeout(this.pcTimer);
     }
 
     // Runs a change to the piles, then animates each card from where it was to where it ended up
@@ -113,6 +114,69 @@ export class GameComponent implements OnInit, OnDestroy {
         this.updateRoundPoints();
         this.changeDetector.detectChanges();
         this.cardAnimationService.animateFrom(positions);
+        this.schedulePcTurn();
+    }
+
+    isPcSeat(player: number): boolean {
+        return this.gameMode === 'learning-pc' && player !== this.HUMAN_SEAT;
+    }
+
+    getPlayerTitle(player: number): string {
+        return 'Player ' + player + (this.isPcSeat(player) ? ' (PC)' : '');
+    }
+
+    // After every change to the board: if it's now a PC's move, make it after a short pause
+    private schedulePcTurn(): void {
+        clearTimeout(this.pcTimer);
+        if (this.isPcTurn()) {
+            this.pcTimer = setTimeout(() => this.playPcTurn(), this.PC_MOVE_MS);
+        }
+    }
+
+    private isPcTurn(): boolean {
+        return !this.isDestroyed && this.isPcSeat(this.activePlayer) && !this.showingCompletedHand && !this.canPlayAgain
+            && !!this.getActivePlayerPile()?.length;
+    }
+
+    // Plays the PC's move through the same path as a click, so rules, animations and messages all apply
+    playPcTurn(): void {
+        if (!this.isPcTurn()) {
+            return;
+        }
+        const view = this.getPcView();
+        let card = this.computerPlayerService.chooseMove(view).card;
+        if (!this.isPcChoiceAllowed(view, card)) {
+            // a PC bug must never freeze the game
+            console.error('PC chose a card the rules do not allow', view, card);
+            card = this.getFastPlayCard();
+        }
+        this.animateCardMoves(() => this.handleCardSelected(card));
+    }
+
+    private isPcChoiceAllowed(view: PcView, card: Card): boolean {
+        if (!card || !view.hand.includes(card)) {
+            return false;
+        }
+        switch (view.phase) {
+            case 'trump':
+                return true;
+            case 'bury':
+                return validateBury(card.code) === '';
+            default:
+                return this.legalCards.includes(card.code);
+        }
+    }
+
+    private getPcView(): PcView {
+        return {
+            seat: this.activePlayer,
+            phase: this.pickingTrump ? 'trump' : this.buryingCards ? 'bury' : 'play',
+            hand: this.getActivePlayerPile(),
+            trick: this.allPiles.get('game') || [],
+            trump: this.trump,
+            caller: this.currentCaller,
+            tricks: this.trickHistory
+        };
     }
 
     private updateLegalCards(): void {
@@ -190,6 +254,10 @@ export class GameComponent implements OnInit, OnDestroy {
     }
 
     cardSelected($event: Card): void {
+        // in vs PC the PC plays its own cards, so clicks only count on your turn
+        if (this.isPcSeat(this.activePlayer)) {
+            return;
+        }
         this.animateCardMoves(() => this.handleCardSelected($event));
     }
 

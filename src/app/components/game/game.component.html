@@ -2,7 +2,7 @@
     <table>
         <tr>
             <td class="seat-player2">
-                <app-hand playerTitle="Player 2"
+                <app-hand [playerTitle]="getPlayerTitle(2)"
                           [playerMoney]="playerToMoney.get('player2')"
                           [playerPoints]="player2RoundPoints"
                           [isCaller]="currentCaller === 2"
@@ -35,7 +35,7 @@
                         style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10; color: green; font-family: inherit; font-size: 2rem; font-weight: bold; background-color: white; padding: 0.625rem 1.25rem; border: none; border-radius: 0.625rem; cursor: pointer;">PLAY AGAIN</button>
             </td>
             <td class="seat-player3">
-                <app-hand playerTitle="Player 3"
+                <app-hand [playerTitle]="getPlayerTitle(3)"
                           [playerMoney]="playerToMoney.get('player3')"
                           [playerPoints]="player3RoundPoints"
                           [isCaller]="currentCaller === 3"
@@ -51,7 +51,7 @@
             <td class="seat-empty">
             </td>
             <td class="seat-player1">
-                <app-hand playerTitle="Player 1"
+                <app-hand [playerTitle]="getPlayerTitle(1)"
                           [playerMoney]="playerToMoney.get('player1')"
                           [playerPoints]="player1RoundPoints"
                           [isCaller]="currentCaller === 1"
