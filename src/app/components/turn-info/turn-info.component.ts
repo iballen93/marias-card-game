@@ -19,7 +19,6 @@ export class TurnInfoComponent implements OnInit {
 
     @Input() pickingTrump: boolean;
     @Input() buryingCards: boolean;
-    @Input() canPlayAgain: boolean;
 
     constructor() {
     }
