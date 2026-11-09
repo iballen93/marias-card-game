@@ -47,5 +47,8 @@ CARD 3
 ### REGRESSION TESTING
 * Run `npm run regression` before and after every change. See REGRESSION-TESTING.md
 
+### HOW THE PC PLAYS
+* Every rule the PC uses for trump, burying and playing, and what it doesn't know yet. See PC-STRATEGY.md
+
 ### BUILDING FOR ANDROID
 * $env:CAPACITOR_ANDROID_STUDIO_PATH="C:\Users\UltraMegaVIP\AppData\Local\Programs\Android Studio\bin\studio64.exe"
