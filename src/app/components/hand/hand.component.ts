@@ -85,8 +85,11 @@ export class HandComponent implements OnInit {
         return 'calc(var(--side-card) - var(--win-peek))';
     }
 
+    // Face down, every card in the win pile sits exactly on top of the others, so it looks like one card and the
+    // other piles are sized as if it were one: nobody can count the tricks. Each card still has a place on the
+    // table, so when the pile turns face up at the end of the round the cards fan out from it.
     private getWinCount(): number {
-        return Math.max(this.getShownWinCards()?.length || 0, 1);
+        return this.hideWin ? 1 : Math.max(this.winCards?.length || 0, 1);
     }
 
     private getPileSpan(cards: Card[]): number {
@@ -104,11 +107,6 @@ export class HandComponent implements OnInit {
 
     private isMarriageShown(): boolean {
         return !!this.marriageCards?.length;
-    }
-
-    // Face down, the win pile is one neat stack: you can see a player has won a trick, but not how many
-    getShownWinCards(): Card[] {
-        return this.hideWin && this.winCards?.length ? this.winCards.slice(-1) : this.winCards;
     }
 
     getWinPileTitle(): string {
