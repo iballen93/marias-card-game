@@ -140,7 +140,7 @@ describe('GameComponent', () => {
 
   describe('vs PC', () => {
     const PC_MOVE_MS = 1300;
-    const HAND_DISPLAY_MS = 2500;
+    const HAND_DISPLAY_MS = 2000;
     let fixture;
 
     const startPcGame = () => {
@@ -219,7 +219,7 @@ describe('GameComponent', () => {
       fixture.destroy();
     }));
 
-    it('should leave a finished trick on the table for 2.5 seconds', fakeAsync(() => {
+    it('should leave a finished trick on the table for 2 seconds', fakeAsync(() => {
       startPcGame();
       component.cardSelected(hand(1)[0]);
       [0, 1].forEach(() => component.cardSelected(hand(1).find(c => !'A0'.includes(c.code.charAt(0)))));
