@@ -6,7 +6,7 @@ Run the game regression test **before and after every change**. It shows whether
 
 `src/app/regression/game-regression.spec.ts` plays seeded games of 3 rounds each through the real game code. Each round covers picking trump, burying, every trick and the final scoring. It takes about 20 seconds.
 
-- **Learning Mode Solo:** 1,000 games (3,000 rounds). Every seat plays a random legal card.
+- **Learning Mode Solo** (the **Practice** option in the menu): 1,000 games (3,000 rounds). Every seat plays a random legal card.
 - **Learning Mode vs PC:** 500 games (1,500 rounds). Your seat plays a random legal card, and Players 2 and 3 make the PC's own moves.
 
 - **Seeded:** the random numbers used to shuffle and choose cards come from a fixed seed, so every run deals and plays exactly the same games.

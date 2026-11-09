@@ -7,7 +7,7 @@ import { DEFAULT_GAME_MODE, GameMode } from 'src/app/game-mode';
 const gameRoute = (mode: GameMode) => ({ path: 'game/' + mode, component: GameComponent, data: { mode } });
 
 const routes: Routes = [
-    // the app opens on, and older links to /game still reach, the original game
+    // the app opens on, and older links to /game still reach, the default game: vs PC Slow
     { path: '', pathMatch: 'full', redirectTo: 'game/' + DEFAULT_GAME_MODE },
     { path: 'game', pathMatch: 'full', redirectTo: 'game/' + DEFAULT_GAME_MODE },
     gameRoute('learning-solo'),

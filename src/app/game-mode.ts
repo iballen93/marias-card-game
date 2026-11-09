@@ -4,4 +4,5 @@ export type GameMode = 'learning-solo' | 'learning-pc' | 'learning-pc-slow' | 's
 
 export const isVsPc = (mode: GameMode): boolean => mode === 'learning-pc' || mode === 'learning-pc-slow';
 
-export const DEFAULT_GAME_MODE: GameMode = 'learning-solo';
+// learning-solo is shown in the menu as Practice: you play all 3 hands
+export const DEFAULT_GAME_MODE: GameMode = 'learning-pc-slow';

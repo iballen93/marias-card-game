@@ -24,8 +24,8 @@ describe('AppComponent', () => {
     (element.querySelector('.menu-toggle') as HTMLElement).click();
     fixture.detectChanges();
     const options = Array.from(element.querySelectorAll('.new-game-menu > *')).map(option => option.textContent.trim());
-    expect(options).toEqual(['New Game (Learning Mode Solo)', 'New Game (Learning Mode vs PC) Slow',
-      'New Game (Learning Mode vs PC) Fast', 'New Game (Standard) Coming soon']);
+    expect(options).toEqual(['New Game (Learning Mode vs PC) Slow', 'New Game (Learning Mode vs PC) Fast',
+      'Practice (play all 3 hands)', 'New Game (Standard) Coming soon']);
     expect(element.querySelector('.menu-disabled').getAttribute('aria-disabled')).toEqual('true');
   });
 
