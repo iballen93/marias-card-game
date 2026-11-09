@@ -6,7 +6,7 @@ import { ValidationService } from 'src/app/validation.service';
 import { ComputerPlayerService, PcView } from 'src/app/computer-player.service';
 import { CardAnimationService } from 'src/app/card-animation.service';
 import { ActivatedRoute } from '@angular/router';
-import { DEFAULT_GAME_MODE, GameMode } from 'src/app/game-mode';
+import { DEFAULT_GAME_MODE, GameMode, isVsPc } from 'src/app/game-mode';
 import { completesMarriage, trickWinnerIndex, validateBury } from 'src/app/rules';
 import { Trick } from 'src/app/trick';
 
@@ -57,6 +57,10 @@ export class GameComponent implements OnInit, OnDestroy {
     private isFastPlaying = false;
     private isDestroyed = false;
     private pcTimer: ReturnType<typeof setTimeout>;
+    // vs PC Slow: after each PC move the game waits for you to click Next
+    waitingForNext = false;
+    // vs PC Slow: a trick the PC finished stays on the table until Next; this is who won it
+    private trickWinnerToCollect: number = null;
     pickingTrump = false;
     buryingCards = false;
     legalCards: string[] = [];
@@ -122,7 +126,7 @@ export class GameComponent implements OnInit, OnDestroy {
     }
 
     isPcSeat(player: number): boolean {
-        return this.gameMode === 'learning-pc' && player !== this.HUMAN_SEAT;
+        return isVsPc(this.gameMode) && player !== this.HUMAN_SEAT;
     }
 
     getPlayerTitle(player: number): string {
@@ -132,7 +136,7 @@ export class GameComponent implements OnInit, OnDestroy {
     // After every change to the board: if it's now a PC's move, make it after a short pause
     private schedulePcTurn(): void {
         clearTimeout(this.pcTimer);
-        if (this.isPcTurn()) {
+        if (this.isPcTurn() && !this.waitingForNext) {
             this.pcTimer = setTimeout(() => this.playPcTurn(), this.PC_MOVE_MS);
         }
     }
@@ -156,6 +160,7 @@ export class GameComponent implements OnInit, OnDestroy {
             card = this.getFastPlayCard();
         }
         this.pcExplanation = this.getPlayerTitle(view.seat) + ' ' + choice.reason;
+        this.waitingForNext = this.gameMode === 'learning-pc-slow';
         this.animateCardMoves(() => this.handleCardSelected(card));
     }
 
@@ -174,7 +179,22 @@ export class GameComponent implements OnInit, OnDestroy {
     }
 
     private getHandDisplayMs(): number {
-        return this.gameMode === 'learning-pc' ? this.PC_HAND_DISPLAY_MS : this.HAND_DISPLAY_MS;
+        return isVsPc(this.gameMode) ? this.PC_HAND_DISPLAY_MS : this.HAND_DISPLAY_MS;
+    }
+
+    // vs PC Slow: you've read why the PC made its move, so the game carries on
+    next(): void {
+        if (!this.waitingForNext) {
+            return;
+        }
+        this.waitingForNext = false;
+        if (this.trickWinnerToCollect !== null) {
+            const winner = this.trickWinnerToCollect;
+            this.trickWinnerToCollect = null;
+            this.animateCardMoves(() => this.collectCompletedHand(winner));
+        } else {
+            this.playPcTurn();
+        }
     }
 
     private getPcView(): PcView {
@@ -269,11 +289,16 @@ export class GameComponent implements OnInit, OnDestroy {
         if (this.isPcSeat(this.activePlayer)) {
             return;
         }
+        // in vs PC Slow, playing your card also counts as reading the PC's last move
+        if (!this.showingCompletedHand) {
+            this.waitingForNext = false;
+        }
         this.animateCardMoves(() => this.handleCardSelected($event));
     }
 
     // For testing: plays by the rules for every player until only the last hand is left
     fastPlayToLastHand(): void {
+        this.waitingForNext = false;
         this.animateCardMoves(() => {
             this.isFastPlaying = true;
             while (!this.isOnLastHand()) {
@@ -364,6 +389,10 @@ export class GameComponent implements OnInit, OnDestroy {
 
                 if (this.isFastPlaying) {
                     this.collectCompletedHand(winningPlayer);
+                } else if (this.waitingForNext) {
+                    // vs PC Slow: the PC played the last card, so the trick stays until you click Next
+                    this.showingCompletedHand = true;
+                    this.trickWinnerToCollect = winningPlayer;
                 } else {
                     // leave the completed hand on the table long enough to see the third card
                     this.showingCompletedHand = true;
@@ -454,6 +483,8 @@ export class GameComponent implements OnInit, OnDestroy {
             this.allPiles = new Map();
             this.trickHistory = [];
             this.pcExplanation = '';
+            this.waitingForNext = false;
+            this.trickWinnerToCollect = null;
             this.setToNextDealer();
             this.activePlayer = this.currentCaller;
             this.shuffleDeck();

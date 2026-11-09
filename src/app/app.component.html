@@ -5,7 +5,8 @@
                 (click)="toggleNewGameMenu()">New Game ▾</button>
         <div *ngIf="isNewGameMenuOpen" class="new-game-menu" role="menu">
             <a routerLink="/game/learning-solo" role="menuitem" (click)="closeNewGameMenu()">New Game (Learning Mode Solo)</a>
-            <a routerLink="/game/learning-pc" role="menuitem" (click)="closeNewGameMenu()">New Game (Learning Mode vs PC)</a>
+            <a routerLink="/game/learning-pc-slow" role="menuitem" (click)="closeNewGameMenu()">New Game (Learning Mode vs PC) Slow</a>
+            <a routerLink="/game/learning-pc" role="menuitem" (click)="closeNewGameMenu()">New Game (Learning Mode vs PC) Fast</a>
             <span class="menu-disabled" role="menuitem" aria-disabled="true">New Game (Standard) <small>Coming soon</small></span>
         </div>
     </div>

@@ -12,6 +12,7 @@ const routes: Routes = [
     { path: 'game', pathMatch: 'full', redirectTo: 'game/' + DEFAULT_GAME_MODE },
     gameRoute('learning-solo'),
     gameRoute('learning-pc'),
+    gameRoute('learning-pc-slow'),
     // Standard gets its route once it's built; the menu shows it greyed out until then
     { path: 'how-to-play', component: HowToPlayComponent }
 ];

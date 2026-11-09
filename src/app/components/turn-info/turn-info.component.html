@@ -17,6 +17,7 @@
 <br>
 <div *ngIf="pcExplanation" class="pc-explanation">
     {{pcExplanation}}
+    <button *ngIf="showNext" type="button" class="next-button" (click)="next.emit()">Next ▸</button>
 </div>
 <br *ngIf="pcExplanation">
 <div *ngIf="legalCards.length > 0" style="color: green; font-size: var(--message-medium); background-color: white; display: inline-block; padding: var(--message-padding); border-radius: 0.625rem; font-weight: bold;">

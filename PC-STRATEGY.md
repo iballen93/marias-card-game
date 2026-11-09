@@ -4,6 +4,8 @@ This explains how the PC (Players 2 and 3 in Learning Mode vs PC) makes every ch
 
 After each PC move, the game shows one line explaining it, such as *"Player 3 (PC) gave the 10♦ to partner Player 2, whose A♦ is the highest diamond left"*. The **Explanation** columns below show those lines.
 
+There are two speeds. In **Fast**, the PC moves on its own after a short pause. In **Slow**, the game stops after every PC move, including picking trump and each buried card, and waits for you to click **Next** so you can read the explanation first. If it's your turn next, playing your card also counts as Next.
+
 ---
 
 ## What the PC knows

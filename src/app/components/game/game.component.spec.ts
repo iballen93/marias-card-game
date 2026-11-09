@@ -168,6 +168,22 @@ describe('GameComponent', () => {
       }
     };
 
+    // Same as above for Slow, clicking Next whenever the game waits for it
+    const playRoundAsPlayer1WithNext = () => {
+      for (let step = 0; step < 500 && !component.canPlayAgain; step++) {
+        if (component.waitingForNext && (component.showingCompletedHand || component.activePlayer !== 1)) {
+          component.next();
+        } else if (component.activePlayer === 1 && !component.showingCompletedHand) {
+          const card = component.buryingCards || component.pickingTrump
+            ? hand(1).find(c => !'A0'.includes(c.code.charAt(0)))
+            : hand(1).find(c => component.legalCards.includes(c.code));
+          component.cardSelected(card);
+        } else {
+          tick(Math.max(PC_MOVE_MS, HAND_DISPLAY_MS));
+        }
+      }
+    };
+
     it('should label Players 2 and 3 as the PC only in vs PC', fakeAsync(() => {
       startPcGame();
       expect([1, 2, 3].map(player => component.getPlayerTitle(player))).toEqual(['Player 1', 'Player 2 (PC)', 'Player 3 (PC)']);
@@ -263,6 +279,54 @@ describe('GameComponent', () => {
       expect(hand(2)).toContain(pcCard);
       tick(PC_MOVE_MS);
       fixture.destroy();
+    }));
+
+    it('should wait for Next after every PC move in Slow', fakeAsync(() => {
+      startPcGame();
+      component.gameMode = 'learning-pc-slow';
+      component.cardSelected(hand(1)[0]);
+      [0, 1].forEach(() => component.cardSelected(hand(1).find(c => !'A0'.includes(c.code.charAt(0)))));
+      component.cardSelected(hand(1).find(c => component.legalCards.includes(c.code)));
+
+      // Player 2 plays and explains, then nothing happens until Next
+      tick(PC_MOVE_MS);
+      expect(pile('game').length).toBe(2);
+      expect(component.waitingForNext).toBeTrue();
+      tick(PC_MOVE_MS * 5);
+      expect(pile('game').length).toBe(2);
+
+      // Next lets Player 3 play right away, and the finished trick stays until Next again
+      component.next();
+      expect(pile('game').length).toBe(3);
+      expect(component.showingCompletedHand).toBeTrue();
+      tick(HAND_DISPLAY_MS * 5);
+      expect(pile('game').length).toBe(3);
+      component.next();
+      expect(pile('game').length).toBe(0);
+      expect(component.trickHistory.length).toBe(1);
+      fixture.destroy();
+      tick(PC_MOVE_MS);
+    }));
+
+    it('should let the PC pick trump, bury and lead one Next at a time in Slow', fakeAsync(() => {
+      startPcGame();
+      component.gameMode = 'learning-pc-slow';
+      playRoundAsPlayer1WithNext();
+      component.playAgain();
+      expect(component.currentCaller).toBe(2);
+
+      tick(PC_MOVE_MS);
+      expect(component.trump).not.toBe('');
+      expect(component.waitingForNext).toBeTrue();
+      component.next();
+      expect(pile('player2Bury').length).toBe(1);
+      component.next();
+      expect(pile('player2Bury').length).toBe(2);
+      expect(pile('game').length).toBe(0);
+      component.next();
+      expect(pile('game').length).toBe(1);
+      fixture.destroy();
+      tick(PC_MOVE_MS);
     }));
 
     it('should not make a PC move after the game is left', fakeAsync(() => {
