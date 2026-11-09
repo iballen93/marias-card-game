@@ -393,10 +393,9 @@ describe('GameComponent', () => {
         tick(PC_MOVE_MS);
       }));
 
-      it('should not lift legal cards, explain PC moves or offer Fast Play', fakeAsync(() => {
+      it('should not lift legal cards or explain PC moves', fakeAsync(() => {
         startPcGame();
         component.gameMode = 'standard';
-        expect(component.canFastPlay()).toBeFalse();
         buryAndLead();
         component.cardSelected(hand(1).find(c => component.legalCards.includes(c.code)));
         tick(PC_MOVE_MS);

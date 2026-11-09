@@ -346,8 +346,8 @@ export class GameComponent implements OnInit, OnDestroy {
     }
 
     canFastPlay(): boolean {
-        // a testing shortcut, so Standard doesn't offer it
-        return !this.isStandard() && !this.showingCompletedHand && !this.isOnLastHand();
+        // a testing shortcut; Standard offers it for now too, and will stop once testing is done
+        return !this.showingCompletedHand && !this.isOnLastHand();
     }
 
     private isOnLastHand(): boolean {
