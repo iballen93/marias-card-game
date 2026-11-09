@@ -15,7 +15,7 @@ describe('AppComponent', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('should open the New Game menu with Standard greyed out', () => {
+  it('should open the New Game menu with every game option', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const element: HTMLElement = fixture.nativeElement;
@@ -25,8 +25,7 @@ describe('AppComponent', () => {
     fixture.detectChanges();
     const options = Array.from(element.querySelectorAll('.new-game-menu > *')).map(option => option.textContent.trim());
     expect(options).toEqual(['New Game (Learning Mode vs PC) Slow', 'New Game (Learning Mode vs PC) Fast',
-      'Practice (play all 3 hands)', 'New Game (Standard) Coming soon']);
-    expect(element.querySelector('.menu-disabled').getAttribute('aria-disabled')).toEqual('true');
+      'Practice (play all 3 hands)', 'New Game (Standard)']);
   });
 
   it('should close the New Game menu on a click outside it or Escape', () => {

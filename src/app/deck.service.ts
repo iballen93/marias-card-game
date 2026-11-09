@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {Card} from './components/card-pile/card-pile.component';
+import {Card, CARD_BACK_IMAGE} from './components/card-pile/card-pile.component';
 
 @Injectable({
   providedIn: 'root'
@@ -25,10 +25,11 @@ export class DeckService {
   }
 
   async preloadCardImages(): Promise<void> {
-    await Promise.all(this.createShuffledDeck().map(card => new Promise<void>(resolve => {
+    const images = this.createShuffledDeck().map(card => card.image).concat(CARD_BACK_IMAGE);
+    await Promise.all(images.map(src => new Promise<void>(resolve => {
       const image = new Image();
       image.onload = image.onerror = () => resolve();
-      image.src = card.image;
+      image.src = src;
       this.preloadedImages.push(image);
     })));
   }

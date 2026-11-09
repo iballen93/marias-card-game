@@ -1,6 +1,8 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {MARRIAGE_CARD_KEY_PREFIX} from 'src/app/card-animation.service';
 
+export const CARD_BACK_IMAGE = 'assets/cards/back.png';
+
 export interface Card {
   code: string;
   image: string;
@@ -23,9 +25,12 @@ export class CardPileComponent implements OnInit {
   @Input() cardOverlap: string;
   // the codes of cards to lift, such as the cards that can legally be played on this turn
   @Input() liftedCards: string[] = [];
+  // Standard: show the backs of the cards, so you can see how many there are but not what they are
+  @Input() faceDown = false;
   @Output() cardSelected = new EventEmitter<Card>();
 
   readonly FULL_CARD_WIDTH = 'var(--card-width)';
+  readonly CARD_BACK = CARD_BACK_IMAGE;
   private readonly FULL_CARD_SPACING = 'var(--card-spacing)';
 
   constructor() {

@@ -19,6 +19,10 @@ export class HandComponent implements OnInit {
     @Input() winCards: Card[];
     // on this player's turn, the cards they can legally play
     @Input() liftedCards: string[] = [];
+    // Standard: which of this player's piles are face down
+    @Input() hideCards = false;
+    @Input() hideBury = false;
+    @Input() hideWin = false;
 
     @Output() cardSelected = new EventEmitter<Card>();
 
@@ -103,6 +107,10 @@ export class HandComponent implements OnInit {
     }
 
     getWinPileTitle(): string {
+        // a face-down win pile keeps its points secret too
+        if (this.hideWin) {
+            return 'Win Pile';
+        }
         return `Win Pile: ${this.playerPoints} ${this.playerPoints === 1 ? 'Point' : 'Points'}`;
     }
 

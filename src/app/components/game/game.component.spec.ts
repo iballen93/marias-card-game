@@ -352,6 +352,62 @@ describe('GameComponent', () => {
       tick(PC_MOVE_MS);
     }));
 
+    describe('Standard', () => {
+      const buryAndLead = () => {
+        component.cardSelected(hand(1)[0]);
+        [0, 1].forEach(() => component.cardSelected(hand(1).find(c => !'A0'.includes(c.code.charAt(0)))));
+      };
+
+      it('should keep the PC hands face down, and yours face up', fakeAsync(() => {
+        startPcGame();
+        component.gameMode = 'standard';
+        expect([1, 2, 3].map(player => component.isHandHidden(player))).toEqual([false, true, true]);
+        fixture.destroy();
+      }));
+
+      it('should show your bury while you choose it, and turn it face down once the first card is led', fakeAsync(() => {
+        startPcGame();
+        component.gameMode = 'standard';
+        buryAndLead();
+        expect(pile('player1Bury').length).toBe(2);
+        expect(component.isBuryHidden(1)).toBeFalse();
+        component.cardSelected(hand(1).find(c => component.legalCards.includes(c.code)));
+        expect(component.isBuryHidden(1)).toBeTrue();
+        fixture.destroy();
+        tick(PC_MOVE_MS);
+      }));
+
+      it('should hide the win piles until the round is over, but never the buries', fakeAsync(() => {
+        startPcGame();
+        component.gameMode = 'standard';
+        expect(component.isWinHidden()).toBeTrue();
+        playRoundAsPlayer1();
+        expect(component.isWinHidden()).toBeFalse();
+        expect(component.isBuryHidden(1)).toBeTrue();
+        component.playAgain();
+        // Player 2 calls the next round; its bury is never shown
+        tick(PC_MOVE_MS * 3);
+        expect(pile('player2Bury').length).toBe(2);
+        expect(component.isBuryHidden(2)).toBeTrue();
+        fixture.destroy();
+        tick(PC_MOVE_MS);
+      }));
+
+      it('should not lift legal cards, explain PC moves or offer Fast Play', fakeAsync(() => {
+        startPcGame();
+        component.gameMode = 'standard';
+        expect(component.canFastPlay()).toBeFalse();
+        buryAndLead();
+        component.cardSelected(hand(1).find(c => component.legalCards.includes(c.code)));
+        tick(PC_MOVE_MS);
+        expect(pile('game').length).toBe(2);
+        expect(component.pcExplanation).toBe('');
+        expect([1, 2, 3].every(player => component.getLiftedCards(player).length === 0)).toBeTrue();
+        fixture.destroy();
+        tick(PC_MOVE_MS);
+      }));
+    });
+
     it('should not make a PC move after the game is left', fakeAsync(() => {
       startPcGame();
       component.cardSelected(hand(1)[0]);

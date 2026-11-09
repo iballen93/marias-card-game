@@ -7,7 +7,7 @@
             <a routerLink="/game/learning-pc-slow" role="menuitem" (click)="closeNewGameMenu()">New Game (Learning Mode vs PC) Slow</a>
             <a routerLink="/game/learning-pc" role="menuitem" (click)="closeNewGameMenu()">New Game (Learning Mode vs PC) Fast</a>
             <a routerLink="/game/learning-solo" role="menuitem" (click)="closeNewGameMenu()">Practice (play all 3 hands)</a>
-            <span class="menu-disabled" role="menuitem" aria-disabled="true">New Game (Standard) <small>Coming soon</small></span>
+            <a routerLink="/game/standard" role="menuitem" (click)="closeNewGameMenu()">New Game (Standard)</a>
         </div>
     </div>
     <a (click)="goToWikiPage()">Mariáš Wiki Page</a>

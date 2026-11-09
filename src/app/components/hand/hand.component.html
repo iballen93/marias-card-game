@@ -9,6 +9,7 @@
                 title="Bury Pile"
                 [alwaysShowTitle]="isCaller"
                 [cards]="buryCards"
+                [faceDown]="hideBury"
                 cardWidth="var(--side-card)"
                 [cardOverlap]="getSideCardOverlap()"
                 (cardSelected)="forwardCardSelected($event)"
@@ -19,6 +20,7 @@
                 [title]="getWinPileTitle()"
                 [alwaysShowTitle]="true"
                 [cards]="winCards"
+                [faceDown]="hideWin"
                 cardWidth="var(--side-card)"
                 [cardOverlap]="getWinCardOverlap()"
                 [style.width]="getWinPileWidth()"
@@ -39,6 +41,7 @@
     <app-card-pile
             [cards]="playerCards"
             [liftedCards]="liftedCards"
+            [faceDown]="hideCards"
             (cardSelected)="forwardCardSelected($event)"
             style="height: var(--hand-pile-height); width: 100%; overflow: hidden; display: flex; align-items: center; justify-content: center;">
     </app-card-pile>

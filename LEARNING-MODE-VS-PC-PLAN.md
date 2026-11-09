@@ -179,6 +179,7 @@ Each step leaves the game working.
 - Step 5 changed along the way. Instead of a speed setting, the menu has **vs PC Slow** (waits for you to click Next after every PC move) and **vs PC Fast**. Instead of hiding the Legal Cards text on PC turns, the legal cards are lifted on every player's turn and the text is gone. Fast Play plays the PC seats with the PC's strategy and only your cards at random.
 - Step 6 is `npm run strength` (see "Measuring strength" in `PC-STRATEGY.md`), which compares the PC with random play and with any earlier version of itself.
 - Solo is now called **Practice (play all 3 hands)**, and the app opens on vs PC Slow.
+- **New Game (Standard)** is built. It's vs PC with the cards face down: the PC hands, the PC caller's bury, and every win pile (with its points) until the round ends. Your own bury is face up while you choose it and turns face down once the first card is led; a bury is never shown, even after the round. Marriages, the trick and your hand stay face up. There are no lifted legal cards, no PC explanations and no Fast Play.
 
 ---
 

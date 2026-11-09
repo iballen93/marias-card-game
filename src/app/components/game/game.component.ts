@@ -65,8 +65,6 @@ export class GameComponent implements OnInit, OnDestroy {
     buryingCards = false;
     legalCards: string[] = [];
 
-    BACK_CARD = 'assets/cards/back.png';
-
     deck: Card[];
     trump = '';
     cardPriority: Map<string, number>;
@@ -129,6 +127,35 @@ export class GameComponent implements OnInit, OnDestroy {
         return isVsPc(this.gameMode) && player !== this.HUMAN_SEAT;
     }
 
+    // Standard: everything but your own hand, the trick and the marriages is face down
+    private isStandard(): boolean {
+        return this.gameMode === 'standard';
+    }
+
+    isHandHidden(player: number): boolean {
+        return this.isStandard() && player !== this.HUMAN_SEAT;
+    }
+
+    // You see your own bury while you choose it; it turns face down once the first card is led. The caller never
+    // has to show its bury, so the PC's stays face down, even after the round.
+    isBuryHidden(player: number): boolean {
+        if (!this.isStandard()) {
+            return false;
+        }
+        const firstCardLed = (this.allPiles.get('game') || []).length > 0 || this.trickHistory.length > 0;
+        return player !== this.HUMAN_SEAT || firstCardLed;
+    }
+
+    // Win piles stay face down, points and all, until the round is over
+    isWinHidden(): boolean {
+        return this.isStandard() && !this.canPlayAgain;
+    }
+
+    // In Learning Mode, the cards the active player may play are lifted; Standard leaves you to work it out
+    getLiftedCards(player: number): string[] {
+        return !this.isStandard() && player === this.activePlayer ? this.legalCards : [];
+    }
+
     getPlayerTitle(player: number): string {
         return 'Player ' + player + (this.isPcSeat(player) ? ' (PC)' : '');
     }
@@ -152,7 +179,8 @@ export class GameComponent implements OnInit, OnDestroy {
             return;
         }
         const { card, reason } = this.choosePcCard();
-        this.pcExplanation = this.getPlayerTitle(this.activePlayer) + ' ' + reason;
+        // the explanations are part of Learning Mode
+        this.pcExplanation = this.isStandard() ? '' : this.getPlayerTitle(this.activePlayer) + ' ' + reason;
         this.waitingForNext = this.gameMode === 'learning-pc-slow';
         this.animateCardMoves(() => this.handleCardSelected(card));
     }
@@ -318,7 +346,8 @@ export class GameComponent implements OnInit, OnDestroy {
     }
 
     canFastPlay(): boolean {
-        return !this.showingCompletedHand && !this.isOnLastHand();
+        // a testing shortcut, so Standard doesn't offer it
+        return !this.isStandard() && !this.showingCompletedHand && !this.isOnLastHand();
     }
 
     private isOnLastHand(): boolean {
