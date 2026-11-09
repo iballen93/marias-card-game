@@ -44,5 +44,8 @@ CARD 3
 * $env:NODE_OPTIONS="--openssl-legacy-provider"
 * ng s
 
+### REGRESSION TESTING
+* Run `npm run regression` before and after every change. See REGRESSION-TESTING.md
+
 ### BUILDING FOR ANDROID
 * $env:CAPACITOR_ANDROID_STUDIO_PATH="C:\Users\UltraMegaVIP\AppData\Local\Programs\Android Studio\bin\studio64.exe"
