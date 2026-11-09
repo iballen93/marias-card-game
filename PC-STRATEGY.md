@@ -129,10 +129,11 @@ These are the known gaps, roughly from most to least important.
    - It does lead an A or 10 first when that card is the highest left (rule 2 above), which banks the point early. It does this because the card is safe now, not because the suit is long.
    - It doesn't draw trumps to protect a long side suit. It only draws trumps as caller when it holds more trumps than are still out.
    - When leading low, ties go to its **longest** suit, which leads into the danger instead of away from it.
-2. **No odds.** It treats a card as either safe (the highest left, and nobody has shown they can trump it) or not. It never weighs how likely it is that a player is out of a suit.
-3. **Planning the last trick.** It keeps trumps by giving them up late, which usually leaves one for the last trick (+1 point), but it doesn't plan for it on purpose.
-4. **Following its partner's signals.** It doesn't read anything into which low cards its partner throws.
-5. **Rules not in the game yet.** The 7 of trump on the last trick bonus and bidding (no tricks, all tricks, and so on) aren't built, so the PC has no rules for them.
+2. **Getting the A out to free a 10.** With a 10 but not the A of a suit, it holds the 10 back and leads its cheapest low card. It never deliberately leads its K to force the A out. Leading the K works well in this game because of the "must go over" rule. Whoever holds the A and still has that suit has to play the A, since it's the only card above the K besides the PC's own 10. After that, the PC's 10 is the highest card left and its point is safe. If the A was buried by the caller, the K simply wins. It's riskier when the A holder may be out of the suit and able to trump instead, and leading a Q is weaker, because the K can beat it instead of the A.
+3. **No odds.** It treats a card as either safe (the highest left, and nobody has shown they can trump it) or not. It never weighs how likely it is that a player is out of a suit.
+4. **Planning the last trick.** It keeps trumps by giving them up late, which usually leaves one for the last trick (+1 point), but it doesn't plan for it on purpose.
+5. **Following its partner's signals.** It doesn't read anything into which low cards its partner throws.
+6. **Rules not in the game yet.** The 7 of trump on the last trick bonus and bidding (no tricks, all tricks, and so on) aren't built, so the PC has no rules for them.
 
 ## Measured strength
 
