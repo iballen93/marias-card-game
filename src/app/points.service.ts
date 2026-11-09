@@ -1,6 +1,7 @@
 import {Injectable} from '@angular/core';
 import {Card} from './components/card-pile/card-pile.component';
-import {isPointCard, marriagePoints} from './rules';
+import {cardName} from './pc-brain';
+import {isPointCard, marriagePoints, SevenResult} from './rules';
 
 export interface Points {
     totalTricks: string;
@@ -102,6 +103,27 @@ export class PointsService {
         console.log(earnings);
 
         return {earnings, winMessage};
+    }
+
+    // The 7 of trump on the last trick is paid separately from the game: by each opponent of the side that won it,
+    // or to each of them when it was lost
+    calculateSevenEarnings(seven: SevenResult, callerPlayer: number): { earnings: Map<string, number>; message: string } {
+        const defenders = [1, 2, 3].filter(player => player !== callerPlayer);
+        const callerSide = seven.player === callerPlayer;
+        // +1 when the caller collects, -1 when the caller pays
+        const callerCollects = callerSide === seven.won ? 1 : -1;
+        const earnings: Map<string, number> = new Map();
+        earnings.set('player' + callerPlayer, callerCollects * seven.cents * 2);
+        defenders.forEach(player => earnings.set('player' + player, -callerCollects * seven.cents));
+
+        const seven7 = (seven.called ? 'called ' : '') + cardName(seven.card);
+        const defenderNames = 'Players ' + defenders.join(' and ');
+        const outcome = seven.won ? ' won the last trick: ' : seven.playedLast ? ' lost the last trick: ' : ' wasn\'t played in the last trick: ';
+        const result = 'Player ' + seven.player + '\'s ' + seven7 + outcome;
+        const payment = callerCollects > 0
+            ? defenderNames + ' each pay Player ' + callerPlayer + ' ' + seven.cents + '¢'
+            : 'Player ' + callerPlayer + ' pays ' + defenderNames + ' ' + seven.cents + '¢ each';
+        return { earnings, message: result + payment };
     }
 
     callerWins(callerPoints: number, opponentPoints: number): boolean {

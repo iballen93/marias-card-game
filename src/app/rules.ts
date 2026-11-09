@@ -106,3 +106,41 @@ export function completesMarriage(card: string, hand: string[]): boolean {
 export function marriagePoints(card: string, trump: string): number {
     return isTrump(card, trump) ? 4 : 2;
 }
+
+// The 7 of trump scores when it is played in the last trick: won if it takes that trick, lost if it is beaten.
+// It is worth 2 cents from each opponent, doubled when the caller called it, and doubled again in spades.
+export const SEVEN_CENTS = 2;
+
+export function sevenOfTrump(trump: string): string {
+    return '7' + trump.charAt(0);
+}
+
+export interface SevenResult {
+    // the 7 of trump, and the player it belongs to
+    card: string;
+    player: number;
+    won: boolean;
+    called: boolean;
+    // false for a called 7 that was played before the last trick, which counts as lost
+    playedLast: boolean;
+    // paid by, or to, each opponent of the player's side
+    cents: number;
+}
+
+// A silent 7 only scores when it is played in the last trick. A called 7 must win the last trick, so a called 7
+// played earlier is lost too; otherwise calling it would cost nothing.
+export function sevenOnLastTrick(lastTrick: { plays: { player: number; card: string }[]; winner: number }, trump: string,
+                                 caller: number, sevenCalled: boolean): SevenResult | undefined {
+    const seven = sevenOfTrump(trump);
+    const spades = trump === 'SPADES' ? 2 : 1;
+    const play = lastTrick?.plays.find(other => other.card === seven);
+    if (!play) {
+        return sevenCalled
+            ? { card: seven, player: caller, won: false, called: true, playedLast: false, cents: SEVEN_CENTS * 2 * spades }
+            : undefined;
+    }
+    // only the caller can call it; a defender's 7 is always silent
+    const called = sevenCalled && play.player === caller;
+    const cents = SEVEN_CENTS * (called ? 2 : 1) * spades;
+    return { card: play.card, player: play.player, won: lastTrick.winner === play.player, called, playedLast: true, cents };
+}

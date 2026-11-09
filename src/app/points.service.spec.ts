@@ -42,4 +42,29 @@ describe('PointsService', () => {
     expect(service.calculatePlayerPoints(new Map(), 1, 1, 'HEARTS')).toBe(1);
     expect(service.calculatePlayerPoints(new Map(), 2, 1, 'HEARTS')).toBe(0);
   });
+
+  describe('paying the 7 of trump', () => {
+    const seven = (player: number, won: boolean, called = false, cents = 2, playedLast = true) =>
+      ({ card: '7H', player, won, called, playedLast, cents });
+    const paid = (result: { earnings: Map<string, number> }) => [1, 2, 3].map(player => result.earnings.get('player' + player));
+
+    it('should have each defender pay the caller when the caller\'s 7 wins, and the reverse when it loses', () => {
+      expect(paid(service.calculateSevenEarnings(seven(1, true, true, 4), 1))).toEqual([8, -4, -4]);
+      expect(paid(service.calculateSevenEarnings(seven(1, false, true, 4), 1))).toEqual([-8, 4, 4]);
+    });
+
+    it('should pay the defenders when a defender\'s 7 wins, and the caller when it loses', () => {
+      expect(paid(service.calculateSevenEarnings(seven(3, true), 1))).toEqual([-4, 2, 2]);
+      expect(paid(service.calculateSevenEarnings(seven(3, false), 1))).toEqual([4, -2, -2]);
+    });
+
+    it('should say what the 7 did and who pays', () => {
+      expect(service.calculateSevenEarnings(seven(1, true, true, 4), 1).message)
+        .toBe('Player 1\'s called 7♥ won the last trick: Players 2 and 3 each pay Player 1 4¢');
+      expect(service.calculateSevenEarnings(seven(2, false), 1).message)
+        .toBe('Player 2\'s 7♥ lost the last trick: Players 2 and 3 each pay Player 1 2¢');
+      expect(service.calculateSevenEarnings(seven(1, false, true, 4, false), 1).message)
+        .toBe('Player 1\'s called 7♥ wasn\'t played in the last trick: Player 1 pays Players 2 and 3 4¢ each');
+    });
+  });
 });

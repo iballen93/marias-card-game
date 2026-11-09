@@ -1,6 +1,15 @@
 <div *ngIf="pickingTrump" style="color: green; font-size: var(--message-large); background-color: white; display: inline-block; padding: var(--message-padding); border-radius: 0.625rem; font-weight: bold;">
     Player {{activePlayer}} must pick Trump
 </div>
+<div *ngIf="announcing" class="announce">
+    <div style="color: green; font-size: var(--message-large); background-color: white; display: inline-block; padding: var(--message-padding); border-radius: 0.625rem; font-weight: bold;">
+        Player {{activePlayer}}: play the Game, or call the {{sevenName}} too?
+    </div>
+    <div *ngIf="canAnnounce" class="announce-buttons">
+        <button type="button" (click)="announce.emit(false)">Game</button>
+        <button type="button" (click)="announce.emit(true)">Game + {{sevenName}}</button>
+    </div>
+</div>
 <div *ngIf="buryingCards" style="color: green; font-size: var(--message-large); background-color: white; display: inline-block; padding: var(--message-padding); border-radius: 0.625rem; font-weight: bold;">
     Player {{activePlayer}} must Bury 2 Cards
 </div>
@@ -8,6 +17,7 @@
 <div *ngIf="winMessage != ''" style="color: green; font-size: var(--message-small); background-color: white; display: inline-block; padding: var(--message-padding); border-radius: 0.625rem; font-weight: bold;">
     {{winMessage}}
 </div>
+<div *ngIf="sevenMessage" class="seven-message">{{sevenMessage}}</div>
 <button *ngIf="canPlayAgain" type="button" class="play-again-button" (click)="playAgain.emit()">PLAY AGAIN</button>
 
 <br>

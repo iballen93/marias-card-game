@@ -1,4 +1,6 @@
-import { completesMarriage, getLegalCards, isHigherRank, isPointCard, isTrump, marriagePoints, trickWinnerIndex, validateBury } from './rules';
+import {
+  completesMarriage, getLegalCards, isHigherRank, isPointCard, isTrump, marriagePoints, sevenOnLastTrick, trickWinnerIndex, validateBury
+} from './rules';
 
 // Hearts are trump in every test; the move rules themselves are covered in validation.service.spec.ts
 describe('rules', () => {
@@ -46,5 +48,43 @@ describe('rules', () => {
 
   it('should treat an empty table as leading', () => {
     expect(getLegalCards(undefined, ['7S', 'AH'], 'HEARTS')).toEqual(['7S', 'AH']);
+  });
+
+  describe('the 7 of trump on the last trick', () => {
+    // Player 1 is the caller in every test
+    const lastTrick = (winner: number, ...cards: string[]) => ({
+      plays: cards.map((card, index) => ({ player: index + 1, card })), winner
+    });
+
+    it('should be won when it takes the last trick, worth 2 cents', () => {
+      expect(sevenOnLastTrick(lastTrick(1, '7H', 'AS', 'KS'), 'HEARTS', 1, false))
+        .toEqual({ card: '7H', player: 1, won: true, called: false, playedLast: true, cents: 2 });
+    });
+
+    it('should be lost when it is played in the last trick and beaten', () => {
+      expect(sevenOnLastTrick(lastTrick(2, '7H', '8H', 'KS'), 'HEARTS', 1, false).won).toBeFalse();
+    });
+
+    it('should double when called, and double again in spades', () => {
+      expect(sevenOnLastTrick(lastTrick(1, '7H', 'AD', 'KD'), 'HEARTS', 1, true).cents).toBe(4);
+      expect(sevenOnLastTrick(lastTrick(1, '7S', 'AD', 'KD'), 'SPADES', 1, false).cents).toBe(4);
+      expect(sevenOnLastTrick(lastTrick(1, '7S', 'AD', 'KD'), 'SPADES', 1, true).cents).toBe(8);
+    });
+
+    it('should count a defender\'s 7 as silent, since only the caller can call it', () => {
+      const seven = sevenOnLastTrick(lastTrick(2, 'AD', '7H', 'KD'), 'HEARTS', 1, true);
+      expect(seven.player).toBe(2);
+      expect(seven.called).toBeFalse();
+      expect(seven.cents).toBe(2);
+    });
+
+    it('should score nothing for a silent 7 that is not in the last trick', () => {
+      expect(sevenOnLastTrick(lastTrick(1, 'AH', '8H', 'KS'), 'HEARTS', 1, false)).toBeUndefined();
+    });
+
+    it('should count a called 7 that was played before the last trick as lost', () => {
+      expect(sevenOnLastTrick(lastTrick(1, 'AH', '8H', 'KS'), 'SPADES', 1, true))
+        .toEqual({ card: '7S', player: 1, won: false, called: true, playedLast: false, cents: 8 });
+    });
   });
 });

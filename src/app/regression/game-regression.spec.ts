@@ -23,6 +23,11 @@ describe('Game regression', () => {
     game.isFastPlaying = true;
     while (!game.canPlayAgain) {
       game.updateLegalCards();
+      if (game.announcing && !game.isPcSeat(game.activePlayer)) {
+        // a seat played at random never calls the 7, so the rest of the round uses the same random numbers as before
+        game.announce(false);
+        continue;
+      }
       if (game.isPcSeat(game.activePlayer)) {
         // the PC's own move, exactly as its timer would make it
         game.playPcTurn();

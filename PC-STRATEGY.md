@@ -82,6 +82,17 @@ The caller buries one card at a time, choosing in this order:
 
 ---
 
+## Calling the 7 of trump
+
+After burying, a caller holding the 7 of trump plays the Game, or the Game and the 7. The 7 scores when it wins the last trick: 2 cents from each opponent, doubled when called, doubled again in spades. A 7 beaten in the last trick costs the same. A called 7 that isn't played in the last trick counts as lost. A defender's 7 is always silent.
+
+| Explanation | When |
+|---|---|
+| called the *7*: it holds *N* trumps, so it expects to keep the *7* for the last trick and win it | it holds 5 or more trumps |
+| played the Game without calling the *7*: with only *N* trumps, the *7* could be beaten on the last trick | fewer |
+
+**Keeping the 7.** As caller, the PC gives up the 7 of trump last, just before its point cards, so it is still there for the last trick. As a defender it does the opposite and plays the 7 early as its lowest trump: on the last trick the caller's higher trumps would usually beat it, and a beaten 7 costs the defenders. Measured with `npm run strength`, keeping the 7 as caller earns about 1.5 cents a round from the 7, while keeping it as a defender lost money.
+
 ## Playing a card
 
 It always chooses from the legal cards. If only one is legal:
@@ -159,7 +170,8 @@ These are the known gaps, roughly from most to least important.
 2. **No odds.** It treats a card as either safe (the highest left, and nobody has shown they can trump it) or not. It never weighs how likely it is that a player is out of a suit.
 3. **Planning the last trick.** It keeps trumps by giving them up late, which usually leaves one for the last trick (+1 point), but it doesn't plan for it on purpose.
 4. **Following its partner's signals.** It doesn't read anything into which low cards its partner throws.
-5. **Rules not in the game yet.** The 7 of trump on the last trick bonus and bidding (no tricks, all tricks, and so on) aren't built, so the PC has no rules for them.
+5. **Rules not in the game yet.** Bidding (the 100, no tricks, all tricks, and raising the stakes) isn't built, so the PC has no rules for it.
+6. **Killing a called 7.** The defenders don't yet play differently when the caller has called the 7, such as keeping a higher trump for the last trick.
 
 ## Measured strength
 
@@ -179,7 +191,7 @@ How some changes measured when they were made:
 
 ## Measuring strength
 
-`npm run strength` plays thousands of rounds without showing them, and prints how often the caller wins and the average points on each side. It takes about 30 seconds.
+`npm run strength` plays thousands of rounds without showing them, and prints how often the caller wins, the average points on each side, and what the 7 of trump paid the caller per round. It takes about 30 seconds.
 
 - `npm run strength` compares the PC with random play, and with itself.
 - `npm run strength -- --against HEAD` also compares the PC as it is now with the PC in a git commit, such as `HEAD` (the last commit), `main~3` or a commit hash. Use it after changing `pc-brain.ts`: if the new PC is stronger, the caller wins more often when the new PC calls, and less often when the new PC defends.

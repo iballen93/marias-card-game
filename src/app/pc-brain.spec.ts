@@ -1,4 +1,4 @@
-import { BrainView, cardName, chooseBury, choosePlay, chooseTrump, Knowledge } from './pc-brain';
+import { BrainView, cardName, chooseAnnouncement, chooseBury, choosePlay, chooseTrump, Knowledge } from './pc-brain';
 import { getLegalCards, isPointCard, isTrump } from './rules';
 import { seededRandom } from './regression/seeded-random';
 
@@ -73,9 +73,14 @@ describe('PC brain', () => {
 
     it('should explain that it had to trump its partner when it has none of the suit led', () => {
       // Diamonds are trump and Player 1 called. Partner Player 2 led the A♣, and Player 3 has no clubs
+      const choice = choosePlay(view({ seat: 3, caller: 1, trump: 'DIAMONDS', trick: ['AC'], hand: ['8D', 'KD', '9S'] }));
+      expect(choice.card).toBe('8D');
+      expect(choice.reason).toBe('had no clubs, so it had to trump partner Player 2\'s A♣, and used its lowest trump, the 8♦');
+    });
+
+    it('should give up its 7 of trump early as a defender, since on the last trick it would usually be beaten', () => {
       const choice = choosePlay(view({ seat: 3, caller: 1, trump: 'DIAMONDS', trick: ['AC'], hand: ['7D', 'KD', '9S'] }));
       expect(choice.card).toBe('7D');
-      expect(choice.reason).toBe('had no clubs, so it had to trump partner Player 2\'s A♣, and used its lowest trump, the 7♦');
     });
 
     it('should bank a 10 of trump over its partner while the A of trump is still out', () => {
@@ -226,5 +231,23 @@ describe('PC brain', () => {
       expect(getLegalCards(trick, hand, ['SPADES', 'HEARTS'][round % 2])).toContain(choice.card);
       expect(choice.reason.length).toBeGreaterThan(10);
     }
+  });
+
+  describe('the 7 of trump', () => {
+    it('should call the 7 with 5 or more trumps, and keep it silent with fewer', () => {
+      const called = chooseAnnouncement(['7H', '8H', '9H', 'KH', 'AH', '7S'], 'HEARTS');
+      expect(called.callSeven).toBeTrue();
+      expect(called.reason).toContain('called the 7♥');
+      expect(chooseAnnouncement(['7H', '8H', 'KH', 'AH', '7S'], 'HEARTS').callSeven).toBeFalse();
+    });
+
+    it('should keep its 7 of trump for the last trick and trump with another card', () => {
+      // it has no spades, so it must trump; any trump wins
+      expect(choosePlay(view({ seat: 3, caller: 3, trick: ['KS', 'QS'], hand: ['7H', '9H', 'QD'] })).card).toBe('9H');
+    });
+
+    it('should play its 7 of trump when it is the last card', () => {
+      expect(choosePlay(view({ seat: 3, caller: 3, trick: ['KS', 'QS'], hand: ['7H'] })).card).toBe('7H');
+    });
   });
 });

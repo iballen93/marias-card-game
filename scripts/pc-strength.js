@@ -85,7 +85,10 @@ if (!match) {
 }
 const rows = JSON.parse(match[1]);
 const pad = (text, width) => String(text).padEnd(width);
-console.log('\n' + pad('Caller', 14) + pad('Defenders', 14) + pad('Caller wins', 13) + pad('Caller points', 15) + 'Defender points');
+console.log('\n' + pad('Caller', 14) + pad('Defenders', 14) + pad('Caller wins', 13) + pad('Caller points', 15)
+  + pad('Defender points', 17) + 'Caller 7 of trump');
 rows.forEach(row => console.log(pad(row.caller, 14) + pad(row.defenders, 14) + pad(row.callerWinPercent.toFixed(2) + '%', 13)
-  + pad(row.callerAveragePoints.toFixed(2), 15) + row.defenderAveragePoints.toFixed(2)));
-console.log(`\n${rounds} rounds per row, the same deals in every row.`);
+  + pad(row.callerAveragePoints.toFixed(2), 15) + pad(row.defenderAveragePoints.toFixed(2), 17)
+  + (row.callerAverageSevenCents >= 0 ? '+' : '') + row.callerAverageSevenCents.toFixed(3) + '¢'));
+console.log(`\n${rounds} rounds per row, the same deals in every row. The 7 of trump column is what it paid the caller per round,`
+  + ' from both defenders together.');

@@ -1,8 +1,10 @@
 // Plays whole rounds between two kinds of player without showing them, to measure how well a PC plays.
 // Scoring follows the game: 1 point for each A and 10 won, 1 for the last trick, and 2 for a marriage (4 in trump),
 // and the caller wins with more points than the two defenders together. See "Measuring strength" in PC-STRATEGY.md.
-import { BrainChoice, BrainView } from '../pc-brain';
-import { completesMarriage, getLegalCards, isPointCard, marriagePoints, trickWinnerIndex, validateBury } from '../rules';
+import { AnnouncementChoice, BrainChoice, BrainView } from '../pc-brain';
+import {
+    completesMarriage, getLegalCards, isPointCard, marriagePoints, sevenOfTrump, sevenOnLastTrick, trickWinnerIndex, validateBury
+} from '../rules';
 import { seededRandom } from './seeded-random';
 
 // What a player does at each step of a round, given only what it may know
@@ -10,12 +12,16 @@ export interface Brain {
     chooseTrump(hand: string[]): BrainChoice;
     chooseBury(hand: string[], trump: string): BrainChoice;
     choosePlay(view: BrainView): BrainChoice;
+    // a brain without it never calls the 7 of trump
+    chooseAnnouncement?(hand: string[], trump: string): AnnouncementChoice;
 }
 
 export interface RoundResult {
     callerPoints: number;
     defenderPoints: number;
     callerWins: boolean;
+    // what the 7 of trump paid the caller in cents, from both defenders together (negative when the caller paid)
+    callerSevenCents: number;
 }
 
 export interface Matchup {
@@ -25,6 +31,7 @@ export interface Matchup {
     callerWinPercent: number;
     callerAveragePoints: number;
     defenderAveragePoints: number;
+    callerAverageSevenCents: number;
 }
 
 const SUITS = { S: 'SPADES', D: 'DIAMONDS', C: 'CLUBS', H: 'HEARTS' };
@@ -64,6 +71,9 @@ export function playRound(dealSeed: number, callerBrain: Brain, defenderBrain: B
         hands[caller] = hands[caller].filter(other => other !== card);
     }
 
+    // a caller holding the 7 of trump plays the Game or calls the 7 too
+    const sevenCalled = hands[caller].includes(sevenOfTrump(trump)) && !!callerBrain.chooseAnnouncement
+        && callerBrain.chooseAnnouncement(hands[caller], trump).callSeven;
     const points = { 1: 0, 2: 0, 3: 0 };
     const tricks = [];
     let leader = caller;
@@ -94,7 +104,9 @@ export function playRound(dealSeed: number, callerBrain: Brain, defenderBrain: B
 
     const callerPoints = points[caller];
     const defenderPoints = [1, 2, 3].filter(seat => seat !== caller).reduce((total, seat) => total + points[seat], 0);
-    return { callerPoints, defenderPoints, callerWins: callerPoints > defenderPoints };
+    const seven = sevenOnLastTrick(tricks[tricks.length - 1], trump, caller, sevenCalled);
+    const callerSevenCents = !seven ? 0 : ((seven.player === caller) === seven.won ? 2 : -2) * seven.cents;
+    return { callerPoints, defenderPoints, callerWins: callerPoints > defenderPoints, callerSevenCents };
 }
 
 // Plays the same deals for a caller and defenders, and sums up how the caller did
@@ -102,11 +114,13 @@ export function measure(callerName: string, callerBrain: Brain, defenderName: st
     let wins = 0;
     let callerTotal = 0;
     let defenderTotal = 0;
+    let sevenTotal = 0;
     for (let round = 0; round < rounds; round++) {
         const result = playRound(round, callerBrain, defenderBrain);
         wins += result.callerWins ? 1 : 0;
         callerTotal += result.callerPoints;
         defenderTotal += result.defenderPoints;
+        sevenTotal += result.callerSevenCents;
     }
     const round2 = (value: number) => Math.round(value * 100) / 100;
     return {
@@ -115,6 +129,7 @@ export function measure(callerName: string, callerBrain: Brain, defenderName: st
         rounds,
         callerWinPercent: round2(100 * wins / rounds),
         callerAveragePoints: round2(callerTotal / rounds),
-        defenderAveragePoints: round2(defenderTotal / rounds)
+        defenderAveragePoints: round2(defenderTotal / rounds),
+        callerAverageSevenCents: Math.round(sevenTotal / rounds * 1000) / 1000
     };
 }

@@ -7,7 +7,8 @@ import { ComputerPlayerService, PcView } from 'src/app/computer-player.service';
 import { CardAnimationService } from 'src/app/card-animation.service';
 import { ActivatedRoute } from '@angular/router';
 import { DEFAULT_GAME_MODE, GameMode, isVsPc } from 'src/app/game-mode';
-import { completesMarriage, trickWinnerIndex, validateBury } from 'src/app/rules';
+import { completesMarriage, sevenOfTrump, sevenOnLastTrick, trickWinnerIndex, validateBury } from 'src/app/rules';
+import { cardName } from 'src/app/pc-brain';
 import { Trick } from 'src/app/trick';
 
 @Component({
@@ -63,6 +64,11 @@ export class GameComponent implements OnInit, OnDestroy {
     private trickWinnerToCollect: number = null;
     pickingTrump = false;
     buryingCards = false;
+    // after burying, a caller holding the 7 of trump plays the Game or calls the 7 as well
+    announcing = false;
+    sevenCalled = false;
+    // what the 7 of trump scored on the last trick, if it was played there
+    sevenMessage = '';
     legalCards: string[] = [];
 
     deck: Card[];
@@ -178,6 +184,13 @@ export class GameComponent implements OnInit, OnDestroy {
         if (!this.isPcTurn()) {
             return;
         }
+        if (this.announcing) {
+            const announcement = this.computerPlayerService.chooseAnnouncement(this.getPcView());
+            this.pcExplanation = this.isStandard() ? '' : this.getPlayerTitle(this.activePlayer) + ' ' + announcement.reason;
+            this.waitingForNext = this.gameMode === 'learning-pc-slow';
+            this.animateCardMoves(() => this.announce(announcement.callSeven));
+            return;
+        }
         const { card, reason } = this.choosePcCard();
         // the explanations are part of Learning Mode
         this.pcExplanation = this.isStandard() ? '' : this.getPlayerTitle(this.activePlayer) + ' ' + reason;
@@ -233,7 +246,7 @@ export class GameComponent implements OnInit, OnDestroy {
     private getPcView(): PcView {
         return {
             seat: this.activePlayer,
-            phase: this.pickingTrump ? 'trump' : this.buryingCards ? 'bury' : 'play',
+            phase: this.pickingTrump ? 'trump' : this.buryingCards ? 'bury' : this.announcing ? 'announce' : 'play',
             hand: this.getActivePlayerPile(),
             trick: this.allPiles.get('game') || [],
             trump: this.trump,
@@ -244,7 +257,7 @@ export class GameComponent implements OnInit, OnDestroy {
     }
 
     private updateLegalCards(): void {
-        const isCardToPlay = !this.pickingTrump && !this.buryingCards && !this.showingCompletedHand;
+        const isCardToPlay = !this.pickingTrump && !this.buryingCards && !this.announcing && !this.showingCompletedHand;
         this.legalCards = isCardToPlay
             ? this.computerPlayerService.getLegalCards(this.allPiles.get('game'), this.getActivePlayerPile(), this.trump)
             : [];
@@ -337,6 +350,12 @@ export class GameComponent implements OnInit, OnDestroy {
         this.animateCardMoves(() => {
             this.isFastPlaying = true;
             while (!this.isOnLastHand()) {
+                if (this.announcing) {
+                    const isPc = this.isPcSeat(this.activePlayer);
+                    this.announce(isPc && this.computerPlayerService.chooseAnnouncement(this.getPcView()).callSeven);
+                    this.updateLegalCards();
+                    continue;
+                }
                 // in vs PC the PC seats keep playing their strategy; only your cards are picked at random
                 this.handleCardSelected(this.isPcSeat(this.activePlayer) ? this.choosePcCard().card : this.getFastPlayCard());
                 this.updateLegalCards();
@@ -366,7 +385,8 @@ export class GameComponent implements OnInit, OnDestroy {
 
     private handleCardSelected($event: Card): void {
         // the completed hand is still on the table, so ignore input until it is collected
-        if (this.showingCompletedHand) {
+        // and while the caller announces, the cards wait
+        if (this.showingCompletedHand || this.announcing) {
             return;
         }
 
@@ -454,6 +474,7 @@ export class GameComponent implements OnInit, OnDestroy {
             }
 
             this.winMessage = winMessage;
+            this.scoreSevenOfTrump();
             this.canPlayAgain = true;
         }
     }
@@ -487,7 +508,44 @@ export class GameComponent implements OnInit, OnDestroy {
         console.log(this.allPiles);
         if (this.allPiles.get('player' + this.activePlayer + 'Bury').length === 2) {
             this.buryingCards = false;
+            // the 7 of trump can only be called by the caller holding it
+            this.announcing = this.getActivePlayerPile().some(card => card.code === sevenOfTrump(this.trump));
         }
+    }
+
+    // Pays out the 7 of trump if it was played in the last trick, on top of the game
+    private scoreSevenOfTrump(): void {
+        const lastTrick = this.trickHistory[this.trickHistory.length - 1];
+        const plays = (lastTrick?.plays || []).map(play => ({ player: play.player, card: play.card.code }));
+        const seven = sevenOnLastTrick({ plays, winner: lastTrick?.winner }, this.trump, this.currentCaller, this.sevenCalled);
+        if (!seven) {
+            return;
+        }
+        const { earnings, message } = this.pointsService.calculateSevenEarnings(seven, this.currentCaller);
+        earnings.forEach((cents, player) => this.playerToMoney.set(player, this.playerToMoney.get(player) + cents));
+        this.sevenMessage = message;
+    }
+
+    // Game, or Game and the 7 of trump. Called by the caller's buttons, or by the PC.
+    announce(callSeven: boolean): void {
+        if (!this.announcing) {
+            return;
+        }
+        this.sevenCalled = callSeven;
+        this.announcing = false;
+    }
+
+    // The buttons only work for a caller you are playing
+    announceFromButton(callSeven: boolean): void {
+        if (this.isPcSeat(this.activePlayer)) {
+            return;
+        }
+        this.animateCardMoves(() => this.announce(callSeven));
+    }
+
+    // the 7 of trump as players say it, such as 7♥
+    getSevenName(): string {
+        return this.trump ? cardName(sevenOfTrump(this.trump)) : '';
     }
 
     canBuryCard(): boolean {
@@ -520,6 +578,9 @@ export class GameComponent implements OnInit, OnDestroy {
             this.allPiles = new Map();
             this.trickHistory = [];
             this.pcExplanation = '';
+            this.announcing = false;
+            this.sevenCalled = false;
+            this.sevenMessage = '';
             this.waitingForNext = false;
             this.trickWinnerToCollect = null;
             this.setToNextDealer();

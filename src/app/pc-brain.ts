@@ -1,6 +1,8 @@
 // How the PC decides, as plain functions on card codes. It only uses what a real player would know:
 // its own hand, its own buried cards if it is the caller, every card played so far, and who has run out of a suit.
-import { completesMarriage, getLegalCards, isPointCard, isTrump, rankOf, rankStrength, suitOf, trickWinnerIndex, validateBury } from './rules';
+import {
+    completesMarriage, getLegalCards, isPointCard, isTrump, rankOf, rankStrength, sevenOfTrump, suitOf, trickWinnerIndex, validateBury
+} from './rules';
 
 export interface BrainView {
     seat: number;
@@ -134,8 +136,14 @@ export class Knowledge {
     }
 }
 
-// How much it hurts to give a card away: points first, then trump, then marriage cards, then rank
+// How much it hurts to give a card away: points first, then trump, then marriage cards, then rank.
+// The caller keeps the 7 of trump for the last trick, where it scores, so for the caller it comes just below the point
+// cards. A defender gives it up early, as its lowest trump: on the last trick it would usually be beaten by the caller's
+// higher trumps, and a beaten 7 costs its side.
 function cost(card: string, view: BrainView): number {
+    if (card === sevenOfTrump(view.trump) && view.seat === view.caller && view.hand.length > 1) {
+        return 95;
+    }
     if (isPointCard(card)) {
         return 100 + rankStrength(card);
     }
@@ -175,6 +183,25 @@ function pointAtRisk(cards: string[], view: BrainView, knowledge: Knowledge): st
 function weakestPoint(cards: string[]): string | undefined {
     const points = cards.filter(isPointCard);
     return points.length ? bestOf(points, rankStrength) : undefined;
+}
+
+// With this many trumps, the caller expects to keep the 7 of trump to the last trick and win it there
+const CALL_SEVEN_TRUMPS = 5;
+
+export interface AnnouncementChoice {
+    callSeven: boolean;
+    reason: string;
+}
+
+// The caller holds the 7 of trump: call it for double, or keep it silent
+export function chooseAnnouncement(hand: string[], trump: string): AnnouncementChoice {
+    const trumps = hand.filter(card => isTrump(card, trump)).length;
+    const seven = cardName(sevenOfTrump(trump));
+    return trumps >= CALL_SEVEN_TRUMPS
+        ? { callSeven: true, reason: 'called the ' + seven + ': it holds ' + trumps + ' trumps, so it expects to keep the ' + seven
+            + ' for the last trick and win it' }
+        : { callSeven: false, reason: 'played the Game without calling the ' + seven + ': with only ' + trumps
+            + ' trumps, the ' + seven + ' could be beaten on the last trick' };
 }
 
 export function chooseTrump(hand: string[]): BrainChoice {

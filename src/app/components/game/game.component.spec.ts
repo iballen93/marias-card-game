@@ -11,6 +11,8 @@ describe('GameComponent', () => {
   let routeData: { mode: string };
 
   const handSizes = () => [1, 2, 3].map(player => component.allPiles.get('player' + player).length);
+  // the deal may give the caller the 7 of trump, which brings the Game or Game + 7 question before the first card
+  const announceIfAsked = () => component.announcing && component.announceFromButton(false);
 
   const startGame = async () => {
     const fixture = TestBed.createComponent(GameComponent);
@@ -129,6 +131,7 @@ describe('GameComponent', () => {
     const playLegal = () => component.cardSelected(component.getActivePlayerPile().find(c => component.legalCards.includes(c.code)));
     component.cardSelected(component.getActivePlayerPile()[0]);
     [0, 1].forEach(() => component.cardSelected(component.getActivePlayerPile().find(c => !'A0'.includes(c.code.charAt(0)))));
+    announceIfAsked();
     [0, 1, 2].forEach(playLegal);
     expect(component.showingCompletedHand).toBeTrue();
 
@@ -158,7 +161,9 @@ describe('GameComponent', () => {
     // Plays your cards when it's your turn and lets time pass otherwise, until the round ends
     const playRoundAsPlayer1 = () => {
       for (let step = 0; step < 500 && !component.canPlayAgain; step++) {
-        if (component.activePlayer === 1 && !component.showingCompletedHand) {
+        if (component.announcing && component.activePlayer === 1) {
+          component.announceFromButton(false);
+        } else if (component.activePlayer === 1 && !component.showingCompletedHand) {
           const card = component.buryingCards || component.pickingTrump
             ? hand(1).find(c => !'A0'.includes(c.code.charAt(0)))
             : hand(1).find(c => component.legalCards.includes(c.code));
@@ -174,6 +179,8 @@ describe('GameComponent', () => {
       for (let step = 0; step < 500 && !component.canPlayAgain; step++) {
         if (component.waitingForNext && (component.showingCompletedHand || component.activePlayer !== 1)) {
           component.next();
+        } else if (component.announcing && component.activePlayer === 1) {
+          component.announceFromButton(false);
         } else if (component.activePlayer === 1 && !component.showingCompletedHand) {
           const card = component.buryingCards || component.pickingTrump
             ? hand(1).find(c => !'A0'.includes(c.code.charAt(0)))
@@ -218,6 +225,10 @@ describe('GameComponent', () => {
       expect(pile('player2Bury').length).toBe(2);
       expect(pile('player2Bury').some(card => 'A0'.includes(card.code.charAt(0)))).toBeFalse();
       tick(PC_MOVE_MS);
+      if (!pile('game').length) {
+        // the deal gave the PC the 7 of trump, so it announced first
+        tick(PC_MOVE_MS);
+      }
       expect(pile('game').length).toBe(1);
       fixture.destroy();
     }));
@@ -226,6 +237,7 @@ describe('GameComponent', () => {
       startPcGame();
       component.cardSelected(hand(1)[0]);
       [0, 1].forEach(() => component.cardSelected(hand(1).find(c => !'A0'.includes(c.code.charAt(0)))));
+      announceIfAsked();
       component.cardSelected(hand(1).find(c => component.legalCards.includes(c.code)));
       expect(component.activePlayer).toBe(2);
 
@@ -240,6 +252,7 @@ describe('GameComponent', () => {
       startPcGame();
       component.cardSelected(hand(1)[0]);
       [0, 1].forEach(() => component.cardSelected(hand(1).find(c => !'A0'.includes(c.code.charAt(0)))));
+      announceIfAsked();
       component.cardSelected(hand(1).find(c => component.legalCards.includes(c.code)));
       tick(PC_MOVE_MS * 2);
       expect(pile('game').length).toBe(3);
@@ -257,6 +270,7 @@ describe('GameComponent', () => {
       startPcGame();
       component.cardSelected(hand(1)[0]);
       [0, 1].forEach(() => component.cardSelected(hand(1).find(c => !'A0'.includes(c.code.charAt(0)))));
+      announceIfAsked();
       component.cardSelected(hand(1).find(c => component.legalCards.includes(c.code)));
 
       const pcView = (component as any).getPcView();
@@ -272,6 +286,7 @@ describe('GameComponent', () => {
       startPcGame();
       component.cardSelected(hand(1)[0]);
       [0, 1].forEach(() => component.cardSelected(hand(1).find(c => !'A0'.includes(c.code.charAt(0)))));
+      announceIfAsked();
       component.cardSelected(hand(1).find(c => component.legalCards.includes(c.code)));
 
       const pcCard = hand(2).find(c => component.legalCards.includes(c.code));
@@ -287,6 +302,7 @@ describe('GameComponent', () => {
       component.gameMode = 'learning-pc-slow';
       component.cardSelected(hand(1)[0]);
       [0, 1].forEach(() => component.cardSelected(hand(1).find(c => !'A0'.includes(c.code.charAt(0)))));
+      announceIfAsked();
       component.cardSelected(hand(1).find(c => component.legalCards.includes(c.code)));
 
       // Player 2 plays and explains, then nothing happens until Next
@@ -325,6 +341,11 @@ describe('GameComponent', () => {
       expect(pile('player2Bury').length).toBe(2);
       expect(pile('game').length).toBe(0);
       component.next();
+      if (!pile('game').length) {
+        // the deal gave the PC the 7 of trump, so it announced Game or Game + 7 first: one more Next
+        expect(component.pcExplanation).toContain('the 7');
+        component.next();
+      }
       expect(pile('game').length).toBe(1);
       fixture.destroy();
       tick(PC_MOVE_MS);
@@ -352,10 +373,88 @@ describe('GameComponent', () => {
       tick(PC_MOVE_MS);
     }));
 
+    describe('the 7 of trump', () => {
+      // Moves the 7 of trump into, or out of, a player's hand, swapping it for a low card, so the deal doesn't decide the test
+      const giveSeven = (player: number, holds: boolean) => {
+        const seven = '7' + component.trump.charAt(0);
+        const owner = [1, 2, 3].find(other => hand(other).some(c => c.code === seven));
+        const target = holds ? player : [1, 2, 3].find(other => other !== player);
+        if (!owner || owner === target) {
+          return;
+        }
+        const from = hand(owner);
+        const to = hand(target);
+        const sevenCard = from.find(c => c.code === seven);
+        const swap = to.find(c => !'A0'.includes(c.code.charAt(0)) && c.code.charAt(1) !== seven.charAt(1));
+        from.splice(from.indexOf(sevenCard), 1, swap);
+        to.splice(to.indexOf(swap), 1, sevenCard);
+      };
+      const buryLow = (player: number) => [0, 1].forEach(() => component.cardSelected(
+        hand(player).find(c => !'A0'.includes(c.code.charAt(0)) && c.code !== '7' + component.trump.charAt(0))));
+
+      it('should ask the caller holding it to play the Game or call the 7, and wait for the answer', fakeAsync(() => {
+        startPcGame();
+        component.cardSelected(hand(1)[0]);
+        giveSeven(1, true);
+        buryLow(1);
+        expect(component.announcing).toBeTrue();
+        expect(component.legalCards).toEqual([]);
+        component.cardSelected(hand(1)[0]);
+        expect(pile('game').length).toBe(0);
+
+        component.announceFromButton(true);
+        expect(component.announcing).toBeFalse();
+        expect(component.sevenCalled).toBeTrue();
+        expect(component.legalCards.length).toBeGreaterThan(0);
+        fixture.destroy();
+      }));
+
+      it('should skip the question when the caller doesn\'t hold the 7 of trump', fakeAsync(() => {
+        startPcGame();
+        component.cardSelected(hand(1)[0]);
+        giveSeven(1, false);
+        buryLow(1);
+        expect(component.announcing).toBeFalse();
+        expect(component.sevenCalled).toBeFalse();
+        fixture.destroy();
+      }));
+
+      it('should let the PC caller decide and explain it', fakeAsync(() => {
+        startPcGame();
+        playRoundAsPlayer1();
+        component.playAgain();
+        tick(PC_MOVE_MS);
+        giveSeven(2, true);
+        tick(PC_MOVE_MS * 2);
+        expect(component.announcing).toBeTrue();
+        // your buttons don't answer for the PC
+        component.announceFromButton(true);
+        expect(component.announcing).toBeTrue();
+        tick(PC_MOVE_MS);
+        expect(component.announcing).toBeFalse();
+        expect(component.pcExplanation).toContain('the 7');
+        fixture.destroy();
+        tick(PC_MOVE_MS);
+      }));
+
+      it('should start the next round without a called 7', fakeAsync(() => {
+        startPcGame();
+        component.sevenCalled = true;
+        component.sevenMessage = 'something';
+        playRoundAsPlayer1();
+        component.playAgain();
+        expect(component.sevenCalled).toBeFalse();
+        expect(component.sevenMessage).toBe('');
+        fixture.destroy();
+        tick(PC_MOVE_MS * 4);
+      }));
+    });
+
     describe('Standard', () => {
       const buryAndLead = () => {
         component.cardSelected(hand(1)[0]);
         [0, 1].forEach(() => component.cardSelected(hand(1).find(c => !'A0'.includes(c.code.charAt(0)))));
+        announceIfAsked();
       };
 
       it('should keep the PC hands face down, and yours face up', fakeAsync(() => {
@@ -411,6 +510,7 @@ describe('GameComponent', () => {
       startPcGame();
       component.cardSelected(hand(1)[0]);
       [0, 1].forEach(() => component.cardSelected(hand(1).find(c => !'A0'.includes(c.code.charAt(0)))));
+      announceIfAsked();
       component.cardSelected(hand(1).find(c => component.legalCards.includes(c.code)));
       fixture.destroy();
 
