@@ -7,7 +7,6 @@
          [style.--win-peek]="getWinCardPeek()">
         <app-card-pile
                 title="Bury Pile"
-                [alwaysShowTitle]="isCaller"
                 [cards]="buryCards"
                 [faceDown]="hideBury"
                 cardWidth="var(--side-card)"
@@ -18,7 +17,6 @@
 
         <app-card-pile
                 [title]="getWinPileTitle()"
-                [alwaysShowTitle]="true"
                 [cards]="winCards"
                 [faceDown]="hideWin"
                 cardWidth="var(--side-card)"

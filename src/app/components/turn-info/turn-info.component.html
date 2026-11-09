@@ -8,6 +8,7 @@
 <div *ngIf="winMessage != ''" style="color: green; font-size: var(--message-small); background-color: white; display: inline-block; padding: var(--message-padding); border-radius: 0.625rem; font-weight: bold;">
     {{winMessage}}
 </div>
+<button *ngIf="canPlayAgain" type="button" class="play-again-button" (click)="playAgain.emit()">PLAY AGAIN</button>
 
 <br>
 <div *ngIf="pcExplanation" class="pc-explanation">

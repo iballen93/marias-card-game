@@ -18,7 +18,6 @@ export class CardPileComponent implements OnInit {
 
   @Input() cards: Card[];
   @Input() title: string;
-  @Input() alwaysShowTitle = false;
 
   // Without a width, cards stay full size and overlap more as the pile runs out of room
   @Input() cardWidth: string;

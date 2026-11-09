@@ -16,6 +16,9 @@ export class TurnInfoComponent implements OnInit {
     // vs PC Slow: show a Next button so you can read the explanation before the game moves on
     @Input() showNext: boolean;
     @Output() next = new EventEmitter<void>();
+    // shown right under the round's result
+    @Input() canPlayAgain: boolean;
+    @Output() playAgain = new EventEmitter<void>();
 
     @Input() pickingTrump: boolean;
     @Input() buryingCards: boolean;

@@ -14,7 +14,8 @@
                  (click)="selectCard(card)">
         </div>
     </div>
-    <div *ngIf="title && (cards || alwaysShowTitle)" style="text-align: center; color: white; font-weight: bold; margin-top: -5px; font-size: var(--pile-title-size);">
+    <!-- a pile is only labelled once it has cards -->
+    <div *ngIf="title && cards?.length" style="text-align: center; color: white; font-weight: bold; margin-top: -5px; font-size: var(--pile-title-size);">
         {{ title }}
     </div>
 </div>
