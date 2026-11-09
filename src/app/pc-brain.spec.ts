@@ -67,7 +67,15 @@ describe('PC brain', () => {
       // Player 3 called; partner Player 2 led the K♠ and Player 3 followed under it. Player 1 has no spades, so it must trump
       const choice = choosePlay(view({ seat: 1, caller: 3, trick: ['KS', '7S'], hand: ['AH', '7H', '9D'] }));
       expect(choice.card).toBe('7H');
-      expect(choice.reason).toContain('lowest card that does, the 7♥');
+      expect(choice.reason).toBe('had no spades, so it had to trump partner Player 2\'s K♠, and used its lowest trump, the 7♥, '
+        + 'and the trick stays with the team');
+    });
+
+    it('should explain that it had to trump its partner when it has none of the suit led', () => {
+      // Diamonds are trump and Player 1 called. Partner Player 2 led the A♣, and Player 3 has no clubs
+      const choice = choosePlay(view({ seat: 3, caller: 1, trump: 'DIAMONDS', trick: ['AC'], hand: ['7D', 'KD', '9S'] }));
+      expect(choice.card).toBe('7D');
+      expect(choice.reason).toBe('had no clubs, so it had to trump partner Player 2\'s A♣, and used its lowest trump, the 7♦');
     });
 
     it('should bank a 10 of trump over its partner while the A of trump is still out', () => {

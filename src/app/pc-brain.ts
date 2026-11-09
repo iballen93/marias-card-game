@@ -270,13 +270,9 @@ function playLast(view: BrainView, knowledge: Knowledge, legal: string[]): Brain
         }
         // the rules make it go over its partner, so the trick stays with the team either way
         const point = pointAtRisk(legal, view, knowledge);
-        if (point) {
-            return { card: point, reason: 'had to go over partner Player ' + winner + ', so it played the ' + cardName(point)
-                + ' to bank its point, and the trick stays with the team' };
-        }
-        const card = cheapest(legal, view);
-        return { card, reason: 'had to go over partner Player ' + winner + ', so it played its lowest card that does, the '
-            + cardName(card) + ', and the trick stays with the team' };
+        const card = point || cheapest(legal, view);
+        return { card, reason: goingOverPartner(view, winner, view.trick[winnerIndex], card, legal, !!point)
+            + ', and the trick stays with the team' };
     }
 
     if (winners.length) {
@@ -298,6 +294,24 @@ function playLast(view: BrainView, knowledge: Knowledge, legal: string[]): Brain
 
     const lowest = cheapest(legal, view);
     return { card: lowest, reason: 'can\'t win the trick, so it threw its lowest card, the ' + cardName(lowest) };
+}
+
+// Why it beat its own partner's card, in the words a player would use. Out of the suit that was led, the rules make it
+// trump (and go over a partner's trump if it can); otherwise it had to follow suit and go over.
+function goingOverPartner(view: BrainView, partner: number, partnerCard: string, card: string, legal: string[],
+                          banksPoint: boolean): string {
+    const ledSuit = suitOf(view.trick[0]);
+    const trumping = isTrump(card, view.trump) && !isTrump(view.trick[0], view.trump);
+    // any trump beats a card of another suit, so "that does" is only needed when following suit
+    const kind = trumping ? 'trump' : ONE_OF_SUIT[suitOf(card)] + ' that does';
+    const choice = banksPoint ? 'the ' + cardName(card) + ' to bank its point'
+        : (legal.length === 1 ? 'its only ' : 'its lowest ') + kind + ', the ' + cardName(card);
+    if (trumping) {
+        const over = isTrump(partnerCard, view.trump) ? 'trump higher than' : 'trump';
+        return 'had no ' + suitName(ledSuit).toLowerCase() + ', so it had to ' + over + ' partner Player ' + partner + '\'s '
+            + cardName(partnerCard) + ', and used ' + choice;
+    }
+    return 'had to go over partner Player ' + partner + '\'s ' + cardName(partnerCard) + ', so it played ' + choice;
 }
 
 // Playing 2nd: nothing still out can beat this card, as far as it can tell. A trump is certain; a suit card also needs
@@ -334,8 +348,7 @@ function playSecond(view: BrainView, knowledge: Knowledge, legal: string[]): Bra
         }
         if (!underPartner.length) {
             const low = cheapest(legal, view);
-            return { card: low, reason: 'had to go over partner Player ' + leader + '\'s ' + cardName(leadCard)
-                + ', so it played its lowest card that does, the ' + cardName(low) };
+            return { card: low, reason: goingOverPartner(view, leader, leadCard, low, legal, false) };
         }
         const card = cheapest(underPartner, view);
         return { card, reason: 'played low with the ' + cardName(card) + ' under partner Player ' + leader + '\'s lead' };
