@@ -111,6 +111,8 @@ One player still plays after it.
 | Situation | What it does | Explanation |
 |---|---|---|
 | partner led the highest card left, and the player after hasn't shown they can trump it | gives partner a 10 or A | gave the *card* to partner Player *N*, whose *card* is the highest *suit* left |
+| partner led a card the last player could still beat, and it holds a point card that is the highest left in that suit (and the last player hasn't shown they can trump it) | **takes over** with it, banking the point now. It doesn't know who holds the cards still out: if its partner has the 10, the partner can bank it in a later trick, and if the opponent has it, the opponent may lose it to a trump | took over partner Player *N*'s *card* with the *card*: it's the highest *suit* left, so it banks its point now, while Player *N* most likely still has to follow suit |
+| partner led, and every legal card goes over it | plays its lowest card that does | had to go over partner Player *N*'s *card*, so it played its lowest card that does, the *card* |
 | partner led, otherwise | plays low under partner | played low with the *card* under partner Player *N*'s lead |
 | an opponent led and its partner plays last, and it can win with a point card that could be lost later | wins with it. Only its partner plays after, so the point is safe | won with the *card*: only partner Player *N* plays after, so the point is safe |
 | same, and the trick has points or it can win cheaply | takes the lead | took the lead with the *card*, with partner Player *N* still to play |

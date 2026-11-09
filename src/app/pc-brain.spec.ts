@@ -92,6 +92,22 @@ describe('PC brain', () => {
       expect(choosePlay(view({ seat: 2, caller: 3, trick: ['AS'], hand: ['0S', '7S', '8D'] })).card).toBe('0S');
     });
 
+    it('should take over a partner\'s low lead with the A to bank its point', () => {
+      // Clubs are trump and Player 1 called. Partner Player 2 led the 7♥; the K♥ or 10♥ could still beat a Q♥
+      const hand = ['8S', '9S', 'KD', '7C', '9C', 'AH', 'QH'];
+      const choice = choosePlay(view({ seat: 3, caller: 1, trump: 'CLUBS', trick: ['7H'], hand }));
+      expect(choice.card).toBe('AH');
+      expect(choice.reason).toContain('took over partner Player 2\'s 7♥ with the A♥');
+    });
+
+    it('should say it went over its partner when every legal card does', () => {
+      // the caller has shown it can trump hearts, so taking over with the A♥ isn't safe
+      const tricks = [{ plays: [{ player: 2, card: '8H' }, { player: 3, card: 'JH' }, { player: 1, card: '7C' }] }];
+      const choice = choosePlay(view({ seat: 3, caller: 1, trump: 'CLUBS', trick: ['7H'], hand: ['8S', 'AH', 'QH'], tricks }));
+      expect(choice.card).toBe('QH');
+      expect(choice.reason).toContain('had to go over partner Player 2\'s 7♥');
+    });
+
     it('should not give a point when the caller has shown it can trump the lead', () => {
       // earlier, Player 3 had no spades and played a trump
       const tricks = [{ plays: [{ player: 1, card: 'KS' }, { player: 2, card: 'QS' }, { player: 3, card: '7H' }] }];

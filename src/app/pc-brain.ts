@@ -285,6 +285,14 @@ function playLast(view: BrainView, knowledge: Knowledge, legal: string[]): Brain
     return { card: lowest, reason: 'can\'t win the trick, so it threw its lowest card, the ' + cardName(lowest) };
 }
 
+// Playing 2nd: nothing still out can beat this card, as far as it can tell. A trump is certain; a suit card also needs
+// the last player not to have shown they can trump the suit.
+function winsForSure(card: string, view: BrainView, knowledge: Knowledge, last: number): boolean {
+    return isTrump(card, view.trump)
+        ? !knowledge.unseen.some(other => isTrump(other, view.trump) && rankStrength(other) > rankStrength(card))
+        : knowledge.isMaster(card) && !knowledge.mayTrump(last, suitOf(card));
+}
+
 function playSecond(view: BrainView, knowledge: Knowledge, legal: string[]): BrainChoice {
     const leader = knowledge.leader();
     const last = seatAfter(view.seat, 1);
@@ -299,7 +307,22 @@ function playSecond(view: BrainView, knowledge: Knowledge, legal: string[]): Bra
             return { card: gift, reason: 'gave the ' + cardName(gift) + ' to partner Player ' + leader + ', whose ' + cardName(leadCard)
                 + ' is the highest ' + ONE_OF_SUIT[suitOf(leadCard)] + ' left' };
         }
-        const card = cheapest(underPartner.length ? underPartner : legal, view);
+        // Partner's card could still be beaten by the last player. Taking over with the highest card left banks its point
+        // now: the last player has to follow suit and can't go over it, unless they're secretly out of the suit and trump.
+        if (!leadHolds) {
+            const point = pointAtRisk(winners.filter(option => winsForSure(option, view, knowledge, last)), view, knowledge);
+            if (point) {
+                return { card: point, reason: 'took over partner Player ' + leader + '\'s ' + cardName(leadCard)
+                    + ' with the ' + cardName(point) + ': it\'s the highest ' + ONE_OF_SUIT[suitOf(point)] + ' left, so it banks its point now, while Player ' + last
+                    + ' most likely still has to follow suit' };
+            }
+        }
+        if (!underPartner.length) {
+            const low = cheapest(legal, view);
+            return { card: low, reason: 'had to go over partner Player ' + leader + '\'s ' + cardName(leadCard)
+                + ', so it played its lowest card that does, the ' + cardName(low) };
+        }
+        const card = cheapest(underPartner, view);
         return { card, reason: 'played low with the ' + cardName(card) + ' under partner Player ' + leader + '\'s lead' };
     }
 
@@ -318,9 +341,7 @@ function playSecond(view: BrainView, knowledge: Knowledge, legal: string[]): Bra
     }
 
     // it's the caller: both other players are against it, and one still plays after
-    const safe = winners.filter(card => isTrump(card, view.trump)
-        ? !knowledge.unseen.some(other => isTrump(other, view.trump) && rankStrength(other) > rankStrength(card))
-        : knowledge.isMaster(card) && !knowledge.mayTrump(last, suitOf(card)));
+    const safe = winners.filter(card => winsForSure(card, view, knowledge, last));
     if (safe.length) {
         const point = strongestPoint(safe);
         const card = point || cheapest(safe, view);
