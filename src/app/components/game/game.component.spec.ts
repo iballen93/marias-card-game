@@ -236,6 +236,21 @@ describe('GameComponent', () => {
       tick(PC_MOVE_MS);
     }));
 
+    it('should only show the PC its own hand, never the other hands', fakeAsync(() => {
+      startPcGame();
+      component.cardSelected(hand(1)[0]);
+      [0, 1].forEach(() => component.cardSelected(hand(1).find(c => !'A0'.includes(c.code.charAt(0)))));
+      component.cardSelected(hand(1).find(c => component.legalCards.includes(c.code)));
+
+      const pcView = (component as any).getPcView();
+      expect(Object.keys(pcView).sort()).toEqual(['bury', 'caller', 'hand', 'phase', 'seat', 'trick', 'tricks', 'trump']);
+      expect(pcView.hand).toBe(hand(2));
+      // Player 1 is the caller, so Player 2 has no buried cards to know about
+      expect(pcView.bury).toEqual([]);
+      fixture.destroy();
+      tick(PC_MOVE_MS);
+    }));
+
     it('should ignore clicks on cards during the PC turn', fakeAsync(() => {
       startPcGame();
       component.cardSelected(hand(1)[0]);

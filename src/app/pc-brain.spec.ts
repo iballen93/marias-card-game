@@ -97,6 +97,45 @@ describe('PC brain', () => {
     it('should not lead a 10 while the A of that suit is still out', () => {
       expect(choosePlay(view({ seat: 2, caller: 1, hand: ['0C', '8D', '9D'] })).card).not.toBe('0C');
     });
+
+    it('should bank the point in the suit with the fewest cards still out first, before someone runs out and trumps it', () => {
+      // only 3 diamonds are out, against 6 clubs
+      const choice = choosePlay(view({ seat: 2, caller: 1, hand: ['AC', '7C', 'AD', 'KD', 'QD', 'JD', '9D'] }));
+      expect(choice.card).toBe('AD');
+      expect(choice.reason).toContain('only 3 diamonds are still out');
+    });
+
+    it('should draw trumps first as the caller when its point card is in a short suit', () => {
+      // only the 10♦ and 7♦ are out, and it holds as many trumps as are still out
+      const choice = choosePlay(view({ seat: 1, caller: 1, hand: ['AH', '0H', 'KH', 'QH', 'AD', 'KD', 'QD', 'JD', '9D', '8D'] }));
+      expect(choice.card).toBe('AH');
+      expect(choice.reason).toContain('draw out trumps first');
+    });
+
+    it('should not lead into a suit that nobody else has while trumps are still out', () => {
+      // it holds all 8 clubs, so anyone else would have to trump them
+      expect(choosePlay(view({ seat: 2, caller: 1, hand: ['AC', 'KC', 'QC', 'JC', '0C', '9C', '8C', '7C', '7S'] })).card).toBe('7S');
+    });
+
+    it('should lead the K to force out the A when it holds the 10 but not the A', () => {
+      const choice = choosePlay(view({ seat: 2, caller: 1, hand: ['0D', 'KD', '7S', '8S', '9C'] }));
+      expect(choice.card).toBe('KD');
+      expect(choice.reason).toContain('force out the A♦');
+    });
+
+    it('should not lead the K into a suit an opponent has shown it can trump', () => {
+      // Player 1 had no diamonds and trumped one, which the PC saw happen
+      const tricks = [{ plays: [{ player: 3, card: 'QD' }, { player: 1, card: '7H' }, { player: 2, card: 'JD' }] }];
+      expect(choosePlay(view({ seat: 2, caller: 1, hand: ['0D', 'KD', '7S', '8S', '9C'], tricks })).card).not.toBe('KD');
+    });
+  });
+
+  it('should choose among equally good cards instead of always the same one', () => {
+    // three 7s with plenty of each suit still out are all equally good leads
+    spyOn(Math, 'random').and.returnValues(0, 0.5, 0.99);
+    const hand = ['7S', '7D', '7C', 'KH'];
+    const picks = [0, 1, 2].map(() => choosePlay(view({ seat: 2, caller: 1, hand })).card);
+    expect(new Set(picks)).toEqual(new Set(['7S', '7D', '7C']));
   });
 
   it('should always choose a legal card and explain it', () => {

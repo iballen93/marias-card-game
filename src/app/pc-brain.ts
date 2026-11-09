@@ -30,6 +30,8 @@ const ONE_OF_SUIT = { S: 'spade', D: 'diamond', C: 'club', H: 'heart' };
 const ALL_CARDS = SUITS.split('').reduce((cards, suit) => cards.concat(RANKS.split('').map(rank => rank + suit)), [] as string[]);
 // a trump this high is worth keeping for a trick that has points in it
 const HIGH_TRUMP = rankStrength('KS');
+// with this few cards of a suit still out, one of the other players has probably run out of it
+const SHORT_SUIT = 2;
 
 export function cardName(code: string): string {
     return RANK_NAMES[rankOf(code)] + SUIT_SYMBOLS[suitOf(code)];
@@ -99,6 +101,16 @@ class Knowledge {
         return this.unseen.filter(card => isTrump(card, this.view.trump)).length;
     }
 
+    // How many cards of a suit it hasn't seen: in the other hands, or buried by the caller
+    outInSuit(suit: string): number {
+        return this.unseen.filter(card => suitOf(card) === suit).length;
+    }
+
+    // Cards of the same suit still out that would beat this one
+    higherOut(card: string): string[] {
+        return this.unseen.filter(other => suitOf(other) === suitOf(card) && rankStrength(other) > rankStrength(card));
+    }
+
     private markVoid(player: number, suit: string): void {
         if (!this.voids.has(player)) {
             this.voids.set(player, new Set());
@@ -121,19 +133,27 @@ function cost(card: string, view: BrainView): number {
     return rankStrength(card);
 }
 
+// The option with the lowest score. When several are equally good (three 7s in different suits, say),
+// any of them may be chosen, so the PC doesn't play the same way every time.
+function bestOf<T>(options: T[], score: (option: T) => number): T {
+    const lowest = Math.min(...options.map(score));
+    const ties = options.filter(option => score(option) === lowest);
+    return ties[Math.floor(Math.random() * ties.length)];
+}
+
 function cheapest(cards: string[], view: BrainView): string {
-    return cards.reduce((best, card) => cost(card, view) < cost(best, view) ? card : best);
+    return bestOf(cards, card => cost(card, view));
 }
 
 function strongestPoint(cards: string[]): string | undefined {
     const points = cards.filter(isPointCard);
-    return points.length ? points.reduce((best, card) => rankStrength(card) > rankStrength(best) ? card : best) : undefined;
+    return points.length ? bestOf(points, card => -rankStrength(card)) : undefined;
 }
 
 // Gives the 10 before the A: both are one point, and the A is more often the highest card left
 function weakestPoint(cards: string[]): string | undefined {
     const points = cards.filter(isPointCard);
-    return points.length ? points.reduce((best, card) => rankStrength(card) < rankStrength(best) ? card : best) : undefined;
+    return points.length ? bestOf(points, rankStrength) : undefined;
 }
 
 export function chooseTrump(hand: string[]): BrainChoice {
@@ -144,7 +164,7 @@ export function chooseTrump(hand: string[]): BrainChoice {
             + (has('K') && has('Q') ? 3 : 0);
     };
     const suits = SUITS.split('').filter(option => hand.some(card => suitOf(card) === option));
-    const best = (options: string[]) => options.reduce((top, option) => score(option) > score(top) ? option : top);
+    const best = (options: string[]) => bestOf(options, option => -score(option));
     const others = suits.filter(option => option !== 'S');
     // Spades doubles what's won or lost, so only pick it when it's clearly the strongest
     let suit = others.length ? best(others) : 'S';
@@ -173,9 +193,7 @@ export function chooseBury(hand: string[], trump: string): BrainChoice {
 
     const suitCount = (option: string) => hand.filter(other => suitOf(other) === suitOf(option)).length;
     // the shortest suit first, so burying can leave the PC out of it; then the lowest card
-    const isBetter = (option: string, best: string) => suitCount(option) < suitCount(best)
-        || suitCount(option) === suitCount(best) && rankStrength(option) < rankStrength(best);
-    const pick = options.reduce((best, option) => isBetter(option, best) ? option : best);
+    const pick = bestOf(options, option => suitCount(option) * 10 + rankStrength(option));
 
     const reason = suitCount(pick) === 1 && !isTrump(pick, trump)
         ? 'buried the ' + cardName(pick) + ' to run out of ' + suitName(suitOf(pick)) + ', so it can trump them later'
@@ -319,19 +337,58 @@ function lead(view: BrainView, knowledge: Knowledge, legal: string[]): BrainChoi
         }
     }
 
+    const others = [1, 2, 3].filter(player => player !== view.seat);
+    const out = (card: string) => knowledge.outInSuit(suitOf(card));
     const safeSuit = (card: string) => !opponents.some(player => knowledge.mayTrump(player, suitOf(card)));
-    const masters = legal.filter(card => !isTrump(card, view.trump) && knowledge.isMaster(card) && safeSuit(card));
-    const pointMaster = strongestPoint(masters);
-    if (pointMaster) {
-        return { card: pointMaster, reason: 'led the ' + cardName(pointMaster) + ': it\'s the highest ' + ONE_OF_SUIT[suitOf(pointMaster)]
-            + ' left, so its point is safe' };
+    // with no cards of the suit still out, the other players can only trump it, unless the trumps are gone
+    const nobodyElseHasIt = (card: string) => out(card) === 0 && unseenTrumps > 0;
+    const masters = legal.filter(card => !isTrump(card, view.trump) && knowledge.isMaster(card) && safeSuit(card)
+        && !nobodyElseHasIt(card));
+    const pointMasters = masters.filter(isPointCard);
+
+    if (pointMasters.length) {
+        const top = trumps.length ? bestOf(trumps, option => -rankStrength(option)) : undefined;
+        const allShort = pointMasters.every(option => out(option) <= SHORT_SUIT);
+        // the caller with as many trumps as are out pulls them first, so a short suit's point card can't be trumped
+        if (allShort && view.seat === view.caller && top && knowledge.isMaster(top) && unseenTrumps > 0 && trumps.length >= unseenTrumps) {
+            const risky = pointMasters[0];
+            return { card: top, reason: 'led the ' + cardName(top) + ' to draw out trumps first: only ' + out(risky) + ' '
+                + suitName(suitOf(risky)).toLowerCase() + ' are still out, so its ' + cardName(risky) + ' could be trumped' };
+        }
+        // the suit with the fewest cards out first: it's the next one someone will run out of and trump
+        const card = bestOf(pointMasters, option => out(option) * 10 - rankStrength(option));
+        const reason = out(card) <= SHORT_SUIT + 1
+            ? ': it\'s the highest ' + ONE_OF_SUIT[suitOf(card)] + ' left and only ' + out(card) + ' '
+                + suitName(suitOf(card)).toLowerCase() + ' are still out, so it banks the point before anyone can trump it'
+            : ': it\'s the highest ' + ONE_OF_SUIT[suitOf(card)] + ' left, so its point is safe';
+        return { card, reason: 'led the ' + cardName(card) + reason };
     }
 
-    const suitLength = (card: string) => view.hand.filter(other => suitOf(other) === suitOf(card)).length;
+    // Holding the 10 but not the A: lead the card just under the A to force it out. Whoever holds the A and still has
+    // the suit must go over, and the A is the only card that can, so afterwards the 10 is the highest left.
+    // It can't know who holds the A, only that nobody has shown they're out of the suit, and that enough are still out.
+    const forcesTheAce = legal.filter(card => {
+        const suit = suitOf(card);
+        const higher = knowledge.higherOut(card);
+        return !isTrump(card, view.trump) && !isPointCard(card) && view.hand.includes('0' + suit)
+            && higher.length === 1 && higher[0] === 'A' + suit
+            && !others.some(player => knowledge.mayTrump(player, suit))
+            && (unseenTrumps === 0 || out(card) >= 3);
+    });
+    if (forcesTheAce.length) {
+        const card = cheapest(forcesTheAce, view);
+        const suit = suitOf(card);
+        return { card, reason: 'led the ' + cardName(card) + ' to force out the ' + cardName('A' + suit) + ': whoever holds it has to go over, '
+            + 'and then its ' + cardName('0' + suit) + ' is the highest ' + ONE_OF_SUIT[suit] + ' left' };
+    }
+
+    // Any of its lowest cards will do, so it varies which one, avoiding a suit someone has probably run out of
     const lowLeads = legal.filter(card => !isTrump(card, view.trump) && !isPointCard(card) && safeSuit(card));
     if (lowLeads.length) {
-        const card = lowLeads.reduce((best, option) => cost(option, view) < cost(best, view)
-            || cost(option, view) === cost(best, view) && suitLength(option) > suitLength(best) ? option : best);
+        const lowestCost = Math.min(...lowLeads.map(option => cost(option, view)));
+        const lowest = lowLeads.filter(option => cost(option, view) === lowestCost);
+        const roomy = lowest.filter(option => out(option) > SHORT_SUIT);
+        const card = bestOf(roomy.length ? roomy : lowest, () => 0);
         return { card, reason: 'led the ' + cardName(card) + ' to keep its high cards for later' };
     }
     if (masters.length) {

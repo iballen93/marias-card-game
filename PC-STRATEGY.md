@@ -17,10 +17,14 @@ The PC plays fair. It only uses what a real player at the table would know:
 
 From this it works out two things:
 
-- **Cards still out:** cards it hasn't seen, which are in the other hands or in the other caller's bury.
+- **Cards still out:** cards it hasn't seen, which are in the other hands or in the other caller's bury. It counts these per suit. If it holds 5 diamonds, it knows only 3 are out.
 - **Highest card left:** a card is the highest left in its suit when no card still out in that suit can beat it.
 
-It does **not** look at the other hands, even though they're face up in Learning Mode.
+It does **not** look at the other hands, even though they're face up in Learning Mode. The game only hands it its own cards, and a test checks this. So it never knows **who** holds a missing card, such as the A of a suit. It only knows the card hasn't appeared yet, and it learns more as players fail to follow suit or play trumps.
+
+## Variety
+
+When several cards are equally good for its reason, it chooses among them at random. For example, with three 7s in different suits that are all safe to lead, it doesn't always lead the same one. This doesn't make it stronger, it just makes it less predictable. It only ever chooses between cards that are equally good. It never picks a worse card for variety.
 
 ## How it ranks its own cards
 
@@ -59,7 +63,7 @@ The caller buries one card at a time, choosing in this order:
 
 1. Never an A or 10 (the rules forbid it).
 2. Avoid trumps and half of a marriage, unless nothing else is left.
-3. Prefer the card from its **shortest** suit, so it can run out of that suit and trump it later. Ties go to the lowest card.
+3. Prefer the card from its **shortest** suit, so it can run out of that suit and trump it later. Next, the lowest card. Remaining ties are chosen at random.
 
 | Explanation | When |
 |---|---|
@@ -112,12 +116,24 @@ One player still plays after it.
 | Order | Situation | What it does | Explanation |
 |---|---|---|---|
 | 1 | it is the caller, holds 2 or more trumps, and holds **more trumps than are still out** | leads its top trump, if it's the highest left, to draw out the others' trumps | led the *card* to draw out the other players' trumps |
-| 2 | it holds a 10 or A that is the highest left in its suit, and no opponent has shown they can trump that suit | leads it to bank the point | led the *card*: it's the highest *suit* left, so its point is safe |
-| 3 | it has a low card (not trump, not a point card) in a suit no opponent has shown they can trump | leads its lowest. Ties go to its longest suit | led the *card* to keep its high cards for later |
-| 4 | it holds a non-point card that is the highest left in its suit | leads it | led the *card*, the highest *suit* left |
-| 5 | anything else | leads the card it can best spare | led the *card*, the card it could best spare |
+| 2 | it holds a 10 or A that is the highest left in its suit, but **2 or fewer** cards of that suit are still out, so someone has probably run out. It is the caller and holds at least as many trumps as are still out | draws trumps first, so the point card can't be trumped | led the *card* to draw out trumps first: only *N* *suit* are still out, so its *card* could be trumped |
+| 3 | it holds a 10 or A that is the highest left in its suit, and no opponent has shown they can trump that suit | leads it to bank the point, from the suit with the **fewest cards still out** first, since that's the next one someone will run out of | led the *card*: it's the highest *suit* left, so its point is safe. When 3 or fewer are out: … and only *N* *suit* are still out, so it banks the point before anyone can trump it |
+| 4 | it holds a 10 but not the A, and the only card still out above one of its cards is the A. Nobody has shown they're out of that suit, and enough of the suit is still out | leads that card, usually the K, to **force out the A** (see below) | led the *card* to force out the A: whoever holds it has to go over, and then its 10 is the highest *suit* left |
+| 5 | it has a low card (not trump, not a point card) in a suit no opponent has shown they can trump | leads one of its lowest, avoiding a suit with 2 or fewer cards out. Ties are chosen at random | led the *card* to keep its high cards for later |
+| 6 | it holds a non-point card that is the highest left in its suit | leads it | led the *card*, the highest *suit* left |
+| 7 | anything else | leads the card it can best spare | led the *card*, the card it could best spare |
 
-A 10 is never led while the A of that suit is still out, because rule 2 needs the 10 to be the highest card left.
+- **A 10 is never led while the A is still out,** because rule 3 needs the 10 to be the highest card left.
+- **A suit nobody else has:** if no cards of a suit are still out and the other players still have trumps, it doesn't lead its high card there. The others would simply trump it.
+
+### Forcing out the A to free a 10
+
+With the 10 but not the A of a suit, the PC leads the card just under the A, which is usually the K. The rules say a player who follows suit **must go over** the card led if they can. Here the only card that can go over is the A, because the PC holds the 10. So whoever holds the A has to play it, as long as they still have that suit. After that, the PC's 10 is the highest card left, and its point can be banked safely. If the A was buried by the caller, the K just wins.
+
+The PC doesn't know who holds the A. It only does this when:
+- the A hasn't appeared yet
+- nobody has shown they're out of that suit and able to trump it, which it learns when a player fails to follow suit and plays a trump
+- at least 3 cards of the suit are still out, so the A holder very likely still has the suit
 
 ---
 
@@ -125,15 +141,11 @@ A 10 is never led while the A of that suit is still out, because rule 2 needs th
 
 These are the known gaps, roughly from most to least important.
 
-1. **Long suits get trumped.** It doesn't think about how many cards of a suit are still out. If it holds 5 diamonds, only 3 are left between the other two players, so one of them is likely to run out soon and trump the next diamond. The PC only avoids a suit after a player has **shown** they're out of it. As a result:
-   - It does lead an A or 10 first when that card is the highest left (rule 2 above), which banks the point early. It does this because the card is safe now, not because the suit is long.
-   - It doesn't draw trumps to protect a long side suit. It only draws trumps as caller when it holds more trumps than are still out.
-   - When leading low, ties go to its **longest** suit, which leads into the danger instead of away from it.
-2. **Getting the A out to free a 10.** With a 10 but not the A of a suit, it holds the 10 back and leads its cheapest low card. It never deliberately leads its K to force the A out. Leading the K works well in this game because of the "must go over" rule. Whoever holds the A and still has that suit has to play the A, since it's the only card above the K besides the PC's own 10. After that, the PC's 10 is the highest card left and its point is safe. If the A was buried by the caller, the K simply wins. It's riskier when the A holder may be out of the suit and able to trump instead, and leading a Q is weaker, because the K can beat it instead of the A.
-3. **No odds.** It treats a card as either safe (the highest left, and nobody has shown they can trump it) or not. It never weighs how likely it is that a player is out of a suit.
-4. **Planning the last trick.** It keeps trumps by giving them up late, which usually leaves one for the last trick (+1 point), but it doesn't plan for it on purpose.
-5. **Following its partner's signals.** It doesn't read anything into which low cards its partner throws.
-6. **Rules not in the game yet.** The 7 of trump on the last trick bonus and bidding (no tricks, all tricks, and so on) aren't built, so the PC has no rules for them.
+1. **Lone 10s still get trumped.** Over 20,000 simulated rounds, about 66% of 10s held without their A end up with their holder's team. About 70% of the rest are lost to **trumps**, not to the A, often when the 10 is the last card of its suit and the holder has to follow with it. Forcing out the A (above) only fixes the smaller part. Keeping a low card of the suit to follow with, or getting rid of the 10 before the suit runs short, would help more.
+2. **No odds.** It treats a card as either safe (the highest left, and nobody has shown they can trump it) or not. It never weighs how likely it is that a player is out of a suit.
+3. **Planning the last trick.** It keeps trumps by giving them up late, which usually leaves one for the last trick (+1 point), but it doesn't plan for it on purpose.
+4. **Following its partner's signals.** It doesn't read anything into which low cards its partner throws.
+5. **Rules not in the game yet.** The 7 of trump on the last trick bonus and bidding (no tricks, all tricks, and so on) aren't built, so the PC has no rules for them.
 
 ## Measured strength
 
@@ -145,6 +157,8 @@ Over 6,000 rounds for each pairing, simulated with the same rules as the game:
 | **PC** | random | **62.5%** | 6.8 |
 | random | **PC** | **16.4%** | 3.8 |
 | PC | PC | 52.0% | 6.2 |
+
+Adding the long-suit and lone-10 lead rules, plus variety, barely changed the totals. Over 20,000 rounds, the new rules keep slightly more lone 10s (65.9% against 65.7%), and the caller's win rate stays within a few tenths of a percent of the earlier PC. That's expected: these situations only come up now and then, and it's how a real player would play them.
 
 ## Changing how the PC plays
 
