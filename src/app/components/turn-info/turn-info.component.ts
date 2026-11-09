@@ -12,7 +12,6 @@ export class TurnInfoComponent implements OnInit {
     @Input() trump: string;
     @Input() bidMultiplier: number;
     @Input() activePlayer: number;
-    @Input() legalCards: string[];
     @Input() pcExplanation: string;
     // vs PC Slow: show a Next button so you can read the explanation before the game moves on
     @Input() showNext: boolean;

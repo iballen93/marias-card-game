@@ -38,6 +38,7 @@
 
     <app-card-pile
             [cards]="playerCards"
+            [liftedCards]="liftedCards"
             (cardSelected)="forwardCardSelected($event)"
             style="height: var(--hand-pile-height); width: 100%; overflow: hidden; display: flex; align-items: center; justify-content: center;">
     </app-card-pile>

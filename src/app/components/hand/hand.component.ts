@@ -17,6 +17,8 @@ export class HandComponent implements OnInit {
     @Input() marriageCards: Card[];
     @Input() buryCards: Card[];
     @Input() winCards: Card[];
+    // on this player's turn, the cards they can legally play
+    @Input() liftedCards: string[] = [];
 
     @Output() cardSelected = new EventEmitter<Card>();
 

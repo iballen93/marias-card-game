@@ -313,8 +313,12 @@ function playSecond(view: BrainView, knowledge: Knowledge, legal: string[]): Bra
     if (safe.length) {
         const point = strongestPoint(safe);
         const card = point || cheapest(safe, view);
-        return { card, reason: 'won with the ' + cardName(card) + ': no card still out can beat it'
-            + (point ? ', so its point is safe' : '') };
+        // a trump nothing can beat is certain; a suit card only wins if Player last isn't secretly out of the suit
+        const reason = isTrump(card, view.trump)
+            ? ': no trump still out can beat it' + (point ? ', so its point is safe' : '')
+            : ': it\'s the highest ' + ONE_OF_SUIT[suitOf(card)] + ' left and Player ' + last
+                + ' hasn\'t shown they can trump it' + (point ? ', so its point should be safe' : '');
+        return { card, reason: 'won with the ' + cardName(card) + reason };
     }
     if (winners.length && trickPoints(view)) {
         const card = cheapest(winners, view);
@@ -357,10 +361,16 @@ function lead(view: BrainView, knowledge: Knowledge, legal: string[]): BrainChoi
         }
         // the suit with the fewest cards out first: it's the next one someone will run out of and trump
         const card = bestOf(pointMasters, option => out(option) * 10 - rankStrength(option));
-        const reason = out(card) <= SHORT_SUIT + 1
-            ? ': it\'s the highest ' + ONE_OF_SUIT[suitOf(card)] + ' left and only ' + out(card) + ' '
-                + suitName(suitOf(card)).toLowerCase() + ' are still out, so it banks the point before anyone can trump it'
-            : ': it\'s the highest ' + ONE_OF_SUIT[suitOf(card)] + ' left, so its point is safe';
+        // It only knows how many are out, not who holds them: one player may hold them all and the other none,
+        // so its point is only certain once nobody has trumps left
+        const highest = ': it\'s the highest ' + ONE_OF_SUIT[suitOf(card)] + ' left';
+        const stillOut = out(card) === 1 ? '1 ' + ONE_OF_SUIT[suitOf(card)] : out(card) + ' ' + suitName(suitOf(card)).toLowerCase();
+        const reason = unseenTrumps === 0
+            ? highest + ' and nobody has trumps left, so its point is safe'
+            : out(card) <= SHORT_SUIT + 1
+                ? highest + '. With only ' + stillOut + ' still out, someone may already have none and trump it, '
+                    + 'so it plays it now while it most likely still wins'
+                : highest + ' and nobody has shown they can trump it, so it should win';
         return { card, reason: 'led the ' + cardName(card) + reason };
     }
 

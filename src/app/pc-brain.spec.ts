@@ -102,7 +102,7 @@ describe('PC brain', () => {
       // only 3 diamonds are out, against 6 clubs
       const choice = choosePlay(view({ seat: 2, caller: 1, hand: ['AC', '7C', 'AD', 'KD', 'QD', 'JD', '9D'] }));
       expect(choice.card).toBe('AD');
-      expect(choice.reason).toContain('only 3 diamonds are still out');
+      expect(choice.reason).toContain('With only 3 diamonds still out, someone may already have none and trump it');
     });
 
     it('should draw trumps first as the caller when its point card is in a short suit', () => {

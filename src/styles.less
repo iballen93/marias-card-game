@@ -4,6 +4,8 @@
   --card-spacing: 50px;
   --side-card-max: 63px;
   --hand-pile-height: 150px;
+  /* how far the cards you can legally play are lifted on your turn */
+  --card-lift: 8px;
   --side-pile-height: 130px;
   --pile-gap: 10px;
   --pile-title-size: 1rem;
@@ -25,10 +27,12 @@
 @media (max-width: 768px), (max-height: 500px) {
   :root {
     /* Escaped because Less would otherwise work out min() itself instead of leaving it to the browser */
-    --card-width: ~"clamp(62px, min(calc((100vh - 396px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) / 6.2), 24vw), 110px)";
+    --card-width: ~"clamp(62px, min(calc((100vh - 396px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) / 6.44), 24vw), 110px)";
     --card-spacing: calc(var(--card-width) * 0.52);
     --side-card-max: calc(var(--card-width) * 0.336);
-    --hand-pile-height: calc(var(--card-width) * 1.39 + 4px);
+    --card-lift: calc(var(--card-width) * 0.08);
+    /* room above the cards to lift the legal ones */
+    --hand-pile-height: calc(var(--card-width) * 1.47 + 4px);
     --side-pile-height: calc(var(--side-card-max) * 1.39 + 16px);
     --pile-gap: 0px;
     --pile-title-size: clamp(0.6875rem, 2.8vw, 0.875rem);
@@ -48,7 +52,7 @@
 
 @media (max-height: 500px) and (orientation: landscape) {
   :root {
-    --card-width: clamp(54px, calc((100vh - 141px) / 4.15), 90px);
+    --card-width: clamp(54px, calc((100vh - 141px) / 4.31), 90px);
     --side-card-max: calc(var(--card-width) * 0.62);
     --seat-width: calc((100vw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)) / 3 - 16px - var(--seat-padding) * 2);
     --side-pile-height: calc(var(--side-card-max) * 1.39 + 12px);

@@ -22,6 +22,8 @@ From this it works out two things:
 - **Cards still out:** cards it hasn't seen, which are in the other hands or in the other caller's bury. It counts these per suit. If it holds 5 diamonds, it knows only 3 are out.
 - **Highest card left:** a card is the highest left in its suit when no card still out in that suit can beat it.
 
+A count is not a split. If 2 clubs are still out, one player may hold both while the other has none and can trump. So the PC only says a point is **safe** when that's certain, for example when nobody has trumps left or only its partner plays after it. Otherwise its explanation says the card *should* win or *most likely* wins.
+
 It does **not** look at the other hands, even though they're face up in Learning Mode. The game only hands it its own cards, and a test checks this. So it never knows **who** holds a missing card, such as the A of a suit. It only knows the card hasn't appeared yet, and it learns more as players fail to follow suit or play trumps.
 
 ## Variety
@@ -109,7 +111,7 @@ One player still plays after it.
 | an opponent led and its partner plays last, and it can win with a point card | wins with it. Only its partner plays after, so the point is safe | won with the *card*: only partner Player *N* plays after, so the point is safe |
 | same, and the trick has points or it can win cheaply | takes the lead | took the lead with the *card*, with partner Player *N* still to play |
 | same, otherwise | plays low and leaves it to partner | played low with the *card* and leaves the trick to partner Player *N* |
-| it is the caller, and a card would win that no card still out can beat | wins with it, using a point card if it can | won with the *card*: no card still out can beat it |
+| it is the caller, and a card would win that no card still out can beat | wins with it, using a point card if it can | won with the *card*: no trump still out can beat it, or: it's the highest *suit* left and Player *N* hasn't shown they can trump it, so its point should be safe |
 | it is the caller and the trick has points, but no winning card is safe | goes for the points anyway | went for the *N* points on the table with the *card* |
 | it is the caller, otherwise | plays low | played low with the *card*: Player *N* could still beat a higher card |
 
@@ -119,7 +121,7 @@ One player still plays after it.
 |---|---|---|---|
 | 1 | it is the caller, holds 2 or more trumps, and holds **more trumps than are still out** | leads its top trump, if it's the highest left, to draw out the others' trumps | led the *card* to draw out the other players' trumps |
 | 2 | it holds a 10 or A that is the highest left in its suit, but **2 or fewer** cards of that suit are still out, so someone has probably run out. It is the caller and holds at least as many trumps as are still out | draws trumps first, so the point card can't be trumped | led the *card* to draw out trumps first: only *N* *suit* are still out, so its *card* could be trumped |
-| 3 | it holds a 10 or A that is the highest left in its suit, and no opponent has shown they can trump that suit | leads it to bank the point, from the suit with the **fewest cards still out** first, since that's the next one someone will run out of | led the *card*: it's the highest *suit* left, so its point is safe. When 3 or fewer are out: … and only *N* *suit* are still out, so it banks the point before anyone can trump it |
+| 3 | it holds a 10 or A that is the highest left in its suit, and no opponent has shown they can trump that suit | leads it to bank the point, from the suit with the **fewest cards still out** first, since that's the next one someone will run out of | led the *card*: it's the highest *suit* left and nobody has shown they can trump it, so it should win. When 3 or fewer are out: … With only *N* *suit* still out, someone may already have none and trump it, so it plays it now while it most likely still wins. When nobody has trumps left: … so its point is safe |
 | 4 | it holds a 10 but not the A, and the only card still out above one of its cards is the A. Nobody has shown they're out of that suit, and enough of the suit is still out | leads that card, usually the K, to **force out the A** (see below) | led the *card* to force out the A: whoever holds it has to go over, and then its 10 is the highest *suit* left |
 | 5 | it has a low card (not trump, not a point card) in a suit no opponent has shown they can trump | leads one of its lowest, avoiding a suit with 2 or fewer cards out. Ties are chosen at random | led the *card* to keep its high cards for later |
 | 6 | it holds a non-point card that is the highest left in its suit | leads it | led the *card*, the highest *suit* left |

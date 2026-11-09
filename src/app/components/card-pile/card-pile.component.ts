@@ -21,6 +21,8 @@ export class CardPileComponent implements OnInit {
   // Without a width, cards stay full size and overlap more as the pile runs out of room
   @Input() cardWidth: string;
   @Input() cardOverlap: string;
+  // the codes of cards to lift, such as the cards that can legally be played on this turn
+  @Input() liftedCards: string[] = [];
   @Output() cardSelected = new EventEmitter<Card>();
 
   readonly FULL_CARD_WIDTH = 'var(--card-width)';
@@ -45,6 +47,15 @@ export class CardPileComponent implements OnInit {
 
   getCardMargin(index: number): string {
     return index > 0 && this.cardOverlap ? `calc(-1 * ${this.cardOverlap})` : '0';
+  }
+
+  // Lifted cards rise and the rest sink by half the lift, so they stay inside the pile's room
+  getCardLift(card: Card): string {
+    if (!this.liftedCards?.length) {
+      return null;
+    }
+    const direction = this.liftedCards.includes(card.code) ? -1 : 1;
+    return `translateY(calc(${direction} * var(--card-lift) / 2))`;
   }
 
   // A marriage card is shown twice, in the marriage pile and wherever it was played

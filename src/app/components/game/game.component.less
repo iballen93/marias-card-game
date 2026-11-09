@@ -40,6 +40,8 @@ table {
     left: 50%;
     transform: translateX(-50%);
     padding-top: 50px;
+    // above the trick pile, whose padding would otherwise cover the Next button and swallow its clicks
+    z-index: 5;
 }
 
 .trick-pile {

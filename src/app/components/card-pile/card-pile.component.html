@@ -5,7 +5,9 @@
              style="min-width: 0;"
              [style.flex]="getCardFlex(isLast)"
              [style.margin-left]="getCardMargin(i)"
-             [style.z-index]="i">
+             class="card-slot"
+             [style.z-index]="i"
+             [style.transform]="getCardLift(card)">
             <img [style.width]="cardWidth ? '100%' : FULL_CARD_WIDTH"
                  [src]="card.image"
                  [attr.data-card-key]="getCardKey(card)"
