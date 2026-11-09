@@ -119,9 +119,28 @@ describe('GameComponent', () => {
     expect(component.canFastPlay()).toBe(true);
   });
 
+  it('should keep a finished trick on the table for 1 second in Solo', fakeAsync(() => {
+    const fixture = TestBed.createComponent(GameComponent);
+    component = fixture.componentInstance;
+    spyOn(TestBed.inject(DeckService), 'preloadCardImages').and.returnValue(Promise.resolve());
+    fixture.detectChanges();
+    flushMicrotasks();
+    const playLegal = () => component.cardSelected(component.getActivePlayerPile().find(c => component.legalCards.includes(c.code)));
+    component.cardSelected(component.getActivePlayerPile()[0]);
+    [0, 1].forEach(() => component.cardSelected(component.getActivePlayerPile().find(c => !'A0'.includes(c.code.charAt(0)))));
+    [0, 1, 2].forEach(playLegal);
+    expect(component.showingCompletedHand).toBeTrue();
+
+    tick(999);
+    expect(component.allPiles.get('game').length).toBe(3);
+    tick(1);
+    expect(component.allPiles.get('game').length).toBe(0);
+    fixture.destroy();
+  }));
+
   describe('vs PC', () => {
-    const PC_MOVE_MS = 900;
-    const HAND_DISPLAY_MS = 1000;
+    const PC_MOVE_MS = 1300;
+    const HAND_DISPLAY_MS = 2500;
     let fixture;
 
     const startPcGame = () => {
@@ -198,6 +217,23 @@ describe('GameComponent', () => {
       tick(1);
       expect(pile('game').length).toBe(2);
       fixture.destroy();
+    }));
+
+    it('should leave a finished trick on the table for 2.5 seconds', fakeAsync(() => {
+      startPcGame();
+      component.cardSelected(hand(1)[0]);
+      [0, 1].forEach(() => component.cardSelected(hand(1).find(c => !'A0'.includes(c.code.charAt(0)))));
+      component.cardSelected(hand(1).find(c => component.legalCards.includes(c.code)));
+      tick(PC_MOVE_MS * 2);
+      expect(pile('game').length).toBe(3);
+      expect(component.showingCompletedHand).toBeTrue();
+
+      tick(HAND_DISPLAY_MS - 1);
+      expect(pile('game').length).toBe(3);
+      tick(1);
+      expect(pile('game').length).toBe(0);
+      fixture.destroy();
+      tick(PC_MOVE_MS);
     }));
 
     it('should ignore clicks on cards during the PC turn', fakeAsync(() => {

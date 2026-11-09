@@ -20,9 +20,11 @@ export class GameComponent implements OnInit, OnDestroy {
 
     private readonly PLAYER_COUNT = 3;
     private readonly DEFAULT_MONEY_CENTS = 128;
+    // how long a finished trick stays on the table; longer in vs PC, so you can see what the PC played
     private readonly HAND_DISPLAY_MS = 1000;
+    private readonly PC_HAND_DISPLAY_MS = 2500;
     // how long the PC waits before each move, so you can follow it
-    private readonly PC_MOVE_MS = 900;
+    private readonly PC_MOVE_MS = 1300;
     // in vs PC you are always Player 1
     private readonly HUMAN_SEAT = 1;
 
@@ -165,6 +167,10 @@ export class GameComponent implements OnInit, OnDestroy {
             default:
                 return this.legalCards.includes(card.code);
         }
+    }
+
+    private getHandDisplayMs(): number {
+        return this.gameMode === 'learning-pc' ? this.PC_HAND_DISPLAY_MS : this.HAND_DISPLAY_MS;
     }
 
     private getPcView(): PcView {
@@ -356,7 +362,7 @@ export class GameComponent implements OnInit, OnDestroy {
                 } else {
                     // leave the completed hand on the table long enough to see the third card
                     this.showingCompletedHand = true;
-                    setTimeout(() => this.animateCardMoves(() => this.collectCompletedHand(winningPlayer)), this.HAND_DISPLAY_MS);
+                    setTimeout(() => this.animateCardMoves(() => this.collectCompletedHand(winningPlayer)), this.getHandDisplayMs());
                 }
             }
         }
