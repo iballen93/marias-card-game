@@ -150,6 +150,12 @@ function strongestPoint(cards: string[]): string | undefined {
     return points.length ? bestOf(points, card => -rankStrength(card)) : undefined;
 }
 
+// The point card worth cashing in a trick that's won anyway: one that could still be lost later. A trump that no card
+// still out can beat will win a trick of its own later, so it isn't spent where any trump would do.
+function pointAtRisk(cards: string[], view: BrainView, knowledge: Knowledge): string | undefined {
+    return strongestPoint(cards.filter(card => !(isTrump(card, view.trump) && knowledge.isMaster(card))));
+}
+
 // Gives the 10 before the A: both are one point, and the A is more often the highest card left
 function weakestPoint(cards: string[]): string | undefined {
     const points = cards.filter(isPointCard);
@@ -248,13 +254,18 @@ function playLast(view: BrainView, knowledge: Knowledge, legal: string[]): Brain
                     + ': partner Player ' + winner + ' is already winning the trick' };
         }
         // the rules make it go over its partner, so the trick stays with the team either way
-        const point = strongestPoint(legal);
-        const card = point || cheapest(legal, view);
-        return { card, reason: 'had to go over partner Player ' + winner + ', so it played the ' + cardName(card) + ' and the trick stays with the team' };
+        const point = pointAtRisk(legal, view, knowledge);
+        if (point) {
+            return { card: point, reason: 'had to go over partner Player ' + winner + ', so it played the ' + cardName(point)
+                + ' to bank its point, and the trick stays with the team' };
+        }
+        const card = cheapest(legal, view);
+        return { card, reason: 'had to go over partner Player ' + winner + ', so it played its lowest card that does, the '
+            + cardName(card) + ', and the trick stays with the team' };
     }
 
     if (winners.length) {
-        const point = strongestPoint(winners);
+        const point = pointAtRisk(winners, view, knowledge);
         if (point) {
             return { card: point, reason: 'won the trick with the ' + cardName(point) + ', so its point is safe' };
         }
@@ -294,7 +305,7 @@ function playSecond(view: BrainView, knowledge: Knowledge, legal: string[]): Bra
 
     if (isTeammate(view, last)) {
         // only its partner plays after, so a winning card here is safe
-        const point = strongestPoint(winners);
+        const point = pointAtRisk(winners, view, knowledge);
         if (point) {
             return { card: point, reason: 'won with the ' + cardName(point) + ': only partner Player ' + last + ' plays after, so the point is safe' };
         }

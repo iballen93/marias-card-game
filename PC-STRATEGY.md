@@ -30,6 +30,10 @@ It does **not** look at the other hands, even though they're face up in Learning
 
 When several cards are equally good for its reason, it chooses among them at random. For example, with three 7s in different suits that are all safe to lead, it doesn't always lead the same one. This doesn't make it stronger, it just makes it less predictable. It only ever chooses between cards that are equally good. It never picks a worse card for variety.
 
+## Keeping the highest trump
+
+When a trick is already won, or any trump would win it, the PC doesn't spend a trump that no card still out can beat, such as the A of trump. That card will win a trick of its own later and bank its point then. It only cashes in point cards that could still be lost, such as a 10 of trump while the A of trump is still out, or a 10 or A of another suit that someone could trump later.
+
 ## How it ranks its own cards
 
 When it needs to throw away its "lowest" card, it gives up cards in this order, keeping the most useful ones:
@@ -94,8 +98,8 @@ Nobody plays after it, so it knows exactly what will happen.
 |---|---|---|
 | partner is winning | gives them a 10 (or A) without taking the trick | gave the *card* to partner Player *N*, who is winning the trick |
 | partner is winning, no point card to give | throws its lowest card | threw the *card*: partner Player *N* is already winning the trick |
-| partner is winning, but the rules force it to go over | plays a point card if it can, since the trick stays with the team | had to go over partner Player *N*, so it played the *card* and the trick stays with the team |
-| an opponent is winning and it can win with a point card | wins with it, so the point is banked | won the trick with the *card*, so its point is safe |
+| partner is winning, but the rules force it to go over | banks a point card that could be lost later. Otherwise it plays its lowest card that goes over, so it never spends the highest trump where any trump would do | had to go over partner Player *N*, so it played the *card* to bank its point, and the trick stays with the team. Or: … so it played its lowest card that does, the *card*, and the trick stays with the team |
+| an opponent is winning and it can win with a point card that could be lost later | wins with it, so the point is banked | won the trick with the *card*, so its point is safe |
 | an opponent is winning and it can win | wins with the cheapest card that does it | won the trick with the *card*, the cheapest card that wins, taking *N* points |
 | the trick has no points and only a K, 10 or A of trump would win | keeps the high trump and lets the trick go | let the trick go with the *card*: it has no points, so it isn't worth the *trump* |
 | it can't win | throws its lowest card | can't win the trick, so it threw its lowest card, the *card* |
@@ -108,7 +112,7 @@ One player still plays after it.
 |---|---|---|
 | partner led the highest card left, and the player after hasn't shown they can trump it | gives partner a 10 or A | gave the *card* to partner Player *N*, whose *card* is the highest *suit* left |
 | partner led, otherwise | plays low under partner | played low with the *card* under partner Player *N*'s lead |
-| an opponent led and its partner plays last, and it can win with a point card | wins with it. Only its partner plays after, so the point is safe | won with the *card*: only partner Player *N* plays after, so the point is safe |
+| an opponent led and its partner plays last, and it can win with a point card that could be lost later | wins with it. Only its partner plays after, so the point is safe | won with the *card*: only partner Player *N* plays after, so the point is safe |
 | same, and the trick has points or it can win cheaply | takes the lead | took the lead with the *card*, with partner Player *N* still to play |
 | same, otherwise | plays low and leaves it to partner | played low with the *card* and leaves the trick to partner Player *N* |
 | it is the caller, and a card would win that no card still out can beat | wins with it, using a point card if it can | won with the *card*: no trump still out can beat it, or: it's the highest *suit* left and Player *N* hasn't shown they can trump it, so its point should be safe |

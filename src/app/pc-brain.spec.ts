@@ -63,6 +63,22 @@ describe('PC brain', () => {
       expect(choosePlay(view({ seat: 3, caller: 3, trick: ['9S', '8S'], hand: ['QS', 'JS', '7D'] })).card).toBe('JS');
     });
 
+    it('should go over its partner with a low trump and keep the highest trump', () => {
+      // Player 3 called; partner Player 2 led the K♠ and Player 3 followed under it. Player 1 has no spades, so it must trump
+      const choice = choosePlay(view({ seat: 1, caller: 3, trick: ['KS', '7S'], hand: ['AH', '7H', '9D'] }));
+      expect(choice.card).toBe('7H');
+      expect(choice.reason).toContain('lowest card that does, the 7♥');
+    });
+
+    it('should bank a 10 of trump over its partner while the A of trump is still out', () => {
+      const choice = choosePlay(view({ seat: 1, caller: 3, trick: ['KS', '7S'], hand: ['0H', '7H', '9D'] }));
+      expect(choice.card).toBe('0H');
+    });
+
+    it('should win with a low trump instead of the highest trump left', () => {
+      expect(choosePlay(view({ seat: 3, caller: 3, trick: ['QS', '8S'], hand: ['AH', '8H', '9D'] })).card).toBe('8H');
+    });
+
     it('should throw its lowest card when it cannot win', () => {
       const choice = choosePlay(view({ seat: 3, caller: 3, trick: ['AS', '0S'], hand: ['KS', '7S', 'AD'] }));
       expect(choice.card).toBe('7S');
