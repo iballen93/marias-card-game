@@ -47,6 +47,8 @@ export class GameComponent implements OnInit, OnDestroy {
     title = 'marias';
     illegalMoveMessage = '';
     winMessage = '';
+    // why the PC made its last move, shown in vs PC so you can learn from it
+    pcExplanation = '';
     activePlayer = 1;
     currentCaller = 1;
     lastTrickPlayer: number;
@@ -146,12 +148,14 @@ export class GameComponent implements OnInit, OnDestroy {
             return;
         }
         const view = this.getPcView();
-        let card = this.computerPlayerService.chooseMove(view).card;
+        const choice = this.computerPlayerService.chooseMove(view);
+        let card = choice.card;
         if (!this.isPcChoiceAllowed(view, card)) {
             // a PC bug must never freeze the game
             console.error('PC chose a card the rules do not allow', view, card);
             card = this.getFastPlayCard();
         }
+        this.pcExplanation = this.getPlayerTitle(view.seat) + ' ' + choice.reason;
         this.animateCardMoves(() => this.handleCardSelected(card));
     }
 
@@ -181,6 +185,7 @@ export class GameComponent implements OnInit, OnDestroy {
             trick: this.allPiles.get('game') || [],
             trump: this.trump,
             caller: this.currentCaller,
+            bury: this.allPiles.get('player' + this.activePlayer + 'Bury') || [],
             tricks: this.trickHistory
         };
     }
@@ -448,6 +453,7 @@ export class GameComponent implements OnInit, OnDestroy {
             this.bidMultiplier = 1;
             this.allPiles = new Map();
             this.trickHistory = [];
+            this.pcExplanation = '';
             this.setToNextDealer();
             this.activePlayer = this.currentCaller;
             this.shuffleDeck();

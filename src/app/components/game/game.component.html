@@ -25,7 +25,8 @@
                                [pickingTrump]="pickingTrump"
                                [buryingCards]="buryingCards"
                                [canPlayAgain]="canPlayAgain"
-                               [legalCards]="legalCards"></app-turn-info>
+                               [legalCards]="legalCards"
+                               [pcExplanation]="pcExplanation"></app-turn-info>
 
                 <app-card-pile class="trick-pile" [cards]="this.allPiles.get('game')" (cardSelected)="cardSelected($event)"></app-card-pile>
 
