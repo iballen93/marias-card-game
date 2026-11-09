@@ -2,6 +2,7 @@ import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { fakeAsync, flushMicrotasks, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { DeckService } from 'src/app/deck.service';
+import { ComputerPlayerService } from 'src/app/computer-player.service';
 import { GameComponent } from './game.component';
 
 describe('GameComponent', () => {
@@ -325,6 +326,28 @@ describe('GameComponent', () => {
       expect(pile('game').length).toBe(0);
       component.next();
       expect(pile('game').length).toBe(1);
+      fixture.destroy();
+      tick(PC_MOVE_MS);
+    }));
+
+    it('should fast play the PC seats with the PC strategy and only your cards at random', fakeAsync(() => {
+      startPcGame();
+      const service = TestBed.inject(ComputerPlayerService);
+      const seats: number[] = [];
+      spyOn(service, 'chooseMove').and.callFake(view => {
+        seats.push(view.seat);
+        return (service.chooseMove as any).and.originalFn.call(service, view);
+      });
+      component.pcExplanation = 'an older move';
+      component.fastPlayToLastHand();
+
+      expect(handSizes()).toEqual([1, 1, 1]);
+      const pcPlays = component.trickHistory.reduce((count, trick) => count + trick.plays.filter(play => play.player !== 1).length, 0);
+      expect(pcPlays).toBe(18);
+      // Player 1 is the caller, so the PC only played cards: one choice for each of its plays, and never for Player 1
+      expect(seats.length).toBe(pcPlays);
+      expect(seats.every(seat => seat !== 1)).toBeTrue();
+      expect(component.pcExplanation).toBe('');
       fixture.destroy();
       tick(PC_MOVE_MS);
     }));

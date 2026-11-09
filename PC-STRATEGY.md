@@ -163,19 +163,32 @@ These are the known gaps, roughly from most to least important.
 
 ## Measured strength
 
-Over 6,000 rounds for each pairing, simulated with the same rules as the game:
+From `npm run strength`, 20,000 rounds for each pairing, with the same deals in every row:
 
-| Caller | Defenders | Caller wins | Caller's average points |
-|---|---|---|---|
-| random | random | 26.5% | 4.4 |
-| **PC** | random | **62.5%** | 6.8 |
-| random | **PC** | **16.4%** | 3.8 |
-| PC | PC | 52.0% | 6.2 |
+| Caller | Defenders | Caller wins | Caller's average points | Defenders' average points |
+|---|---|---|---|---|
+| random | random | 27.3% | 4.4 | 7.2 |
+| **PC** | random | **63.7%** | 6.9 | 5.4 |
+| random | **PC** | **15.2%** | 3.7 | 7.9 |
+| PC | PC | 50.2% | 6.1 | 6.1 |
 
-Working out who holds a card, and using it to set up partner's trumps, made the defenders a little stronger. Over the same 20,000 deals, the caller wins 52.8% against the new defenders against 53.5% before.
+How some changes measured when they were made:
 
-Adding the long-suit and lone-10 lead rules, plus variety, barely changed the totals. Over 20,000 rounds, the new rules keep slightly more lone 10s (65.9% against 65.7%), and the caller's win rate stays within a few tenths of a percent of the earlier PC. That's expected: these situations only come up now and then, and it's how a real player would play them.
+- **Working out who holds a card**, and using it to set up partner's trumps, made the defenders a little stronger: the caller won 52.8% against the new defenders, against 53.5% before.
+- **The long-suit and lone-10 lead rules, plus variety**, barely changed the totals. The new rules keep slightly more lone 10s (65.9% against 65.7%). That's expected: these situations only come up now and then, and it's how a real player would play them.
+
+## Measuring strength
+
+`npm run strength` plays thousands of rounds without showing them, and prints how often the caller wins and the average points on each side. It takes about 30 seconds.
+
+- `npm run strength` compares the PC with random play, and with itself.
+- `npm run strength -- --against HEAD` also compares the PC as it is now with the PC in a git commit, such as `HEAD` (the last commit), `main~3` or a commit hash. Use it after changing `pc-brain.ts`: if the new PC is stronger, the caller wins more often when the new PC calls, and less often when the new PC defends.
+- `npm run strength -- --rounds 5000` gives a quicker, rougher answer.
+
+Scoring follows the game: 1 point for each A and 10 won, 1 for the last trick, and 2 for a marriage (4 in trump). The caller wins with more points than both defenders together. Every row plays the same deals with the same random numbers, so two identical PCs score exactly the same, and any difference between rows comes from how they play. A difference of a few tenths of a percent is about the size of the noise.
+
+The simulation is in `src/app/regression/pc-strength.ts`. A quick version runs with the normal tests and checks that the PC still clearly beats random play.
 
 ## Changing how the PC plays
 
-Change `src/app/pc-brain.ts`, add or update a test in `src/app/pc-brain.spec.ts`, and run the regression test (see `REGRESSION-TESTING.md`). Every Solo game must stay the same, and the vs PC games are expected to change. Save the new vs PC baseline in the same commit, and update this document to match.
+Change `src/app/pc-brain.ts`, add or update a test in `src/app/pc-brain.spec.ts`, run the regression test (see `REGRESSION-TESTING.md`), and run `npm run strength -- --against HEAD` to see whether it plays better. Every Solo game must stay the same, and the vs PC games are expected to change. Save the new vs PC baseline in the same commit, and update this document to match.

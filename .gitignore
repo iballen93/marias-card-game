@@ -46,3 +46,7 @@ testem.log
 .DS_Store
 Thumbs.db
 package-lock.json
+
+# Temporary files written by scripts/pc-strength.js
+src/app/regression/*.tmp.ts
+src/app/regression/*.tmp.spec.ts

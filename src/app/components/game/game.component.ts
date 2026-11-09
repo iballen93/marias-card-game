@@ -151,17 +151,22 @@ export class GameComponent implements OnInit, OnDestroy {
         if (!this.isPcTurn()) {
             return;
         }
-        const view = this.getPcView();
-        const choice = this.computerPlayerService.chooseMove(view);
-        let card = choice.card;
-        if (!this.isPcChoiceAllowed(view, card)) {
-            // a PC bug must never freeze the game
-            console.error('PC chose a card the rules do not allow', view, card);
-            card = this.getFastPlayCard();
-        }
-        this.pcExplanation = this.getPlayerTitle(view.seat) + ' ' + choice.reason;
+        const { card, reason } = this.choosePcCard();
+        this.pcExplanation = this.getPlayerTitle(this.activePlayer) + ' ' + reason;
         this.waitingForNext = this.gameMode === 'learning-pc-slow';
         this.animateCardMoves(() => this.handleCardSelected(card));
+    }
+
+    // The active PC's choice, checked against the rules
+    private choosePcCard(): { card: Card; reason: string } {
+        const view = this.getPcView();
+        const choice = this.computerPlayerService.chooseMove(view);
+        if (!this.isPcChoiceAllowed(view, choice.card)) {
+            // a PC bug must never freeze the game
+            console.error('PC chose a card the rules do not allow', view, choice.card);
+            return { card: this.getFastPlayCard(), reason: choice.reason };
+        }
+        return choice;
     }
 
     private isPcChoiceAllowed(view: PcView, card: Card): boolean {
@@ -299,10 +304,13 @@ export class GameComponent implements OnInit, OnDestroy {
     // For testing: plays by the rules for every player until only the last hand is left
     fastPlayToLastHand(): void {
         this.waitingForNext = false;
+        // the last explanation would be about a move from before the fast forward
+        this.pcExplanation = '';
         this.animateCardMoves(() => {
             this.isFastPlaying = true;
             while (!this.isOnLastHand()) {
-                this.handleCardSelected(this.getFastPlayCard());
+                // in vs PC the PC seats keep playing their strategy; only your cards are picked at random
+                this.handleCardSelected(this.isPcSeat(this.activePlayer) ? this.choosePcCard().card : this.getFastPlayCard());
                 this.updateLegalCards();
             }
             this.isFastPlaying = false;

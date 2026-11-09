@@ -174,6 +174,12 @@ Each step leaves the game working.
 | 6 | **Tuning check.** A test-only script that plays thousands of rounds of Normal vs Easy without showing them, and reports the win rate and average points as caller and defender. | S | Normal clearly beats Easy. The numbers are a starting point for adjusting the weights. |
 | 7 | *(Later)* Hard PC and a settings screen for the toggles. | M–L | |
 
+**Status (November 2026):** steps 1 to 6 are done.
+
+- Step 5 changed along the way. Instead of a speed setting, the menu has **vs PC Slow** (waits for you to click Next after every PC move) and **vs PC Fast**. Instead of hiding the Legal Cards text on PC turns, the legal cards are lifted on every player's turn and the text is gone. Fast Play plays the PC seats with the PC's strategy and only your cards at random.
+- Step 6 is `npm run strength` (see "Measuring strength" in `PC-STRATEGY.md`), which compares the PC with random play and with any earlier version of itself.
+- Solo is now called **Practice (play all 3 hands)**, and the app opens on vs PC Slow.
+
 ---
 
 ## 7. Risks and things to watch

@@ -8,6 +8,7 @@
     "test": "ng test",
     "regression": "ng test --include=src/app/regression/game-regression.spec.ts --watch=false --browsers=ChromeHeadless --progress=false",
     "regression:baseline": "node scripts/regression-baseline.js",
+    "strength": "node scripts/pc-strength.js",
     "lint": "ng lint",
     "e2e": "ng e2e"
   },
