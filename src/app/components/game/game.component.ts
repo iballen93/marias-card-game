@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { Card } from 'src/app/components/card-pile/card-pile.component';
 import { DeckService } from 'src/app/deck.service';
-import { PointsService } from 'src/app/points.service';
+import { BetResult, PointsService } from 'src/app/points.service';
 import { ValidationService } from 'src/app/validation.service';
 import { ComputerPlayerService, PcView } from 'src/app/computer-player.service';
 import { CardAnimationService } from 'src/app/card-animation.service';
@@ -70,8 +70,9 @@ export class GameComponent implements OnInit, OnDestroy {
     // the 100 replaces the Game: the caller alone must reach 100
     hundredCalled = false;
     // what the 7 of trump scored on the last trick, if it was played there
-    // what each bet paid, under the round's result: the Game or the 100, the 7 of trump, and the total when both paid
-    payoutMessages: string[] = [];
+    // under the round's result: who pays whom in all, then whether the caller won or lost each bet
+    payoutTotal = '';
+    betResults: BetResult[] = [];
     legalCards: string[] = [];
 
     deck: Card[];
@@ -470,7 +471,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
         if (this.isRoundComplete()) {
             // TODO implement earningsMultiplier
-            const { earnings, winMessage, paymentMessage } = this.pointsService.calculateEarnings(
+            const { earnings, winMessage, betResult } = this.pointsService.calculateEarnings(
                 this.allPiles, this.currentCaller, this.lastTrickPlayer, this.trump, this.hundredCalled);
             for (let player = 1; player <= 3; player++) {
                 const currentMoney = this.playerToMoney.get('player' + player);
@@ -478,13 +479,12 @@ export class GameComponent implements OnInit, OnDestroy {
             }
 
             this.winMessage = winMessage;
-            this.payoutMessages = [paymentMessage];
+            this.betResults = [betResult];
             const sevenEarnings = this.scoreSevenOfTrump();
-            if (sevenEarnings) {
-                const callerTotal = earnings.get('player' + this.currentCaller) + sevenEarnings.get('player' + this.currentCaller);
-                // the caller's total is from both defenders together
-                this.payoutMessages.push('In total: ' + this.pointsService.describePayment(callerTotal / 2, this.currentCaller));
-            }
+            const caller = 'player' + this.currentCaller;
+            // the caller collects from, or pays, both defenders together, so each defender's share is half
+            const callerTotal = earnings.get(caller) + (sevenEarnings ? sevenEarnings.get(caller) : 0);
+            this.payoutTotal = this.pointsService.describePayment(callerTotal / 2, this.currentCaller);
             this.canPlayAgain = true;
         }
     }
@@ -531,9 +531,9 @@ export class GameComponent implements OnInit, OnDestroy {
         if (!seven) {
             return undefined;
         }
-        const { earnings, message } = this.pointsService.calculateSevenEarnings(seven, this.currentCaller);
+        const { earnings, betResult } = this.pointsService.calculateSevenEarnings(seven, this.currentCaller);
         earnings.forEach((cents, player) => this.playerToMoney.set(player, this.playerToMoney.get(player) + cents));
-        this.payoutMessages.push(message);
+        this.betResults.push(betResult);
         return earnings;
     }
 
@@ -598,7 +598,8 @@ export class GameComponent implements OnInit, OnDestroy {
             this.announcing = false;
             this.sevenCalled = false;
             this.hundredCalled = false;
-            this.payoutMessages = [];
+            this.payoutTotal = '';
+            this.betResults = [];
             this.waitingForNext = false;
             this.trickWinnerToCollect = null;
             this.setToNextDealer();

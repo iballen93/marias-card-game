@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { BetResult } from '../../points.service';
 
 @Component({
     selector: 'app-turn-info',
@@ -21,8 +22,9 @@ export class TurnInfoComponent implements OnInit {
     // the caller is bidding; a person does it in the bid pop-up, so this only says a PC is deciding
     @Input() announcing: boolean;
     @Input() canAnnounce: boolean;
-    // what each bet paid, one line each
-    @Input() payoutMessages: string[] = [];
+    // who pays whom in all, then the caller's result on each bet
+    @Input() payoutTotal: string;
+    @Input() betResults: BetResult[] = [];
     @Output() playAgain = new EventEmitter<void>();
 
     @Input() pickingTrump: boolean;

@@ -442,7 +442,7 @@ describe('GameComponent', () => {
         tick(PC_MOVE_MS);
       }));
 
-      it('should list what the 100 and the 7 each paid, and the total, after a missed 100 with a won 7 in spades', async () => {
+      it('should show the total paid, then each bet won or lost, after a missed 100 with a won 7 in spades', async () => {
         await startGame();
         const cards = (...codes: string[]) => codes.map(code => ({ code, image: '', suit: '' }));
         [1, 2, 3].forEach(player => {
@@ -462,11 +462,8 @@ describe('GameComponent', () => {
         component.trickHistory = [{ plays: cards('8H', '7S', '9H').map((card, index) => ({ player: [2, 1, 3][index], card })), winner: 1 }];
         (component as any).collectCompletedHand(1);
         expect(component.winMessage).toBe('Player 1 Misses the Called 100, 3 to 6!');
-        expect(component.payoutMessages).toEqual([
-          'The 100: Player 1 pays Players 2 and 3 16¢ each',
-          'Player 1\'s called 7♠ won the last trick: Players 2 and 3 each pay Player 1 8¢',
-          'In total: Player 1 pays Players 2 and 3 8¢ each'
-        ]);
+        expect(component.payoutTotal).toBe('Player 1 pays Players 2 and 3 8¢ each');
+        expect(component.betResults.map(bet => bet.text)).toEqual(['Player 1 lost the Called 100', 'Player 1 won the Called 7♠']);
         expect([1, 2, 3].map(player => component.playerToMoney.get('player' + player))).toEqual([112, 136, 136]);
       });
 
@@ -474,12 +471,14 @@ describe('GameComponent', () => {
         startPcGame();
         component.sevenCalled = true;
         component.hundredCalled = true;
-        component.payoutMessages = ['something'];
+        component.payoutTotal = 'something';
+        component.betResults = [{ text: 'something', won: true }];
         playRoundAsPlayer1();
         component.playAgain();
         expect(component.sevenCalled).toBeFalse();
         expect(component.hundredCalled).toBeFalse();
-        expect(component.payoutMessages).toEqual([]);
+        expect(component.payoutTotal).toBe('');
+        expect(component.betResults).toEqual([]);
         fixture.destroy();
         tick(PC_MOVE_MS * 4);
       }));

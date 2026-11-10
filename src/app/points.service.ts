@@ -9,6 +9,12 @@ export interface Points {
     theSeven: boolean;
 }
 
+// One bet's outcome, always from the caller's side: "Player 1 lost the Called 100"
+export interface BetResult {
+    text: string;
+    won: boolean;
+}
+
 export interface Earnings {
     centsGained: number;
     centsLost: number;
@@ -27,7 +33,7 @@ export class PointsService {
 
     // The Game, or the called 100 that replaces it
     calculateEarnings(allPiles: Map<string, Card[]>, callerPlayer: number, lastTrickPlayer: number, trump: string,
-                      hundredCalled = false): { earnings: Map<string, number>; winMessage: string; paymentMessage: string } {
+                      hundredCalled = false): { earnings: Map<string, number>; winMessage: string; betResult: BetResult } {
         const defenders = [1, 2, 3].filter(player => player !== callerPlayer);
         const callerPoints = this.calculatePlayerPoints(allPiles, callerPlayer, lastTrickPlayer, trump);
         const defenderPoints = defenders
@@ -48,8 +54,8 @@ export class PointsService {
         } else {
             winMessage = defenderNames + ' Win the Round ' + defenderPoints + ' to ' + callerPoints + '!';
         }
-        const paymentMessage = (hundredCalled ? 'The 100: ' : 'The Game: ') + this.describePayment(cents, callerPlayer);
-        return { earnings, winMessage, paymentMessage };
+        const betResult = this.describeBet(callerPlayer, cents > 0, hundredCalled ? 'the Called 100' : 'the Game');
+        return { earnings, winMessage, betResult };
     }
 
     // Who pays whom, given what each defender pays the caller (negative when the caller pays each of them)
@@ -61,12 +67,16 @@ export class PointsService {
         if (centsFromEachDefender < 0) {
             return 'Player ' + callerPlayer + ' pays ' + defenderNames + ' ' + -centsFromEachDefender + '¢ each';
         }
-        return 'nobody pays anything';
+        return 'Nobody pays anything';
+    }
+
+    private describeBet(callerPlayer: number, won: boolean, bet: string): BetResult {
+        return { text: 'Player ' + callerPlayer + (won ? ' won ' : ' lost ') + bet, won };
     }
 
     // The 7 of trump on the last trick is paid separately from the game: by each opponent of the side that won it,
     // or to each of them when it was lost
-    calculateSevenEarnings(seven: SevenResult, callerPlayer: number): { earnings: Map<string, number>; message: string } {
+    calculateSevenEarnings(seven: SevenResult, callerPlayer: number): { earnings: Map<string, number>; betResult: BetResult } {
         const defenders = [1, 2, 3].filter(player => player !== callerPlayer);
         const callerSide = seven.player === callerPlayer;
         // +1 when the caller collects, -1 when the caller pays
@@ -75,10 +85,9 @@ export class PointsService {
         earnings.set('player' + callerPlayer, callerCollects * seven.cents * 2);
         defenders.forEach(player => earnings.set('player' + player, -callerCollects * seven.cents));
 
-        const seven7 = (seven.called ? 'called ' : '') + cardName(seven.card);
-        const outcome = seven.won ? ' won the last trick: ' : seven.playedLast ? ' lost the last trick: ' : ' wasn\'t played in the last trick: ';
-        const result = 'Player ' + seven.player + '\'s ' + seven7 + outcome;
-        return { earnings, message: result + this.describePayment(callerCollects * seven.cents, callerPlayer) };
+        // a defender's 7 is always silent, and its result is still told from the caller's side
+        const bet = (seven.called ? 'the Called ' : 'the Silent ') + cardName(seven.card);
+        return { earnings, betResult: this.describeBet(callerPlayer, callerCollects > 0, bet) };
     }
 
     calculatePlayerPoints(allPiles: Map<string, Card[]>, player: number, lastTrickPlayer: number, trump: string): number {

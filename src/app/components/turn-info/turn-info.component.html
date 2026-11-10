@@ -12,8 +12,9 @@
 <div *ngIf="winMessage != ''" style="color: green; font-size: var(--message-small); background-color: white; display: inline-block; padding: var(--message-padding); border-radius: 0.625rem; font-weight: bold;">
     {{winMessage}}
 </div>
-<div *ngIf="payoutMessages?.length" class="payout-message">
-    <div *ngFor="let line of payoutMessages" class="payout-line" [class.total]="line.startsWith('In total')">{{line}}</div>
+<div *ngIf="payoutTotal" class="payout-message">
+    <div class="payout-total">{{payoutTotal}}</div>
+    <div *ngFor="let bet of betResults" class="bet-result" [class.lost]="!bet.won">{{bet.text}}</div>
 </div>
 <button *ngIf="canPlayAgain" type="button" class="play-again-button" (click)="playAgain.emit()">PLAY AGAIN</button>
 

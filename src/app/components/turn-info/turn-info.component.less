@@ -72,12 +72,13 @@
     border-radius: 0.625rem;
 }
 
-.payout-line {
+// the caller's result on each bet, quieter than the total above it
+.bet-result {
     margin: 0;
+    font-size: 0.85em;
+    font-weight: normal;
 }
 
-.payout-line.total {
-    margin-top: 2px;
-    padding-top: 2px;
-    border-top: 1px solid #cfe0cf;
+.bet-result.lost {
+    color: #b00020;
 }

@@ -47,12 +47,16 @@ describe('PointsService', () => {
     expect(service.calculateEarnings(missed, 1, 1, 'HEARTS', true).winMessage).toBe('Player 1 Misses the Called 100, 3 to 1!');
   });
 
-  it('should say what the Game or the 100 paid, and who paid whom', () => {
+  it('should say whether the caller won or lost the Game or the 100', () => {
     const won = new Map([['player1Win', cards('AS', '0S')], ['player2Win', cards('AD')]]);
-    expect(service.calculateEarnings(won, 1, 1, 'HEARTS').paymentMessage).toBe('The Game: Players 2 and 3 each pay Player 1 2¢');
-    expect(service.calculateEarnings(won, 1, 1, 'SPADES', true).paymentMessage).toBe('The 100: Player 1 pays Players 2 and 3 16¢ each');
-    expect(service.describePayment(0, 2)).toBe('nobody pays anything');
+    expect(service.calculateEarnings(won, 1, 1, 'HEARTS').betResult).toEqual({ text: 'Player 1 won the Game', won: true });
+    expect(service.calculateEarnings(won, 1, 1, 'SPADES', true).betResult).toEqual({ text: 'Player 1 lost the Called 100', won: false });
+  });
+
+  it('should say who pays whom', () => {
     expect(service.describePayment(4, 2)).toBe('Players 1 and 3 each pay Player 2 4¢');
+    expect(service.describePayment(-8, 1)).toBe('Player 1 pays Players 2 and 3 8¢ each');
+    expect(service.describePayment(0, 2)).toBe('Nobody pays anything');
   });
 
   it('should only give the last trick point to the player who won it', () => {
@@ -75,13 +79,11 @@ describe('PointsService', () => {
       expect(paid(service.calculateSevenEarnings(seven(3, false), 1))).toEqual([4, -2, -2]);
     });
 
-    it('should say what the 7 did and who pays', () => {
-      expect(service.calculateSevenEarnings(seven(1, true, true, 4), 1).message)
-        .toBe('Player 1\'s called 7♥ won the last trick: Players 2 and 3 each pay Player 1 4¢');
-      expect(service.calculateSevenEarnings(seven(2, false), 1).message)
-        .toBe('Player 2\'s 7♥ lost the last trick: Players 2 and 3 each pay Player 1 2¢');
-      expect(service.calculateSevenEarnings(seven(1, false, true, 4, false), 1).message)
-        .toBe('Player 1\'s called 7♥ wasn\'t played in the last trick: Player 1 pays Players 2 and 3 4¢ each');
+    it('should say whether the caller won or lost the 7, even when a defender played it', () => {
+      expect(service.calculateSevenEarnings(seven(1, true, true, 4), 1).betResult.text).toBe('Player 1 won the Called 7♥');
+      expect(service.calculateSevenEarnings(seven(2, false), 1).betResult.text).toBe('Player 1 won the Silent 7♥');
+      expect(service.calculateSevenEarnings(seven(3, true), 1).betResult.text).toBe('Player 1 lost the Silent 7♥');
+      expect(service.calculateSevenEarnings(seven(1, false, true, 4, false), 1).betResult.text).toBe('Player 1 lost the Called 7♥');
     });
   });
 });

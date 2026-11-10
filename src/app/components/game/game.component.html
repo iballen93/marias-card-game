@@ -34,7 +34,8 @@
                                (playAgain)="playAgain()"
                                [announcing]="announcing"
                                [canAnnounce]="announcing && !isPcSeat(activePlayer)"
-                               [payoutMessages]="payoutMessages"
+                               [payoutTotal]="payoutTotal"
+                               [betResults]="betResults"
                                (next)="next()"></app-turn-info>
 
                 <app-card-pile class="trick-pile" [cards]="this.allPiles.get('game')" (cardSelected)="cardSelected($event)"></app-card-pile>
