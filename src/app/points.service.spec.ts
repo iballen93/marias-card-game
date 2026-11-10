@@ -35,7 +35,7 @@ describe('PointsService', () => {
 
   it('should show both team scores when the opponents win', () => {
     const piles = new Map([['player1Win', cards('AS')], ['player2Win', cards('AD')], ['player3Win', cards('0D')]]);
-    expect(service.calculateEarnings(piles, 1, 3, 'HEARTS').winMessage).toBe('Players 2 and 3 won: 3 to 1');
+    expect(service.calculateEarnings(piles, 1, 3, 'HEARTS').winMessage).toBe('Player 1 lost: 1 to 3');
   });
 
   it('should say whether a called 100 was made or missed, and pay it instead of the Game', () => {

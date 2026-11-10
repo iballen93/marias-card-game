@@ -73,6 +73,8 @@ export class GameComponent implements OnInit, OnDestroy {
     // under the round's result: who pays whom in all, then whether the caller won or lost each bet
     payoutTotal = '';
     betResults: BetResult[] = [];
+    // whether the caller won the Game or the 100, which colours the result line
+    callerWonRound = false;
     legalCards: string[] = [];
 
     deck: Card[];
@@ -479,7 +481,9 @@ export class GameComponent implements OnInit, OnDestroy {
             }
 
             this.winMessage = winMessage;
-            this.betResults = [betResult];
+            this.callerWonRound = betResult.won;
+            // the result line already says whether the Game was won, so only the 100 gets a line of its own
+            this.betResults = this.hundredCalled ? [betResult] : [];
             const sevenEarnings = this.scoreSevenOfTrump();
             const caller = 'player' + this.currentCaller;
             // the caller collects from, or pays, both defenders together, so each defender's share is half

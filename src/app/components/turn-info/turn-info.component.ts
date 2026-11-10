@@ -25,6 +25,7 @@ export class TurnInfoComponent implements OnInit {
     // who pays whom in all, then the caller's result on each bet
     @Input() payoutTotal: string;
     @Input() betResults: BetResult[] = [];
+    @Input() callerWonRound: boolean;
     @Output() playAgain = new EventEmitter<void>();
 
     @Input() pickingTrump: boolean;

@@ -464,7 +464,26 @@ describe('GameComponent', () => {
         expect(component.winMessage).toBe('Player 1 lost: 3 to 6');
         expect(component.payoutTotal).toBe('Player 1 pays Players 2 and 3 8¢ each');
         expect(component.betResults.map(bet => bet.text)).toEqual(['Player 1 lost the Called 100', 'Player 1 won the Called 7♠']);
+        expect(component.callerWonRound).toBeFalse();
         expect([1, 2, 3].map(player => component.playerToMoney.get('player' + player))).toEqual([112, 136, 136]);
+      });
+
+      it('should leave out a line for the Game, since the result above it already says who won', async () => {
+        const cards = (...codes: string[]) => codes.map(code => ({ code, image: '', suit: '' }));
+        await startGame();
+        [1, 2, 3].forEach(player => component.allPiles.set('player' + player, []));
+        component.allPiles.set('game', []);
+        component.allPiles.set('player1Win', cards('AC', '0D'));
+        component.allPiles.set('player2Win', cards('AH', '0H', 'AS'));
+        component.allPiles.set('player3Win', cards('0S', '8D'));
+        component.trump = 'HEARTS';
+        component.currentCaller = 1;
+        component.lastTrickPlayer = 2;
+        component.trickHistory = [{ plays: cards('8H', '9C', '9H').map((card, index) => ({ player: [2, 1, 3][index], card })), winner: 2 }];
+        (component as any).collectCompletedHand(2);
+        expect(component.winMessage).toBe('Player 1 lost: 2 to 5');
+        expect(component.betResults).toEqual([]);
+        expect(component.payoutTotal).toBe('Player 1 pays Players 2 and 3 2¢ each');
       });
 
       it('should start the next round without a called 7', fakeAsync(() => {
