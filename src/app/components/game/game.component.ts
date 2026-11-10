@@ -70,7 +70,8 @@ export class GameComponent implements OnInit, OnDestroy {
     // the 100 replaces the Game: the caller alone must reach 100
     hundredCalled = false;
     // what the 7 of trump scored on the last trick, if it was played there
-    sevenMessage = '';
+    // what each bet paid, under the round's result: the Game or the 100, the 7 of trump, and the total when both paid
+    payoutMessages: string[] = [];
     legalCards: string[] = [];
 
     deck: Card[];
@@ -469,7 +470,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
         if (this.isRoundComplete()) {
             // TODO implement earningsMultiplier
-            const { earnings, winMessage } = this.pointsService.calculateEarnings(
+            const { earnings, winMessage, paymentMessage } = this.pointsService.calculateEarnings(
                 this.allPiles, this.currentCaller, this.lastTrickPlayer, this.trump, this.hundredCalled);
             for (let player = 1; player <= 3; player++) {
                 const currentMoney = this.playerToMoney.get('player' + player);
@@ -477,7 +478,13 @@ export class GameComponent implements OnInit, OnDestroy {
             }
 
             this.winMessage = winMessage;
-            this.scoreSevenOfTrump();
+            this.payoutMessages = [paymentMessage];
+            const sevenEarnings = this.scoreSevenOfTrump();
+            if (sevenEarnings) {
+                const callerTotal = earnings.get('player' + this.currentCaller) + sevenEarnings.get('player' + this.currentCaller);
+                // the caller's total is from both defenders together
+                this.payoutMessages.push('In total: ' + this.pointsService.describePayment(callerTotal / 2, this.currentCaller));
+            }
             this.canPlayAgain = true;
         }
     }
@@ -516,17 +523,18 @@ export class GameComponent implements OnInit, OnDestroy {
         }
     }
 
-    // Pays out the 7 of trump if it was played in the last trick, on top of the game
-    private scoreSevenOfTrump(): void {
+    // Pays out the 7 of trump if it was played in the last trick, on top of the game, and returns what it paid
+    private scoreSevenOfTrump(): Map<string, number> | undefined {
         const lastTrick = this.trickHistory[this.trickHistory.length - 1];
         const plays = (lastTrick?.plays || []).map(play => ({ player: play.player, card: play.card.code }));
         const seven = sevenOnLastTrick({ plays, winner: lastTrick?.winner }, this.trump, this.currentCaller, this.sevenCalled);
         if (!seven) {
-            return;
+            return undefined;
         }
         const { earnings, message } = this.pointsService.calculateSevenEarnings(seven, this.currentCaller);
         earnings.forEach((cents, player) => this.playerToMoney.set(player, this.playerToMoney.get(player) + cents));
-        this.sevenMessage = message;
+        this.payoutMessages.push(message);
+        return earnings;
     }
 
     // The Game or the 100, each with or without the 7 of trump. Called by the caller's buttons, or by the PC.
@@ -590,7 +598,7 @@ export class GameComponent implements OnInit, OnDestroy {
             this.announcing = false;
             this.sevenCalled = false;
             this.hundredCalled = false;
-            this.sevenMessage = '';
+            this.payoutMessages = [];
             this.waitingForNext = false;
             this.trickWinnerToCollect = null;
             this.setToNextDealer();

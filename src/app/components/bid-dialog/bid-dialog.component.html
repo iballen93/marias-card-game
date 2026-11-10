@@ -17,7 +17,7 @@
         <label class="toggle">
             <span class="toggle-text">
                 <span class="toggle-name">Call the 100</span>
-                <span class="toggle-note">Replaces the Game: you alone need 100</span>
+                <span class="toggle-note">Score 100 points. Every 10 points beyond 100 doubles the winnings.</span>
                 <span class="toggle-cost hundred-cost">{{getHundredCost()}}</span>
             </span>
             <input type="checkbox" class="hundred-toggle" [checked]="hundred" (change)="setHundred($any($event.target).checked)">

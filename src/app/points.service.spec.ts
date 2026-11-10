@@ -47,6 +47,14 @@ describe('PointsService', () => {
     expect(service.calculateEarnings(missed, 1, 1, 'HEARTS', true).winMessage).toBe('Player 1 Misses the Called 100, 3 to 1!');
   });
 
+  it('should say what the Game or the 100 paid, and who paid whom', () => {
+    const won = new Map([['player1Win', cards('AS', '0S')], ['player2Win', cards('AD')]]);
+    expect(service.calculateEarnings(won, 1, 1, 'HEARTS').paymentMessage).toBe('The Game: Players 2 and 3 each pay Player 1 2¢');
+    expect(service.calculateEarnings(won, 1, 1, 'SPADES', true).paymentMessage).toBe('The 100: Player 1 pays Players 2 and 3 16¢ each');
+    expect(service.describePayment(0, 2)).toBe('nobody pays anything');
+    expect(service.describePayment(4, 2)).toBe('Players 1 and 3 each pay Player 2 4¢');
+  });
+
   it('should only give the last trick point to the player who won it', () => {
     expect(service.calculatePlayerPoints(new Map(), 1, 1, 'HEARTS')).toBe(1);
     expect(service.calculatePlayerPoints(new Map(), 2, 1, 'HEARTS')).toBe(0);

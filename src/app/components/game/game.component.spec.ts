@@ -442,16 +442,44 @@ describe('GameComponent', () => {
         tick(PC_MOVE_MS);
       }));
 
+      it('should list what the 100 and the 7 each paid, and the total, after a missed 100 with a won 7 in spades', async () => {
+        await startGame();
+        const cards = (...codes: string[]) => codes.map(code => ({ code, image: '', suit: '' }));
+        [1, 2, 3].forEach(player => {
+          component.allPiles.set('player' + player, []);
+          component.playerToMoney.set('player' + player, 128);
+        });
+        component.allPiles.set('game', []);
+        // Player 1 called the 100 and the 7 of spades, then took 3 points to 6, with the 7 winning the last trick
+        component.allPiles.set('player1Win', cards('AC', '0D', '7S', '8H', '9H'));
+        component.allPiles.set('player2Win', cards('AH', '0H', '0S', 'AD', '8C', '9C'));
+        component.allPiles.set('player3Win', cards('AS', '0C', '8D'));
+        component.trump = 'SPADES';
+        component.currentCaller = 1;
+        component.lastTrickPlayer = 1;
+        component.hundredCalled = true;
+        component.sevenCalled = true;
+        component.trickHistory = [{ plays: cards('8H', '7S', '9H').map((card, index) => ({ player: [2, 1, 3][index], card })), winner: 1 }];
+        (component as any).collectCompletedHand(1);
+        expect(component.winMessage).toBe('Player 1 Misses the Called 100, 3 to 6!');
+        expect(component.payoutMessages).toEqual([
+          'The 100: Player 1 pays Players 2 and 3 16¢ each',
+          'Player 1\'s called 7♠ won the last trick: Players 2 and 3 each pay Player 1 8¢',
+          'In total: Player 1 pays Players 2 and 3 8¢ each'
+        ]);
+        expect([1, 2, 3].map(player => component.playerToMoney.get('player' + player))).toEqual([112, 136, 136]);
+      });
+
       it('should start the next round without a called 7', fakeAsync(() => {
         startPcGame();
         component.sevenCalled = true;
         component.hundredCalled = true;
-        component.sevenMessage = 'something';
+        component.payoutMessages = ['something'];
         playRoundAsPlayer1();
         component.playAgain();
         expect(component.sevenCalled).toBeFalse();
         expect(component.hundredCalled).toBeFalse();
-        expect(component.sevenMessage).toBe('');
+        expect(component.payoutMessages).toEqual([]);
         fixture.destroy();
         tick(PC_MOVE_MS * 4);
       }));

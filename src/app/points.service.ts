@@ -27,7 +27,7 @@ export class PointsService {
 
     // The Game, or the called 100 that replaces it
     calculateEarnings(allPiles: Map<string, Card[]>, callerPlayer: number, lastTrickPlayer: number, trump: string,
-                      hundredCalled = false): { earnings: Map<string, number>; winMessage: string } {
+                      hundredCalled = false): { earnings: Map<string, number>; winMessage: string; paymentMessage: string } {
         const defenders = [1, 2, 3].filter(player => player !== callerPlayer);
         const callerPoints = this.calculatePlayerPoints(allPiles, callerPlayer, lastTrickPlayer, trump);
         const defenderPoints = defenders
@@ -48,7 +48,20 @@ export class PointsService {
         } else {
             winMessage = defenderNames + ' Win the Round ' + defenderPoints + ' to ' + callerPoints + '!';
         }
-        return { earnings, winMessage };
+        const paymentMessage = (hundredCalled ? 'The 100: ' : 'The Game: ') + this.describePayment(cents, callerPlayer);
+        return { earnings, winMessage, paymentMessage };
+    }
+
+    // Who pays whom, given what each defender pays the caller (negative when the caller pays each of them)
+    describePayment(centsFromEachDefender: number, callerPlayer: number): string {
+        const defenderNames = 'Players ' + [1, 2, 3].filter(player => player !== callerPlayer).join(' and ');
+        if (centsFromEachDefender > 0) {
+            return defenderNames + ' each pay Player ' + callerPlayer + ' ' + centsFromEachDefender + '¢';
+        }
+        if (centsFromEachDefender < 0) {
+            return 'Player ' + callerPlayer + ' pays ' + defenderNames + ' ' + -centsFromEachDefender + '¢ each';
+        }
+        return 'nobody pays anything';
     }
 
     // The 7 of trump on the last trick is paid separately from the game: by each opponent of the side that won it,
@@ -63,13 +76,9 @@ export class PointsService {
         defenders.forEach(player => earnings.set('player' + player, -callerCollects * seven.cents));
 
         const seven7 = (seven.called ? 'called ' : '') + cardName(seven.card);
-        const defenderNames = 'Players ' + defenders.join(' and ');
         const outcome = seven.won ? ' won the last trick: ' : seven.playedLast ? ' lost the last trick: ' : ' wasn\'t played in the last trick: ';
         const result = 'Player ' + seven.player + '\'s ' + seven7 + outcome;
-        const payment = callerCollects > 0
-            ? defenderNames + ' each pay Player ' + callerPlayer + ' ' + seven.cents + '¢'
-            : 'Player ' + callerPlayer + ' pays ' + defenderNames + ' ' + seven.cents + '¢ each';
-        return { earnings, message: result + payment };
+        return { earnings, message: result + this.describePayment(callerCollects * seven.cents, callerPlayer) };
     }
 
     calculatePlayerPoints(allPiles: Map<string, Card[]>, player: number, lastTrickPlayer: number, trump: string): number {
