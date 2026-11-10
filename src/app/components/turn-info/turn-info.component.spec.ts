@@ -19,8 +19,8 @@ describe('TurnInfoComponent', () => {
   });
 
   it('should leave out the result line after a called 100, since its own line carries the score', () => {
-    expect(showResult(true, [{ text: 'Player 1 lost the Called 100: 5 to 4', won: false }]))
-      .toEqual(['Player 1 lost the Called 100: 5 to 4', 'Player 1 pays Players 2 and 3 24¢ each']);
+    expect(showResult(true, [{ text: '-24¢ Player 1 lost the Called 100: 5 to 4', won: false }]))
+      .toEqual(['-24¢ Player 1 lost the Called 100: 5 to 4', 'Player 1 pays Players 2 and 3 24¢ each']);
   });
 
   it('should keep the result line in a normal game', () => {

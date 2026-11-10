@@ -463,7 +463,8 @@ describe('GameComponent', () => {
         (component as any).collectCompletedHand(1);
         expect(component.winMessage).toBe('Player 1 lost: 3 to 6');
         expect(component.payoutTotal).toBe('Player 1 pays Players 2 and 3 8¢ each');
-        expect(component.betResults.map(bet => bet.text)).toEqual(['Player 1 lost the Called 100: 3 to 6', 'Player 1 won the Called 7♠']);
+        // each bet's cents add up to the total: -16¢ + 8¢ is 8¢ from Player 1 to each defender
+        expect(component.betResults.map(bet => bet.text)).toEqual(['-16¢ Player 1 lost the Called 100: 3 to 6', '+8¢ Player 1 won the Called 7♠']);
         expect(component.callerWonRound).toBeFalse();
         expect([1, 2, 3].map(player => component.playerToMoney.get('player' + player))).toEqual([112, 136, 136]);
       });

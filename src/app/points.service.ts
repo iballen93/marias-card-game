@@ -48,7 +48,7 @@ export class PointsService {
         const winMessage = 'Player ' + callerPlayer + (cents > 0 ? ' won: ' : ' lost: ') + callerPoints + ' to ' + defenderPoints;
         // a called 100 can be lost with more points than the defenders, so its line carries the score instead of the result above
         const score = ': ' + callerPoints + ' to ' + defenderPoints;
-        const betResult = this.describeBet(callerPlayer, cents > 0, hundredCalled ? 'the Called 100' + score : 'the Game');
+        const betResult = this.describeBet(callerPlayer, cents, hundredCalled ? 'the Called 100' + score : 'the Game');
         return { earnings, winMessage, betResult };
     }
 
@@ -64,8 +64,11 @@ export class PointsService {
         return 'Nobody pays anything';
     }
 
-    private describeBet(callerPlayer: number, won: boolean, bet: string): BetResult {
-        return { text: 'Player ' + callerPlayer + (won ? ' won ' : ' lost ') + bet, won };
+    // starts with what the bet paid the caller from each defender: "-8¢ Player 1 lost the Called 7♠"
+    private describeBet(callerPlayer: number, centsFromEachDefender: number, bet: string): BetResult {
+        const won = centsFromEachDefender > 0;
+        const cents = (won ? '+' : '-') + Math.abs(centsFromEachDefender) + '¢ ';
+        return { text: cents + 'Player ' + callerPlayer + (won ? ' won ' : ' lost ') + bet, won };
     }
 
     // The 7 of trump on the last trick is paid separately from the game: by each opponent of the side that won it,
@@ -81,7 +84,7 @@ export class PointsService {
 
         // a defender's 7 is always silent, and its result is still told from the caller's side
         const bet = (seven.called ? 'the Called ' : 'the Silent ') + cardName(seven.card);
-        return { earnings, betResult: this.describeBet(callerPlayer, callerCollects > 0, bet) };
+        return { earnings, betResult: this.describeBet(callerPlayer, callerCollects * seven.cents, bet) };
     }
 
     calculatePlayerPoints(allPiles: Map<string, Card[]>, player: number, lastTrickPlayer: number, trump: string): number {
