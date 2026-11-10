@@ -95,6 +95,13 @@ h2 {
     }
 }
 
+// the 7 without the 7 of trump in hand: shown, but it can't be switched on
+.toggle.unavailable {
+    cursor: default;
+    opacity: 0.45;
+    filter: grayscale(1);
+}
+
 .toggle input:focus-visible + .switch {
     outline: 2px solid #1b3d1b;
     outline-offset: 2px;
@@ -104,7 +111,7 @@ h2 {
     border-bottom: 1px solid #dfe8df;
 }
 
-// what the bet is worth, shown once it's switched on
+// what the bet is worth if it's switched on
 .toggle-cost {
     margin-top: 0.125rem;
     color: green;

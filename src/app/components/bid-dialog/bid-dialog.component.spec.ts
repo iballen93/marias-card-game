@@ -27,24 +27,20 @@ describe('BidDialogComponent', () => {
     fixture.detectChanges();
   });
 
-  it('should ask what to bid on, the 7 first and the 100 second, with both switches off and no costs shown', () => {
+  it('should ask what to bid on, the 7 first and the 100 second, with both switches off and their costs shown', () => {
     expect(element().querySelector('h2').textContent).toBe('What would you like to bid on?');
     expect(Array.from(element().querySelectorAll('.toggle-name')).map(name => name.textContent)).toEqual(['Call the 7♦', 'Call the 100']);
     expect((element().querySelector('.hundred-toggle') as HTMLInputElement).checked).toBeFalse();
     expect((element().querySelector('.seven-toggle') as HTMLInputElement).checked).toBeFalse();
-    expect(element().querySelector('.toggle-cost')).toBeNull();
+    expect(element().querySelector('.seven-cost').textContent).toBe('4¢ per player');
+    expect(element().querySelector('.hundred-cost').textContent).toBe('8¢ per player');
   });
 
-  it('should show what each bet costs once it is switched on, doubled in spades', () => {
-    toggle('.seven-toggle');
-    expect(element().querySelector('.seven-cost').textContent).toBe('4¢ from each opponent, won or lost');
-    expect(element().querySelector('.hundred-cost')).toBeNull();
-    toggle('.hundred-toggle');
-    expect(element().querySelector('.hundred-cost').textContent).toBe('8¢ from each opponent, won or lost');
+  it('should double both costs in spades', () => {
     component.trump = 'SPADES';
     fixture.detectChanges();
-    expect(element().querySelector('.seven-cost').textContent).toBe('8¢ from each opponent, won or lost (doubled for spades)');
-    expect(element().querySelector('.hundred-cost').textContent).toBe('16¢ from each opponent, won or lost (doubled for spades)');
+    expect(element().querySelector('.seven-cost').textContent).toBe('8¢ per player (doubled for spades)');
+    expect(element().querySelector('.hundred-cost').textContent).toBe('16¢ per player (doubled for spades)');
   });
 
   it('should bid on the Game alone when nothing is switched on', () => {
@@ -66,10 +62,15 @@ describe('BidDialogComponent', () => {
     expect(bids).toEqual([{ seven: false, hundred: false }]);
   });
 
-  it('should hide the 7 switch from a caller without the 7 of trump', () => {
+  it('should grey out the 7 switch for a caller without the 7 of trump, so it bids without it', () => {
     component.canCallSeven = false;
     fixture.detectChanges();
-    expect(element().querySelector('.seven-toggle')).toBeNull();
-    expect(element().querySelectorAll('.toggle').length).toBe(1);
+    const seven = element().querySelector('.seven-toggle') as HTMLInputElement;
+    expect(seven.disabled).toBeTrue();
+    expect(seven.closest('.toggle').classList).toContain('unavailable');
+    expect(seven.closest('.toggle').textContent).toContain('You don\'t hold the 7♦');
+    toggle('.seven-toggle');
+    bid();
+    expect(bids).toEqual([{ seven: false, hundred: false }]);
   });
 });

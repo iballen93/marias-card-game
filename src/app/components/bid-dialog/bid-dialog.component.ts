@@ -21,7 +21,7 @@ export class BidDialogComponent {
     constructor(private changeDetector: ChangeDetectorRef) {
     }
 
-    // redraw straight away, so the cost line appears or goes with the switch
+    // redraw straight away, so the switch moves as soon as it's tapped
     setSeven(on: boolean): void {
         this.seven = on;
         this.changeDetector.detectChanges();
@@ -32,7 +32,7 @@ export class BidDialogComponent {
         this.changeDetector.detectChanges();
     }
 
-    // what a switched-on bet is worth from each opponent, won or lost: calling the 7 doubles it, and spades doubles everything
+    // what each bet is worth per player if switched on, won or lost: calling the 7 doubles it, and spades doubles everything
     getSevenCost(): string {
         return this.describeCost(SEVEN_CENTS * 2);
     }
@@ -47,6 +47,6 @@ export class BidDialogComponent {
 
     private describeCost(cents: number): string {
         const spades = this.trump === 'SPADES';
-        return (spades ? cents * 2 : cents) + '¢ from each opponent, won or lost' + (spades ? ' (doubled for spades)' : '');
+        return (spades ? cents * 2 : cents) + '¢ per player' + (spades ? ' (doubled for spades)' : '');
     }
 }

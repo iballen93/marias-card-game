@@ -2,13 +2,15 @@
     <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="bid-title">
         <h2 id="bid-title">What would you like to bid on?</h2>
 
-        <label *ngIf="canCallSeven" class="toggle">
+        <!-- greyed out, and can't be switched on, without the 7 of trump in hand -->
+        <label class="toggle" [class.unavailable]="!canCallSeven">
             <span class="toggle-text">
                 <span class="toggle-name">Call the {{sevenName}}</span>
-                <span class="toggle-note">Win the last trick with it</span>
-                <span *ngIf="seven" class="toggle-cost seven-cost">{{getSevenCost()}}</span>
+                <span class="toggle-note">{{canCallSeven ? 'Win the last trick with it' : "You don't hold the " + sevenName}}</span>
+                <span class="toggle-cost seven-cost">{{getSevenCost()}}</span>
             </span>
-            <input type="checkbox" class="seven-toggle" [checked]="seven" (change)="setSeven($any($event.target).checked)">
+            <input type="checkbox" class="seven-toggle" [checked]="seven" [disabled]="!canCallSeven"
+                   (change)="setSeven($any($event.target).checked)">
             <span class="switch"></span>
         </label>
 
@@ -16,7 +18,7 @@
             <span class="toggle-text">
                 <span class="toggle-name">Call the 100</span>
                 <span class="toggle-note">Replaces the Game: you alone need 100</span>
-                <span *ngIf="hundred" class="toggle-cost hundred-cost">{{getHundredCost()}}</span>
+                <span class="toggle-cost hundred-cost">{{getHundredCost()}}</span>
             </span>
             <input type="checkbox" class="hundred-toggle" [checked]="hundred" (change)="setHundred($any($event.target).checked)">
             <span class="switch"></span>
