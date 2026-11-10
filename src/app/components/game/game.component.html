@@ -34,9 +34,6 @@
                                (playAgain)="playAgain()"
                                [announcing]="announcing"
                                [canAnnounce]="announcing && !isPcSeat(activePlayer)"
-                               [canCallSeven]="announcing && holdsSevenOfTrump()"
-                               [sevenName]="getSevenName()"
-                               (announce)="announceFromButton($event)"
                                [sevenMessage]="sevenMessage"
                                (next)="next()"></app-turn-info>
 
@@ -85,4 +82,10 @@
             </td>
         </tr>
     </table>
+
+    <app-bid-dialog *ngIf="announcing && !isPcSeat(activePlayer)"
+                    [canCallSeven]="holdsSevenOfTrump()"
+                    [sevenName]="getSevenName()"
+                    [trump]="trump"
+                    (bid)="announceFromButton($event)"></app-bid-dialog>
 </div>

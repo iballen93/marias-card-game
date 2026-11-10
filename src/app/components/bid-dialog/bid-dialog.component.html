@@ -1,0 +1,27 @@
+<div class="backdrop">
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="bid-title">
+        <h2 id="bid-title">What would you like to bid on?</h2>
+
+        <label *ngIf="canCallSeven" class="toggle">
+            <span class="toggle-text">
+                <span class="toggle-name">Call the {{sevenName}}</span>
+                <span class="toggle-note">Win the last trick with it</span>
+                <span *ngIf="seven" class="toggle-cost seven-cost">{{getSevenCost()}}</span>
+            </span>
+            <input type="checkbox" class="seven-toggle" [checked]="seven" (change)="setSeven($any($event.target).checked)">
+            <span class="switch"></span>
+        </label>
+
+        <label class="toggle">
+            <span class="toggle-text">
+                <span class="toggle-name">Call the 100</span>
+                <span class="toggle-note">Replaces the Game: you alone need 100</span>
+                <span *ngIf="hundred" class="toggle-cost hundred-cost">{{getHundredCost()}}</span>
+            </span>
+            <input type="checkbox" class="hundred-toggle" [checked]="hundred" (change)="setHundred($any($event.target).checked)">
+            <span class="switch"></span>
+        </label>
+
+        <button type="button" class="bid-button" (click)="submit()">Bid</button>
+    </div>
+</div>

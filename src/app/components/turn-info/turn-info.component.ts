@@ -18,12 +18,9 @@ export class TurnInfoComponent implements OnInit {
     @Output() next = new EventEmitter<void>();
     // shown right under the round's result
     @Input() canPlayAgain: boolean;
-    // the caller chooses the Game or the 100, and the 7 of trump too when holding it
+    // the caller is bidding; a person does it in the bid pop-up, so this only says a PC is deciding
     @Input() announcing: boolean;
     @Input() canAnnounce: boolean;
-    @Input() canCallSeven: boolean;
-    @Input() sevenName: string;
-    @Output() announce = new EventEmitter<{ seven: boolean; hundred: boolean }>();
     @Input() sevenMessage: string;
     @Output() playAgain = new EventEmitter<void>();
 
