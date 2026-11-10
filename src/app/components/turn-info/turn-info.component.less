@@ -60,10 +60,9 @@
     }
 }
 
-// What each bet paid, under the round's result
-.payout-message {
+// The round's result, the caller's bets, and who pays whom, all in one bubble
+.round-result {
     display: inline-block;
-    margin-top: 4px;
     color: green;
     font-size: var(--message-small);
     font-weight: bold;
@@ -72,7 +71,7 @@
     border-radius: 0.625rem;
 }
 
-// the caller's result on each bet, quieter than the total above it
+// the caller's result on each bet, quieter than the lines around it
 .bet-result {
     margin: 0;
     font-size: 0.85em;
@@ -81,4 +80,10 @@
 
 .bet-result.lost {
     color: #b00020;
+}
+
+.payout-total {
+    margin-top: 2px;
+    padding-top: 2px;
+    border-top: 1px solid #cfe0cf;
 }

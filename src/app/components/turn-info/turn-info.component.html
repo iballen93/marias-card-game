@@ -9,12 +9,11 @@
     Player {{activePlayer}} must Bury 2 Cards
 </div>
 
-<div *ngIf="winMessage != ''" style="color: green; font-size: var(--message-small); background-color: white; display: inline-block; padding: var(--message-padding); border-radius: 0.625rem; font-weight: bold;">
-    {{winMessage}}
-</div>
-<div *ngIf="payoutTotal" class="payout-message">
-    <div class="payout-total">{{payoutTotal}}</div>
+<!-- one bubble: who won, each bet the caller won or lost, then who pays whom in all -->
+<div *ngIf="winMessage != ''" class="round-result">
+    <div>{{winMessage}}</div>
     <div *ngFor="let bet of betResults" class="bet-result" [class.lost]="!bet.won">{{bet.text}}</div>
+    <div *ngIf="payoutTotal" class="payout-total">{{payoutTotal}}</div>
 </div>
 <button *ngIf="canPlayAgain" type="button" class="play-again-button" (click)="playAgain.emit()">PLAY AGAIN</button>
 
