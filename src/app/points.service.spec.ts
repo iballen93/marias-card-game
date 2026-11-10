@@ -41,10 +41,10 @@ describe('PointsService', () => {
   it('should say whether a called 100 was made or missed, and pay it instead of the Game', () => {
     const made = new Map([['player1Win', cards('AS', '0S', 'AD', '0D', 'AC', '0C', 'AH', '0H')], ['player1Marriage', cards('KS')]]);
     const result = service.calculateEarnings(made, 1, 1, 'HEARTS', true);
-    expect(result.winMessage).toBe('Player 1 Makes the Called 100, 11 to 0!');
+    expect(result.winMessage).toBe('Player 1 wins the game: 11 to 0');
     expect([1, 2, 3].map(player => result.earnings.get('player' + player))).toEqual([32, -16, -16]);
     const missed = new Map([['player1Win', cards('AS', '0S')], ['player2Win', cards('AD')]]);
-    expect(service.calculateEarnings(missed, 1, 1, 'HEARTS', true).winMessage).toBe('Player 1 Misses the Called 100, 3 to 1!');
+    expect(service.calculateEarnings(missed, 1, 1, 'HEARTS', true).winMessage).toBe('Player 1 loses the game: 3 to 1');
   });
 
   it('should say whether the caller won or lost the Game or the 100', () => {
