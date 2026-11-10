@@ -461,7 +461,7 @@ describe('GameComponent', () => {
         component.sevenCalled = true;
         component.trickHistory = [{ plays: cards('8H', '7S', '9H').map((card, index) => ({ player: [2, 1, 3][index], card })), winner: 1 }];
         (component as any).collectCompletedHand(1);
-        expect(component.winMessage).toBe('Player 1 loses the game: 3 to 6');
+        expect(component.winMessage).toBe('Player 1 lost: 3 to 6');
         expect(component.payoutTotal).toBe('Player 1 pays Players 2 and 3 8¢ each');
         expect(component.betResults.map(bet => bet.text)).toEqual(['Player 1 lost the Called 100', 'Player 1 won the Called 7♠']);
         expect([1, 2, 3].map(player => component.playerToMoney.get('player' + player))).toEqual([112, 136, 136]);

@@ -47,8 +47,8 @@ export class PointsService {
         const defenderNames = 'Players ' + defenders.join(' and ');
         let winMessage: string;
         if (hundredCalled) {
-            // the bets below the result say it was the 100, so this reads like any other game
-            winMessage = 'Player ' + callerPlayer + (cents > 0 ? ' wins' : ' loses') + ' the game: '
+            // kept short: the bets below the result say it was the 100
+            winMessage = 'Player ' + callerPlayer + (cents > 0 ? ' won: ' : ' lost: ')
                 + callerPoints + ' to ' + defenderPoints;
         } else if (cents > 0) {
             winMessage = 'Player ' + callerPlayer + ' Wins the Round ' + callerPoints + ' to ' + defenderPoints + '!';
