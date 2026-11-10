@@ -45,15 +45,14 @@ export class PointsService {
         defenders.forEach(player => earnings.set('player' + player, -cents));
 
         const defenderNames = 'Players ' + defenders.join(' and ');
+        // kept short: the bets below the result say whether it was the Game or the 100
         let winMessage: string;
         if (hundredCalled) {
-            // kept short: the bets below the result say it was the 100
-            winMessage = 'Player ' + callerPlayer + (cents > 0 ? ' won: ' : ' lost: ')
-                + callerPoints + ' to ' + defenderPoints;
+            winMessage = 'Player ' + callerPlayer + (cents > 0 ? ' won: ' : ' lost: ') + callerPoints + ' to ' + defenderPoints;
         } else if (cents > 0) {
-            winMessage = 'Player ' + callerPlayer + ' Wins the Round ' + callerPoints + ' to ' + defenderPoints + '!';
+            winMessage = 'Player ' + callerPlayer + ' won: ' + callerPoints + ' to ' + defenderPoints;
         } else {
-            winMessage = defenderNames + ' Win the Round ' + defenderPoints + ' to ' + callerPoints + '!';
+            winMessage = defenderNames + ' won: ' + defenderPoints + ' to ' + callerPoints;
         }
         const betResult = this.describeBet(callerPlayer, cents > 0, hundredCalled ? 'the Called 100' : 'the Game');
         return { earnings, winMessage, betResult };
