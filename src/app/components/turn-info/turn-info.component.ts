@@ -26,6 +26,8 @@ export class TurnInfoComponent implements OnInit {
     @Input() payoutTotal: string;
     @Input() betResults: BetResult[] = [];
     @Input() callerWonRound: boolean;
+    // red when the caller owes money in all, green when they collect
+    @Input() callerPays: boolean;
     // the 100's own line says how it went, since "won: 5 to 4" could read as a win when the 100 was lost
     @Input() hundredCalled: boolean;
     @Output() playAgain = new EventEmitter<void>();

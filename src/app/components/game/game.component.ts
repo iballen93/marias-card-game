@@ -75,6 +75,8 @@ export class GameComponent implements OnInit, OnDestroy {
     betResults: BetResult[] = [];
     // whether the caller won the Game or the 100, which colours the result line
     callerWonRound = false;
+    // whether the caller owes money in all, which colours the total red
+    callerPays = false;
     legalCards: string[] = [];
 
     deck: Card[];
@@ -489,6 +491,7 @@ export class GameComponent implements OnInit, OnDestroy {
             // the caller collects from, or pays, both defenders together, so each defender's share is half
             const callerTotal = earnings.get(caller) + (sevenEarnings ? sevenEarnings.get(caller) : 0);
             this.payoutTotal = this.pointsService.describePayment(callerTotal / 2, this.currentCaller);
+            this.callerPays = callerTotal < 0;
             this.canPlayAgain = true;
         }
     }

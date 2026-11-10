@@ -13,7 +13,7 @@
 <div *ngIf="winMessage != ''" class="round-result">
     <div *ngIf="!hundredCalled || !payoutTotal" [class.lost]="payoutTotal && !callerWonRound">{{winMessage}}</div>
     <div *ngFor="let bet of betResults" class="bet-result" [class.lost]="!bet.won">{{bet.text}}</div>
-    <div *ngIf="payoutTotal" class="payout-total">{{payoutTotal}}</div>
+    <div *ngIf="payoutTotal" class="payout-total" [class.lost]="callerPays">{{payoutTotal}}</div>
 </div>
 <button *ngIf="canPlayAgain" type="button" class="play-again-button" (click)="playAgain.emit()">PLAY AGAIN</button>
 
