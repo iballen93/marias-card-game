@@ -50,7 +50,8 @@ describe('PointsService', () => {
   it('should say whether the caller won or lost the Game or the 100', () => {
     const won = new Map([['player1Win', cards('AS', '0S')], ['player2Win', cards('AD')]]);
     expect(service.calculateEarnings(won, 1, 1, 'HEARTS').betResult).toEqual({ text: 'Player 1 won the Game', won: true });
-    expect(service.calculateEarnings(won, 1, 1, 'SPADES', true).betResult).toEqual({ text: 'Player 1 lost the Called 100', won: false });
+    expect(service.calculateEarnings(won, 1, 1, 'SPADES', true).betResult)
+      .toEqual({ text: 'Player 1 lost the Called 100: 3 to 1', won: false });
   });
 
   it('should say who pays whom', () => {

@@ -46,7 +46,9 @@ export class PointsService {
 
         // always from the caller's side, kept short: the bets below the result say whether it was the Game or the 100
         const winMessage = 'Player ' + callerPlayer + (cents > 0 ? ' won: ' : ' lost: ') + callerPoints + ' to ' + defenderPoints;
-        const betResult = this.describeBet(callerPlayer, cents > 0, hundredCalled ? 'the Called 100' : 'the Game');
+        // a called 100 can be lost with more points than the defenders, so its line carries the score instead of the result above
+        const score = ': ' + callerPoints + ' to ' + defenderPoints;
+        const betResult = this.describeBet(callerPlayer, cents > 0, hundredCalled ? 'the Called 100' + score : 'the Game');
         return { earnings, winMessage, betResult };
     }
 
