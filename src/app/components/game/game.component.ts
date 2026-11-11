@@ -426,6 +426,10 @@ export class GameComponent implements OnInit, OnDestroy {
         this.illegalMoveMessage = this.validationService.validateMove();
 
         if (this.illegalMoveMessage === '') {
+            // once you play, the PC's last move is old news; a PC's own move keeps the explanation it just set
+            if (!this.isPcSeat(this.activePlayer)) {
+                this.pcExplanation = '';
+            }
             // CARD PICKED HERE
             if (this.isCardInMarriage($event.code)) {
                 this.removeFromPlayerPile($event.code);

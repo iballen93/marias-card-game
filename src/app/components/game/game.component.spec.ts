@@ -353,6 +353,35 @@ describe('GameComponent', () => {
       tick(PC_MOVE_MS);
     }));
 
+    it('should clear the PC\'s last explanation once you play a card, and keep it after an illegal click', fakeAsync(() => {
+      startPcGame();
+      // play until it's your turn in a trick with a PC's move still explained on screen
+      for (let step = 0; step < 500 && !(component.activePlayer === 1 && pile('game').length && component.pcExplanation); step++) {
+        if (component.announcing && component.activePlayer === 1) {
+          component.announceFromButton(GAME);
+        } else if (component.activePlayer === 1 && !component.showingCompletedHand) {
+          const card = component.buryingCards || component.pickingTrump
+            ? hand(1).find(c => !'A0'.includes(c.code.charAt(0)))
+            : hand(1).find(c => component.legalCards.includes(c.code));
+          component.cardSelected(card);
+        } else {
+          tick(Math.max(PC_MOVE_MS, HAND_DISPLAY_MS));
+        }
+      }
+      const explanation = component.pcExplanation;
+      expect(explanation).toContain('Player');
+      const illegal = hand(1).find(c => !component.legalCards.includes(c.code));
+      if (illegal) {
+        component.cardSelected(illegal);
+        tick(PC_MOVE_MS);
+        expect(component.pcExplanation).toBe(explanation);
+      }
+      component.cardSelected(hand(1).find(c => component.legalCards.includes(c.code)));
+      expect(component.pcExplanation).toBe('');
+      fixture.destroy();
+      tick(Math.max(PC_MOVE_MS, HAND_DISPLAY_MS));
+    }));
+
     it('should fast play the PC seats with the PC strategy and only your cards at random', fakeAsync(() => {
       startPcGame();
       const service = TestBed.inject(ComputerPlayerService);
