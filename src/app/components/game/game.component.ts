@@ -476,6 +476,8 @@ export class GameComponent implements OnInit, OnDestroy {
         // add to player win pile (which removes from game pile)
         this.addGamePileToPlayerWinPile(winningPlayer);
         this.showingCompletedHand = false;
+        // the explanation was about a card in this trick, which is now off the table
+        this.pcExplanation = '';
 
         if (this.isRoundComplete()) {
             // TODO implement earningsMultiplier

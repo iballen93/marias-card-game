@@ -356,7 +356,8 @@ describe('GameComponent', () => {
     it('should clear the PC\'s last explanation once you play a card, and keep it after an illegal click', fakeAsync(() => {
       startPcGame();
       // play until it's your turn in a trick with a PC's move still explained on screen
-      for (let step = 0; step < 500 && !(component.activePlayer === 1 && pile('game').length && component.pcExplanation); step++) {
+      const yourTurnMidTrick = () => component.activePlayer === 1 && !component.showingCompletedHand && pile('game').length > 0;
+      for (let step = 0; step < 500 && !(yourTurnMidTrick() && component.pcExplanation); step++) {
         if (component.announcing && component.activePlayer === 1) {
           component.announceFromButton(GAME);
         } else if (component.activePlayer === 1 && !component.showingCompletedHand) {
@@ -377,6 +378,15 @@ describe('GameComponent', () => {
         expect(component.pcExplanation).toBe(explanation);
       }
       component.cardSelected(hand(1).find(c => component.legalCards.includes(c.code)));
+      expect(component.pcExplanation).toBe('');
+      fixture.destroy();
+      tick(Math.max(PC_MOVE_MS, HAND_DISPLAY_MS));
+    }));
+
+    it('should clear the PC\'s explanation when a trick moves to the win pile', fakeAsync(() => {
+      startPcGame();
+      component.pcExplanation = 'Player 3 (PC) played the K♥, its only legal card.';
+      (component as any).collectCompletedHand(2);
       expect(component.pcExplanation).toBe('');
       fixture.destroy();
       tick(Math.max(PC_MOVE_MS, HAND_DISPLAY_MS));
