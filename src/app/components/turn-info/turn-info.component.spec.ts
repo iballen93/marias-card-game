@@ -30,6 +30,16 @@ describe('TurnInfoComponent', () => {
     expect(fixture.nativeElement.querySelector('.payout-total').classList).not.toContain('lost');
   });
 
+  it('should hide what the PC last played once the round is over', () => {
+    fixture = TestBed.createComponent(TurnInfoComponent);
+    fixture.componentInstance.pcExplanation = 'Player 3 (PC) played the K♥, its only legal card.';
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.pc-explanation')).not.toBeNull();
+    fixture.componentInstance.canPlayAgain = true;
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.pc-explanation')).toBeNull();
+  });
+
   it('should keep the result line in a normal game', () => {
     expect(showResult(false, [])).toEqual(['Player 1 lost: 5 to 4', 'Player 1 pays Players 2 and 3 24¢ each']);
   });

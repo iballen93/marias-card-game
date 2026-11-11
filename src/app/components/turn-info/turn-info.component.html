@@ -18,11 +18,12 @@
 <button *ngIf="canPlayAgain" type="button" class="play-again-button" (click)="playAgain.emit()">PLAY AGAIN</button>
 
 <br>
-<div *ngIf="pcExplanation" class="pc-explanation">
+<!-- once the round is over, what the PC last played is old news -->
+<div *ngIf="pcExplanation && !canPlayAgain" class="pc-explanation">
     {{pcExplanation}}
     <button *ngIf="showNext" type="button" class="next-button" (click)="next.emit()">Next ▸</button>
 </div>
-<br *ngIf="pcExplanation">
+<br *ngIf="pcExplanation && !canPlayAgain">
 <div *ngIf="illegalMoveMessage" style="color: red; font-size: var(--message-illegal); background-color: white; display: inline-block; padding: var(--message-padding); border-radius: 0.625rem; font-weight: bold;">
     Illegal Move - {{illegalMoveMessage}}
 </div>
