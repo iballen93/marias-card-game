@@ -108,18 +108,19 @@ table {
         display: grid;
         grid-template-columns: calc(var(--card-width) * 2.1) 1fr;
         column-gap: 8px;
-        height: calc(var(--hand-pile-height) + 20px);
+        // at least a trick's height, and taller when a message needs it, so nothing scrolls
+        min-height: calc(var(--hand-pile-height) + 20px);
         padding: 2px 8px;
-        overflow: hidden;
         box-sizing: border-box;
     }
 
+    // at the bottom, just above Player 1
     .turn-status {
         grid-column: 2;
         position: static;
         transform: none;
         padding: 0;
-        overflow-y: auto;
+        align-self: end;
     }
 
     .trick-pile {
@@ -129,7 +130,7 @@ table {
         position: static;
         transform: none;
         padding: 0;
-        align-self: center;
+        align-self: start;
     }
 
     // Player 1's piles are above the corners here, so only Fast Play limits the width
@@ -177,21 +178,21 @@ table {
         max-width: calc(33vw - env(safe-area-inset-left, 0px) - var(--corner-gap) * 2);
     }
 
-    // Messages sit at the top centre like the web view, with the trick below them
+    // The trick sits at the top centre, and the messages at the bottom, just above Player 1
     .trick-pile {
         grid-column: 2;
         grid-row: 1;
         align-self: start;
-        margin-top: var(--message-space);
-        // keeps its height when the table is empty, so Player 1 doesn't jump
-        min-height: var(--hand-pile-height);
+        // keeps the whole middle's height when the table is empty, so Player 1 doesn't jump
+        min-height: calc(var(--hand-pile-height) + var(--message-space));
     }
 
+    // grows upwards as far as the text needs, over the bottom of the trick if it must, since the cards' corners still show
     .turn-status {
         grid-column: 2;
         grid-row: 1;
-        align-self: start;
-        max-height: var(--message-space);
+        align-self: end;
+        max-height: calc(var(--hand-pile-height) + var(--message-space));
         padding: 0 8px;
         box-sizing: border-box;
     }
