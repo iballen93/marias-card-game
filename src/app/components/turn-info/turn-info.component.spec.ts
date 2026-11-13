@@ -4,11 +4,11 @@ import { TurnInfoComponent } from './turn-info.component';
 describe('TurnInfoComponent', () => {
   let fixture: ComponentFixture<TurnInfoComponent>;
 
-  const showResult = (hundredCalled: boolean, betResults: { text: string; won: boolean }[], callerPays = true) => {
+  const showResult = (hundredCalled: boolean, betResults: { text: string; won: boolean }[], player1LosesMoney = true) => {
     fixture = TestBed.createComponent(TurnInfoComponent);
     Object.assign(fixture.componentInstance, {
       winMessage: 'Player 1 lost: 5 to 4', payoutTotal: 'Player 1 pays Players 2 and 3 24¢ each',
-      callerWonRound: false, hundredCalled, betResults, callerPays
+      hundredCalled, betResults, player1LosesMoney
     });
     fixture.detectChanges();
     return Array.from(fixture.nativeElement.querySelectorAll('.round-result > div')).map((line: HTMLElement) => line.textContent.trim());
@@ -23,11 +23,11 @@ describe('TurnInfoComponent', () => {
       .toEqual(['-24¢ Player 1 lost the Called 100: 5 to 4', 'Player 1 pays Players 2 and 3 24¢ each']);
   });
 
-  it('should make the total red when the caller pays, and leave it green when they collect', () => {
+  it('should make the whole result red when Player 1 loses money, and green otherwise', () => {
     showResult(false, []);
-    expect(fixture.nativeElement.querySelector('.payout-total').classList).toContain('lost');
+    expect(fixture.nativeElement.querySelector('.round-result').classList).toContain('lost');
     showResult(false, [], false);
-    expect(fixture.nativeElement.querySelector('.payout-total').classList).not.toContain('lost');
+    expect(fixture.nativeElement.querySelector('.round-result').classList).not.toContain('lost');
   });
 
   it('should hide what the PC last played once the round is over', () => {

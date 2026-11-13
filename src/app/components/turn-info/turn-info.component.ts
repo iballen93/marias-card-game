@@ -25,9 +25,8 @@ export class TurnInfoComponent implements OnInit {
     // who pays whom in all, then the caller's result on each bet
     @Input() payoutTotal: string;
     @Input() betResults: BetResult[] = [];
-    @Input() callerWonRound: boolean;
-    // red when the caller owes money in all, green when they collect
-    @Input() callerPays: boolean;
+    // the whole result is red when you, Player 1, lose money on the round, and green otherwise
+    @Input() player1LosesMoney: boolean;
     // the 100's own line says how it went, since "won: 5 to 4" could read as a win when the 100 was lost
     @Input() hundredCalled: boolean;
     @Output() playAgain = new EventEmitter<void>();
