@@ -267,7 +267,7 @@ describe('PC brain', () => {
       expect(strong.reason).toBe('called the 100: its marriages and point cards already add up to about 12 points');
       const weak = chooseAnnouncement(['KH', 'QH', 'AH', '8H', '7S', '8S', '9D', 'JD', 'QC', '7C'], 'HEARTS');
       expect(weak.callHundred).toBeFalse();
-      expect(weak.reason).toBe('didn\'t call the 100: its marriages and point cards only add up to about 5 points');
+      expect(weak.reason).toBe('is playing the Game: its marriages and point cards add up to about 5 points, short of the 100');
     });
   });
 });

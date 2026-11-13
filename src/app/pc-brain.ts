@@ -218,7 +218,7 @@ export function chooseAnnouncement(hand: string[], trump: string): AnnouncementC
     const estimate = expectedPoints(hand, trump);
     const callHundred = estimate >= CALL_HUNDRED_ESTIMATE;
 
-    // the Game is always played, so only the bets on top of it need a reason
+    // the Game is always played, so it's only named when the PC bets nothing more; otherwise the extra bets get the reason
     const hundredReason = 'called the 100: its marriages and point cards already add up to about ' + estimate + ' points';
     const sevenReason = callSeven
         ? 'called the ' + seven + ': with ' + trumps + ' trumps it expects to keep the ' + seven + ' for the last trick'
@@ -229,7 +229,7 @@ export function chooseAnnouncement(hand: string[], trump: string): AnnouncementC
     } else if (holdsSeven) {
         reason = sevenReason;
     } else {
-        reason = 'didn\'t call the 100: its marriages and point cards only add up to about ' + estimate + ' points';
+        reason = 'is playing the Game: its marriages and point cards add up to about ' + estimate + ' points, short of the 100';
     }
     return { callSeven, callHundred, reason };
 }
