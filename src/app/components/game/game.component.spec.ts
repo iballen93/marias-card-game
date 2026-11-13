@@ -346,7 +346,7 @@ describe('GameComponent', () => {
       // it announces the Game or the 100, then leads: one Next each
       component.next();
       expect(pile('game').length).toBe(0);
-      expect(component.pcExplanation).toMatch(/the Game|the 100/);
+      expect(component.pcExplanation).toMatch(/the 100|the 7/);
       component.next();
       expect(pile('game').length).toBe(1);
       fixture.destroy();

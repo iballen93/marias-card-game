@@ -218,13 +218,20 @@ export function chooseAnnouncement(hand: string[], trump: string): AnnouncementC
     const estimate = expectedPoints(hand, trump);
     const callHundred = estimate >= CALL_HUNDRED_ESTIMATE;
 
-    const contract = callHundred
-        ? 'called the 100: its marriages and point cards already add up to about ' + estimate + ' points'
-        : 'played the Game: its marriages and point cards add up to about ' + estimate + ' points, short of the 100';
-    const sevenPart = !holdsSeven ? ''
-        : callSeven ? '. It called the ' + seven + ' too: with ' + trumps + ' trumps it expects to keep the ' + seven + ' for the last trick'
-        : '. It kept the ' + seven + ' silent: with only ' + trumps + ' trumps, it could be beaten on the last trick';
-    return { callSeven, callHundred, reason: contract + sevenPart };
+    // the Game is always played, so only the bets on top of it need a reason
+    const hundredReason = 'called the 100: its marriages and point cards already add up to about ' + estimate + ' points';
+    const sevenReason = callSeven
+        ? 'called the ' + seven + ': with ' + trumps + ' trumps it expects to keep the ' + seven + ' for the last trick'
+        : 'kept the ' + seven + ' silent: with only ' + trumps + ' trumps, it could be beaten on the last trick';
+    let reason: string;
+    if (callHundred) {
+        reason = hundredReason + (holdsSeven ? '. It ' + sevenReason : '');
+    } else if (holdsSeven) {
+        reason = sevenReason;
+    } else {
+        reason = 'didn\'t call the 100: its marriages and point cards only add up to about ' + estimate + ' points';
+    }
+    return { callSeven, callHundred, reason };
 }
 
 export function chooseTrump(hand: string[]): BrainChoice {

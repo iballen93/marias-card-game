@@ -237,7 +237,10 @@ describe('PC brain', () => {
     it('should call the 7 with 5 or more trumps, and keep it silent with fewer', () => {
       const called = chooseAnnouncement(['7H', '8H', '9H', 'KH', 'AH', '7S'], 'HEARTS');
       expect(called.callSeven).toBeTrue();
-      expect(called.reason).toContain('It called the 7♥ too');
+      // the Game goes without saying, so only the 7 is explained
+      expect(called.reason).toBe('called the 7♥: with 5 trumps it expects to keep the 7♥ for the last trick');
+      expect(chooseAnnouncement(['7H', '8H', 'KH', 'AH', '7S'], 'HEARTS').reason)
+        .toBe('kept the 7♥ silent: with only 4 trumps, it could be beaten on the last trick');
       expect(chooseAnnouncement(['7H', '8H', 'KH', 'AH', '7S'], 'HEARTS').callSeven).toBeFalse();
     });
 
@@ -261,10 +264,10 @@ describe('PC brain', () => {
     it('should call the 100 on a hand already worth about 9 points, and play the Game otherwise', () => {
       const strong = chooseAnnouncement(['KH', 'QH', 'AH', '0H', 'JH', 'KS', 'QS', 'AS', '0S', 'AD'], 'HEARTS');
       expect(strong.callHundred).toBeTrue();
-      expect(strong.reason).toContain('called the 100');
+      expect(strong.reason).toBe('called the 100: its marriages and point cards already add up to about 12 points');
       const weak = chooseAnnouncement(['KH', 'QH', 'AH', '8H', '7S', '8S', '9D', 'JD', 'QC', '7C'], 'HEARTS');
       expect(weak.callHundred).toBeFalse();
-      expect(weak.reason).toContain('played the Game');
+      expect(weak.reason).toBe('didn\'t call the 100: its marriages and point cards only add up to about 5 points');
     });
   });
 });
