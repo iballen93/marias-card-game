@@ -18,7 +18,7 @@
                           (cardSelected)="cardSelected($event)"></app-hand>
             </td>
             <td class="table-center">
-                <app-game-values class="game-values" [trump]="trump" [bidMultiplier]="bidMultiplier" [sevenCalled]="sevenCalled" [hundredCalled]="hundredCalled"
+                <app-game-values class="game-values" [trump]="trump" [sevenCalled]="sevenCalled" [hundredCalled]="hundredCalled"
                                  [gameRaise]="raiseName(raiseTracks.game.level)" [sevenRaise]="raiseName(raiseTracks.seven.level)"></app-game-values>
 
                 <app-turn-info class="turn-status" [class.expanded]="canPlayAgain || announcing || raising"
@@ -26,7 +26,6 @@
                                [hundredCalled]="hundredCalled"
                                [illegalMoveMessage]="illegalMoveMessage"
                                [trump]="trump"
-                               [bidMultiplier]="bidMultiplier"
                                [activePlayer]="activePlayer"
                                [pickingTrump]="pickingTrump"
                                [buryingCards]="buryingCards"

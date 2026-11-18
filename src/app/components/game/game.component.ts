@@ -37,7 +37,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
     gameMode: GameMode = DEFAULT_GAME_MODE;
 
-    bidMultiplier = 1;
+    // what each game mode is worth, for when the rest are built
     // game modes                   = bid
     // point trick game             = 2
     // no tricks                    = 6
@@ -512,7 +512,6 @@ export class GameComponent implements OnInit, OnDestroy {
         this.pcExplanation = '';
 
         if (this.isRoundComplete()) {
-            // TODO implement earningsMultiplier
             const { earnings, winMessage, betResult } = this.pointsService.calculateEarnings(
                 this.allPiles, this.currentCaller, this.lastTrickPlayer, this.trump, this.hundredCalled, this.raiseTracks.game.level);
             for (let player = 1; player <= 3; player++) {
@@ -539,9 +538,6 @@ export class GameComponent implements OnInit, OnDestroy {
     //  OR a player calls no-tricks or all-tricks. Anyone is welcome to any mode. (normal tricks < no-tricks < all-tricks)
     // TODO after the game mode is decided, betting can commence. After betting is complete, the game can start.
     pickTrump(suit: string): void {
-        if (suit === 'SPADES') {
-            this.bidMultiplier++;
-        }
         this.trump = suit;
         this.pickingTrump = false;
         this.deal([5, 5, 5]);
@@ -712,7 +708,6 @@ export class GameComponent implements OnInit, OnDestroy {
             this.canPlayAgain = false;
             this.winMessage = '';
             this.trump = '';
-            this.bidMultiplier = 1;
             this.allPiles = new Map();
             this.trickHistory = [];
             this.pcExplanation = '';

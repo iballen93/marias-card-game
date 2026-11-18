@@ -11,7 +11,6 @@ export class TurnInfoComponent implements OnInit {
     @Input() winMessage: string;
     @Input() illegalMoveMessage: string;
     @Input() trump: string;
-    @Input() bidMultiplier: number;
     @Input() activePlayer: number;
     @Input() pcExplanation: string;
     // vs PC Slow: show a Next button so you can read the explanation before the game moves on
