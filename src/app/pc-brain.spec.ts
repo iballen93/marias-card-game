@@ -317,6 +317,14 @@ describe('PC brain', () => {
           reason: 'passed on All Tricks: with only 2 aces it can\'t be sure the caller holds a suit it can beat' });
       });
 
+      it('should say Kontra on All Tricks holding 2 aces and 7 of the other two suits, leaving the caller too few of them', () => {
+        expect(ask(['AH', 'AD', '7S', '8S', '9S', '0S', '7C', '8C', '9C', '7H'], 'all-tricks')).toEqual({ raise: ['game'],
+          reason: 'said Kontra on All Tricks: it holds the A♥ and A♦ and 7 of the other cards, '
+            + 'so the caller must hold a heart or diamond' });
+        // with 6 of them, the caller could still hold the other 10
+        expect(ask(['AH', 'AD', '7S', '8S', '9S', '7C', '8C', '9C', '7H', '8H'], 'all-tricks').raise).toEqual([]);
+      });
+
       it('should check the caller\'s cards in an open All Tricks, keeping a K back under the caller\'s A to beat its Q', () => {
         const caller = ['AH', 'QH', 'AS', 'KS', 'QS', 'JS', 'AD', 'KD', 'AC', 'KC'];
         expect(ask(['KH', '7H', '7S', '8S', '9S', '7D', '8D', '7C', '8C', '9C'], 'all-tricks-open', caller)).toEqual({ raise: ['game'],

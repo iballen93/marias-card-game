@@ -138,7 +138,7 @@ The caller and a player taking over hold 12 cards and bury 2, so the PC first lo
 
 The PC raises its own No Tricks only with at most 1 dangerous card, and All Tricks only when it's sure. As a defender it says Kontra when its own hand, or the caller's cards in an open contract, show the caller will fail:
 
-- **All Tricks:** a defender's A wins a trick in any suit the caller holds, since the caller has to lead that suit at some point and the defender has to go over it. So the caller can only be safe in suits where it holds the A. With 3 aces in one defender's hand, the one suit left has 8 cards and the caller holds 10, so the defender is sure to win a trick.
+- **All Tricks:** a defender's A wins a trick in any suit the caller holds, since the caller has to lead that suit at some point and the defender has to go over it. So the caller can only be safe in suits where it holds the A. With 3 aces in one defender's hand, the one suit left has 8 cards and the caller holds 10, so the defender is sure to win a trick. With 2 aces the two suits left have 16 cards, so a caller with all 10 of its cards there could still win; the defender only says Kontra when it holds 7 or more of those 16 itself, leaving the caller 9 at most.
 - **Open All Tricks:** it checks each suit of the caller's face-up cards: a card higher than one of the caller's, with enough other cards of the suit to follow the caller's higher ones first, wins a trick.
 - **Open No Tricks:** it counts the caller's dangerous cards, and says Kontra at 6 or more, where No Tricks is lost more often than won.
 - **No Tricks:** it passes. Without seeing the caller's cards, its own hand doesn't tell it whether the caller will have to take a trick.

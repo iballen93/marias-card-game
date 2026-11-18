@@ -694,12 +694,22 @@ function judgeNoTrumpAsDefender(hand: string[], contract: Contract, callerHand?:
                 : { raise: false, why: 'none of its cards can beat the caller\'s' };
         }
         // a defender's A wins a trick in any suit the caller holds, so the caller can only be safe in suits where it holds the
-        // A. With 3 aces here, the one suit left has 8 cards, and the caller holds 10: one of the 3 aces must beat it.
-        const aces = hand.filter(card => rankOf(card) === 'A').length;
-        if (aces >= 3) {
-            return { raise: true, why: 'it holds ' + aces + ' aces, so the caller must hold a suit where one of them beats it' };
+        // A. With 3 aces here, the one suit left has 8 cards, and the caller holds 10: one of the 3 aces must beat it. With 2,
+        // the two suits left have 16 cards, so it's only sure when it holds 7 of those itself, leaving the caller 9 at most.
+        const aces = hand.filter(card => rankOf(card) === 'A');
+        if (aces.length >= 3) {
+            return { raise: true, why: 'it holds ' + aces.length + ' aces, so the caller must hold a suit where one of them beats it' };
         }
-        return { raise: false, why: (aces ? 'with only ' + aces + (aces === 1 ? ' ace' : ' aces') : 'without an ace')
+        if (aces.length === 2) {
+            const aceSuits = aces.map(suitOf);
+            const others = hand.filter(card => !aceSuits.includes(suitOf(card))).length;
+            if (16 - others < 10) {
+                return { raise: true, why: 'it holds the ' + aces.map(cardName).join(' and ') + ' and ' + others
+                    + ' of the other cards, so the caller must hold a ' + aceSuits.map(suit => ONE_OF_SUIT[suit]).join(' or ') };
+            }
+        }
+        const aceCount = aces.length;
+        return { raise: false, why: (aceCount ? 'with only ' + aceCount + (aceCount === 1 ? ' ace' : ' aces') : 'without an ace')
             + ' it can\'t be sure the caller holds a suit it can beat' };
     }
     if (callerHand) {
