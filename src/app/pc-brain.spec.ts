@@ -1,5 +1,6 @@
 import {
-  BrainView, cardName, chooseAnnouncement, chooseBury, choosePlay, chooseRaises, chooseTrump, expectedPoints, Knowledge
+  BrainView, cardName, chooseAnnouncement, chooseBury, chooseNoTrumpBury, choosePlay, chooseRaises, chooseTakeOver, chooseTrump,
+  expectedPoints, isSureAllTricks, Knowledge, noTricksDanger
 } from './pc-brain';
 import { getLegalCards, isPointCard, isTrump } from './rules';
 import { seededRandom } from './regression/seeded-random';
@@ -237,13 +238,13 @@ describe('PC brain', () => {
 
   describe('the 7 of trump', () => {
     it('should call the 7 with 5 or more trumps, and keep it silent with fewer', () => {
-      const called = chooseAnnouncement(['7H', '8H', '9H', 'KH', 'AH', '7S'], 'HEARTS');
+      const called = chooseAnnouncement(['7H', '8H', '9H', 'KH', 'AH', '7S', 'AS', 'AD', 'AC', '0C'], 'HEARTS');
       expect(called.callSeven).toBeTrue();
       // the Game goes without saying, so only the 7 is explained
       expect(called.reason).toBe('called the 7♥: with 5 trumps it expects to keep the 7♥ for the last trick');
-      expect(chooseAnnouncement(['7H', '8H', 'KH', 'AH', '7S'], 'HEARTS').reason)
+      expect(chooseAnnouncement(['7H', '8H', 'KH', 'AH', '7S', 'AS', 'AD', 'AC', '0C'], 'HEARTS').reason)
         .toBe('kept the 7♥ silent: with only 4 trumps, it could be beaten on the last trick');
-      expect(chooseAnnouncement(['7H', '8H', 'KH', 'AH', '7S'], 'HEARTS').callSeven).toBeFalse();
+      expect(chooseAnnouncement(['7H', '8H', 'KH', 'AH', '7S', 'AS', 'AD', 'AC', '0C'], 'HEARTS').callSeven).toBeFalse();
     });
 
     it('should keep its 7 of trump for the last trick and trump with another card', () => {
@@ -253,6 +254,60 @@ describe('PC brain', () => {
 
     it('should play its 7 of trump when it is the last card', () => {
       expect(choosePlay(view({ seat: 3, caller: 3, trick: ['KS', 'QS'], hand: ['7H'] })).card).toBe('7H');
+    });
+  });
+
+  describe('No Tricks and All Tricks', () => {
+    // every suit runs down from the A: it wins every trick it leads
+    const sureAllTricks = ['AS', 'KS', 'QS', 'JS', 'AH', 'KH', 'QH', 'AD', 'KD', 'AC'];
+    // every suit runs up from the 7: whatever a defender plays in it is higher
+    const safeNoTricks = ['7S', '8S', '9S', '0S', '7H', '8H', '7D', '8D', '9D', '7C'];
+
+    it('should only count a hand as sure for All Tricks, or safe for No Tricks, when nothing can go wrong', () => {
+      expect(isSureAllTricks(sureAllTricks)).toBeTrue();
+      expect(isSureAllTricks(['AS', 'QS', ...sureAllTricks.slice(4)])).toBeFalse();
+      expect(noTricksDanger(safeNoTricks)).toBe(0);
+      // the 9 of clubs without the 8 leaves a gap a defender can lead into
+      expect(noTricksDanger([...safeNoTricks.slice(0, 9), '9C'])).toBe(1);
+    });
+
+    it('should call Open All Tricks on a sure hand and No Tricks on a safe one, and the Game otherwise', () => {
+      expect(chooseAnnouncement(sureAllTricks, 'HEARTS')).toEqual(jasmine.objectContaining({ contract: 'all-tricks-open' }));
+      expect(chooseAnnouncement(safeNoTricks, 'HEARTS').contract).toBe('no-tricks');
+      expect(chooseAnnouncement(safeNoTricks, 'HEARTS').reason).toBe('called No Tricks: its cards are low enough in every suit '
+        + 'to stay under the defenders');
+      expect(chooseAnnouncement(['KH', 'QH', 'AH', '8H', '7S', '8S', '9D', 'JD', 'QC', '7C'], 'HEARTS').contract).toBeUndefined();
+    });
+
+    it('should only take over with a higher contract its own hand can\'t lose', () => {
+      expect(chooseTakeOver(safeNoTricks, 'game')).toEqual({ contract: 'no-tricks', reason: 'took over with No Tricks: its cards are '
+        + 'low enough in every suit to stay under the defenders' });
+      expect(chooseTakeOver(safeNoTricks, 'all-tricks').contract).toBeUndefined();
+      expect(chooseTakeOver(['KH', 'QH', 'AH', '8H', '7S', '8S', '9D', 'JD', 'QC', '7C'], 'game'))
+        .toEqual({ reason: 'passed: its hand isn\'t right for No Tricks or All Tricks' });
+    });
+
+    it('should bury its way into a sure contract, and after taking over bury what it doesn\'t need', () => {
+      // the K of clubs and 9 of diamonds break an otherwise sure All Tricks; neither is an A or 10
+      const twelve = [...sureAllTricks, 'KC', '9D'];
+      // burying the J of spades instead of the K of clubs works as well
+      const bury = chooseBury(twelve, 'HEARTS');
+      expect(['KC', '9D', 'JS']).toContain(bury.card);
+      expect(bury.reason).toBe('buried the ' + cardName(bury.card) + ' to set up Open All Tricks');
+      expect(chooseNoTrumpBury([...safeNoTricks, 'AS', 'KH'], 'no-tricks').reason).toMatch(/doesn't need for No Tricks/);
+    });
+
+    it('should play No Tricks as the caller by staying under the trick with its highest card', () => {
+      // nothing it holds can go over the K, so it gets rid of its highest heart: the 10, which ranks below the J here
+      const play = choosePlay({ seat: 1, caller: 1, trump: 'NONE', contract: 'no-tricks', hand: ['7H', '9H', '0H', '7S'],
+        trick: ['KH'], bury: [], tricks: [] });
+      expect(play).toEqual({ card: '0H', reason: 'stayed under the trick with the 10♥' });
+    });
+
+    it('should beat the All Tricks caller when it can, as a defender', () => {
+      const play = choosePlay({ seat: 2, caller: 1, trump: 'NONE', contract: 'all-tricks', hand: ['AH', '7H', '9S'],
+        trick: ['KH'], bury: [], tricks: [] });
+      expect(play.card).toBe('AH');
     });
   });
 

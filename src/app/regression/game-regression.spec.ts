@@ -18,6 +18,9 @@ describe('Game regression', () => {
 
   const codes = (cards: Card[]) => (cards || []).map(card => card.code).join(',');
 
+  // the rules a round broke, if any
+  const problems: string[] = [];
+
   const playRound = (game: any, plays: string[]) => {
     // collects each finished trick at once instead of leaving it on the table for a second
     game.isFastPlaying = true;
@@ -26,6 +29,11 @@ describe('Game regression', () => {
       if (game.announcing && !game.isPcSeat(game.activePlayer)) {
         // a seat played at random plays the Game and never calls the 7, so no random numbers are used here
         game.announce(false);
+        continue;
+      }
+      if (game.takingOver && !game.isPcSeat(game.activePlayer)) {
+        // it never takes over either
+        game.takeOver();
         continue;
       }
       if (game.raising && !game.isPcSeat(game.activePlayer)) {
@@ -52,17 +60,28 @@ describe('Game regression', () => {
       ...players.map(p => 'marriage' + p + '=' + codes(piles.get('player' + p + 'Marriage'))),
       'points=' + [game.player1RoundPoints, game.player2RoundPoints, game.player3RoundPoints].join(','),
       'money=' + players.map(p => game.playerToMoney.get('player' + p)).join(','),
-      'message=' + game.winMessage
+      'message=' + game.winMessage,
+      // only No Tricks and All Tricks are named, so every Game round keeps its old fingerprint
+      ...(game.contract === 'game' ? [] : ['contract=' + game.contract])
     ].join(' | ');
 
-    // rules that must always hold, whatever the baseline says
+    // rules that must always hold, whatever the baseline says. Broken ones are collected and checked once per test:
+    // an expect for each would send thousands of passed checks back to the test runner, more than it can take.
     const won = players.reduce((count, p) => count + (piles.get('player' + p + 'Win') || []).length, 0);
     const bury = piles.get('player' + game.currentCaller + 'Bury') || [];
-    expect(won).withContext('cards won ' + roundLine).toBe(30);
-    expect(bury.length).withContext('cards buried ' + roundLine).toBe(2);
-    expect(bury.some(card => 'A0'.includes(card.code.charAt(0)))).withContext('point card buried ' + roundLine).toBeFalse();
+    // No Tricks and All Tricks can end with cards still in hand
+    const inHands = players.reduce((count, p) => count + (piles.get('player' + p) || []).length, 0);
+    // points don't count in No Tricks and All Tricks, so a player who took one over may bury an A or 10
+    const pointBuried = bury.some(card => 'A0'.includes(card.code.charAt(0)));
     const money = players.reduce((total, p) => total + game.playerToMoney.get('player' + p), 0);
-    expect(money).withContext('money created or lost ' + roundLine).toBe(START_MONEY * 3);
+    const broken = [
+      won + inHands !== 30 && 'cards lost',
+      game.contract === 'game' && inHands > 0 && 'cards left in hand',
+      bury.length !== 2 && 'cards buried',
+      game.contract === 'game' && pointBuried && 'point card buried',
+      money !== START_MONEY * 3 && 'money created or lost'
+    ].filter(problem => problem);
+    problems.push(...broken.map(problem => problem + ': ' + roundLine));
     return roundLine;
   };
 
@@ -81,6 +100,7 @@ describe('Game regression', () => {
     const log = console.log.bind(console);
     spyOn(console, 'log');
     const random = spyOn(Math, 'random');
+    problems.length = 0;
     const hashes: string[] = [];
     const gameLines: string[][] = [];
 
@@ -121,6 +141,7 @@ describe('Game regression', () => {
       fail('No regression baseline yet. Run: npm run regression:baseline');
       return;
     }
+    expect(problems.slice(0, 5)).withContext(problems.length + ' rounds broke a rule').toEqual([]);
     expect(hashes.length).toBe(baseline.length);
     const changed = hashes.map((hash, index) => hash === baseline[index] ? 0 : index + 1).filter(seed => seed);
     if (changed.length) {

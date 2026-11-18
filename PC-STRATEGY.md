@@ -105,6 +105,46 @@ The count leaves out points it may win from the defenders, so it is cautious. Me
 
 **Keeping the 7.** As caller, the PC gives up the 7 of trump last, just before its point cards, so it is still there for the last trick. As a defender it does the opposite and plays the 7 early as its lowest trump: on the last trick the caller's higher trumps would usually beat it, and a beaten 7 costs the defenders. Measured with `npm run strength`, keeping the 7 as caller earns about 1.5 cents a round from the 7, while keeping it as a defender lost money.
 
+## No Tricks and All Tricks
+
+After burying, the caller can play **No Tricks** (take no trick at all) or **All Tricks** (take every trick) instead of the Game, either one open (cards face up from the start) for double. There's no trump, the 10 drops below the J (A K Q J 10 9 8 7), marriages, the 7 and the 100 don't count, and the round ends as soon as it's decided. Players still have to follow suit and go higher if they can. The caller leads.
+
+| Contract | Worth, from each defender |
+|---|---|
+| No Tricks | 6 cents |
+| All Tricks | 10 cents |
+| Open No Tricks | 12 cents |
+| Open All Tricks | 20 cents |
+
+Spades doesn't double these, since there's no trump. After the caller's bid, each of the others in turn, starting with the one who plays after the caller, may **take over** with a higher contract (Game < No Tricks < All Tricks < Open No Tricks < Open All Tricks). Whoever takes over picks up the caller's 2 buried cards, buries 2 (an A or 10 is allowed, since points don't count), and becomes the caller; then the others may take over from them. Once everyone passes, the stakes can be raised on the contract that stands. The rules are in `src/app/rules.ts`.
+
+How the PC decides (`pc-brain.ts`):
+
+| Contract | When the PC calls it, or takes over with it |
+|---|---|
+| Open All Tricks | every suit it holds runs unbroken down from the A. It leads every trick, and each card it leads is the highest of its suit still out, so it can't lose, even open. |
+| No Tricks | at most 3 **dangerous cards**, and, as the caller, a hand worth 5 points or fewer in the Game |
+| All Tricks or Open No Tricks | never: not measured yet |
+
+A card is **dangerous** in No Tricks when the PC doesn't hold every lower card of its suit. Since a player who can go higher than the card to beat must, a gap lets a defender lead a card in it and force the PC over. Measured over 200,000 deals, played out by the PC on both sides, No Tricks is won about:
+
+| Dangerous cards | 1 | 2 | 3 | 4 | 5 | 6 |
+|---|---|---|---|---|---|---|
+| Won | 93% | 90% | 77% | 66% | 59% | 48% |
+
+It pays 6 cents either way, so anything over half beats a weak hand in the Game; the PC stops at 3 to leave room for defenders who play better than it does.
+
+The caller and a player taking over hold 12 cards and bury 2, so the PC first looks for 2 cards to bury that would leave such a hand. The caller can't bury an A or 10, since it might still have to play the Game.
+
+The PC raises its own No Tricks only with at most 1 dangerous card, and All Tricks only when it's sure. As a defender it never raises them: its own hand doesn't tell it whether the caller will fail.
+
+How it plays them:
+
+- **No Tricks, caller:** leads its lowest card from its shortest suit, so the defenders have to go over it, then gets rid of its highest card that still stays under each trick.
+- **No Tricks, defender:** plays low, so the caller has to go over the trick; when the caller is already winning a trick, it stays under with its highest card.
+- **All Tricks, caller:** leads its strongest card.
+- **All Tricks, defender:** beats the caller's card with its lowest card that can; otherwise plays its lowest card.
+
 ## Raising the stakes: Kontra, Re, Supre
 
 After the bid, each announced bet can be raised: the Game (or the called 100, which replaces it) and a called 7. A silent 7 can't be raised. Every raise doubles that bet, up to six raises: **Kontra, Re, Supre, Kontra More, Re More, Supre More**. The defenders make the 1st, 3rd and 5th raises and the caller the 2nd, 4th and 6th. A defender's raise counts for both defenders. On the defenders' turn, the defender who plays after the caller speaks first, and the other one only gets a say on a bet the first one passed. A side that passes a bet ends the raising on it. The rules are in `src/app/raising.ts`.
@@ -207,7 +247,7 @@ These are the known gaps, roughly from most to least important.
 2. **No odds.** It treats a card as either safe (the highest left, and nobody has shown they can trump it) or not. It never weighs how likely it is that a player is out of a suit.
 3. **Planning the last trick.** It keeps trumps by giving them up late, which usually leaves one for the last trick (+1 point), but it doesn't plan for it on purpose.
 4. **Following its partner's signals.** It doesn't read anything into which low cards its partner throws.
-5. **Rules not in the game yet.** No tricks and all tricks aren't built, so the PC has no rules for them.
+5. **No Tricks and All Tricks are basic.** It only plays All Tricks when it can't lose, which is very rare, and never plays Open No Tricks. Its No Tricks play doesn't track which cards are still out.
 6. **Playing against a called 7 or 100.** The defenders don't yet play differently when the caller has called the 7 or the 100, such as keeping a higher trump for the last trick, or fighting harder for points.
 7. **Raising is decided on counts alone.** It doesn't take into account who raised before it, or how the caller bid. A defender facing a Re still only looks at its own points.
 

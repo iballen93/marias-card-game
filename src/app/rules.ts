@@ -11,6 +11,11 @@ export const ILLEGAL_MOVES = {
 
 // Strongest first
 const RANKS = 'A0KQJ987';
+// No Tricks and All Tricks have no trump, and the 10 sits in its natural place
+const NO_TRUMP_RANKS = 'AKQJ0987';
+
+// What the game stores as the trump in No Tricks and All Tricks, so no card is ever trump
+export const NO_TRUMP = 'NONE';
 
 export function rankOf(code: string): string {
     return code.charAt(0);
@@ -20,9 +25,10 @@ export function suitOf(code: string): string {
     return code.charAt(1);
 }
 
-// Higher is stronger: 7 = 0 up to A = 7
-export function rankStrength(code: string): number {
-    return RANKS.length - 1 - RANKS.indexOf(rankOf(code));
+// Higher is stronger: 7 = 0 up to A = 7. Without trump the 10 drops below the J.
+export function rankStrength(code: string, trump = ''): number {
+    const ranks = trump === NO_TRUMP ? NO_TRUMP_RANKS : RANKS;
+    return ranks.length - 1 - ranks.indexOf(rankOf(code));
 }
 
 // trump is the suit's full name, as the game stores it ('HEARTS')
@@ -35,22 +41,23 @@ export function isSameSuit(code1: string, code2: string): boolean {
 }
 
 // Only compares rank; callers check the suit
-export function isHigherRank(code: string, other: string): boolean {
-    return rankStrength(code) > rankStrength(other);
+export function isHigherRank(code: string, other: string, trump = ''): boolean {
+    return rankStrength(code, trump) > rankStrength(other, trump);
 }
 
 export function isPointCard(code: string): boolean {
     return rankOf(code) === 'A' || rankOf(code) === '0';
 }
 
-export function validateBury(code: string): string {
-    return isPointCard(code) ? ILLEGAL_MOVES.BURY_POINTS : '';
+// Points don't count in No Tricks and All Tricks, so a player taking one of them over may bury any card
+export function validateBury(code: string, contract: Contract = 'game'): string {
+    return contract === 'game' && isPointCard(code) ? ILLEGAL_MOVES.BURY_POINTS : '';
 }
 
 // The card a follower has to beat in suit: the lead, or the second card if it went over the lead in suit
-function cardToBeatInSuit(trick: string[]): string {
+function cardToBeatInSuit(trick: string[], trump: string): string {
     const [lead, second] = trick;
-    return second && isSameSuit(second, lead) && isHigherRank(second, lead) ? second : lead;
+    return second && isSameSuit(second, lead) && isHigherRank(second, lead, trump) ? second : lead;
 }
 
 // Returns '' for a legal play, or the rule it breaks
@@ -58,15 +65,15 @@ export function validateMove(trick: string[], hand: string[], card: string, trum
     if (!trick?.length) {
         return '';
     }
-    const toBeat = cardToBeatInSuit(trick);
+    const toBeat = cardToBeatInSuit(trick, trump);
     if (hand.some(handCard => isSameSuit(handCard, toBeat))) {
         if (!isSameSuit(card, toBeat)) {
             return ILLEGAL_MOVES.MUST_FOLLOW_SUIT;
         }
         // a second card trump already wins over the lead suit, so the third card only has to follow suit
         const trumpedSecond = trick.length === 2 && !isTrump(trick[0], trump) && isTrump(trick[1], trump);
-        const canGoOver = !trumpedSecond && hand.some(handCard => isSameSuit(handCard, toBeat) && isHigherRank(handCard, toBeat));
-        return canGoOver && !isHigherRank(card, toBeat) ? ILLEGAL_MOVES.MUST_OVERRIDE : '';
+        const canGoOver = !trumpedSecond && hand.some(handCard => isSameSuit(handCard, toBeat) && isHigherRank(handCard, toBeat, trump));
+        return canGoOver && !isHigherRank(card, toBeat, trump) ? ILLEGAL_MOVES.MUST_OVERRIDE : '';
     }
     if (hand.some(handCard => isTrump(handCard, trump))) {
         if (!isTrump(card, trump)) {
@@ -89,7 +96,7 @@ export function trickWinnerIndex(trick: string[], trump: string): number {
     trick.forEach((card, index) => {
         const best = trick[winner];
         const beatsBest = isTrump(card, trump) && !isTrump(best, trump)
-            || isSameSuit(card, best) && isHigherRank(card, best);
+            || isSameSuit(card, best) && isHigherRank(card, best, trump);
         if (beatsBest) {
             winner = index;
         }
@@ -167,4 +174,59 @@ export function sevenOnLastTrick(lastTrick: { plays: { player: number; card: str
     const called = sevenCalled && play.player === caller;
     const cents = SEVEN_CENTS * (called ? 2 : 1) * spades;
     return { card: play.card, player: play.player, won: lastTrick.winner === play.player, called, playedLast: true, cents };
+}
+
+// What the caller plays. The Game is played with trump, marriages, the 7 and the 100. No Tricks and All Tricks replace
+// all of that: no trump, and only tricks count. The caller must take no trick at all, or every trick, and the round ends
+// as soon as that fails. The open versions are played with the caller's cards face up from the start, and pay double.
+export type Contract = 'game' | 'no-tricks' | 'all-tricks' | 'no-tricks-open' | 'all-tricks-open';
+
+// Weakest first: a player can only take over with a contract further along
+export const CONTRACTS: Contract[] = ['game', 'no-tricks', 'all-tricks', 'no-tricks-open', 'all-tricks-open'];
+
+// Paid by each defender to the caller, or by the caller to each defender. Spades doesn't double these: there's no trump.
+export const CONTRACT_CENTS: Record<Exclude<Contract, 'game'>, number> = {
+    'no-tricks': 6,
+    'all-tricks': 10,
+    'no-tricks-open': 12,
+    'all-tricks-open': 20
+};
+
+const CONTRACT_NAMES: Record<Contract, string> = {
+    game: 'the Game',
+    'no-tricks': 'No Tricks',
+    'all-tricks': 'All Tricks',
+    'no-tricks-open': 'Open No Tricks',
+    'all-tricks-open': 'Open All Tricks'
+};
+
+export function contractName(contract: Contract): string {
+    return CONTRACT_NAMES[contract];
+}
+
+export function isNoTrumpContract(contract: Contract): boolean {
+    return contract !== 'game';
+}
+
+export function isOpenContract(contract: Contract): boolean {
+    return contract === 'no-tricks-open' || contract === 'all-tricks-open';
+}
+
+export function isAllTricks(contract: Contract): boolean {
+    return contract === 'all-tricks' || contract === 'all-tricks-open';
+}
+
+// The contracts a player may take over with
+export function higherContracts(contract: Contract): Contract[] {
+    return CONTRACTS.slice(CONTRACTS.indexOf(contract) + 1);
+}
+
+// After each trick of No Tricks or All Tricks: 'lost' as soon as the caller takes a trick (No Tricks) or loses one
+// (All Tricks), 'won' once all ten went the caller's way, and undefined while it's still open
+export function noTrumpResult(contract: Contract, tricksPlayed: number, callerTricks: number): 'won' | 'lost' | undefined {
+    const allTricks = isAllTricks(contract);
+    if (allTricks ? callerTricks < tricksPlayed : callerTricks > 0) {
+        return 'lost';
+    }
+    return tricksPlayed === 10 ? 'won' : undefined;
 }

@@ -2,6 +2,27 @@
     <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="bid-title">
         <h2 id="bid-title">What would you like to bid on?</h2>
 
+        <!-- the contract: the Game, or No Tricks or All Tricks, which replace it -->
+        <div class="kinds" role="radiogroup" aria-label="Contract">
+            <button *ngFor="let option of kinds" type="button" role="radio" [class]="'kind kind-' + option.kind"
+                    [class.chosen]="kind === option.kind" [attr.aria-checked]="kind === option.kind"
+                    (click)="setKind(option.kind)">{{option.name}}</button>
+        </div>
+
+        <ng-container *ngIf="kind !== 'game'">
+            <p class="contract-note">{{getContractNote()}}</p>
+            <label class="toggle">
+                <span class="toggle-text">
+                    <span class="toggle-name">Play it open</span>
+                    <span class="toggle-note">Your cards face up from the start, for double</span>
+                    <span class="toggle-cost contract-cost">{{getContractCost()}}</span>
+                </span>
+                <input type="checkbox" class="open-toggle" [checked]="open" (change)="setOpen($any($event.target).checked)">
+                <span class="switch"></span>
+            </label>
+        </ng-container>
+
+        <ng-container *ngIf="kind === 'game'">
         <!-- greyed out, and can't be switched on, without the 7 of trump in hand -->
         <label class="toggle" [class.unavailable]="!canCallSeven">
             <span class="toggle-text">
@@ -23,6 +44,7 @@
             <input type="checkbox" class="hundred-toggle" [checked]="hundred" (change)="setHundred($any($event.target).checked)">
             <span class="switch"></span>
         </label>
+        </ng-container>
 
         <button type="button" class="bid-button" (click)="submit()">Bid</button>
     </div>

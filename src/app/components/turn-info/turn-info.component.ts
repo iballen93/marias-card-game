@@ -23,6 +23,8 @@ export class TurnInfoComponent implements OnInit {
     @Input() canAnnounce: boolean;
     // a PC is deciding whether to raise the stakes; a person does it in the raise pop-up
     @Input() raising: boolean;
+    // a PC is deciding whether to take over with No Tricks or All Tricks
+    @Input() takingOver: boolean;
     // who pays whom in all, then the caller's result on each bet
     @Input() payoutTotal: string;
     @Input() betResults: BetResult[] = [];

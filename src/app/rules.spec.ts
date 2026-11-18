@@ -1,6 +1,6 @@
 import {
-  completesMarriage, contractCents, getLegalCards, isHigherRank, isPointCard, isTrump, marriagePoints, sevenOnLastTrick, trickWinnerIndex,
-  validateBury
+  completesMarriage, contractCents, contractName, getLegalCards, higherContracts, isHigherRank, isPointCard, isTrump, marriagePoints,
+  NO_TRUMP, noTrumpResult, sevenOnLastTrick, trickWinnerIndex, validateBury
 } from './rules';
 
 // Hearts are trump in every test; the move rules themselves are covered in validation.service.spec.ts
@@ -113,6 +113,42 @@ describe('rules', () => {
       expect(contractCents(9, 4, 'HEARTS', true)).toBe(-8);
       expect(contractCents(2, 9, 'HEARTS', true)).toBe(-8);
       expect(contractCents(9, 4, 'SPADES', true)).toBe(-16);
+    });
+  });
+
+  describe('No Tricks and All Tricks', () => {
+    it('should drop the 10 below the J, with no trump', () => {
+      expect(isHigherRank('JH', '0H', NO_TRUMP)).toBeTrue();
+      expect(isHigherRank('0H', 'JH')).toBeTrue();
+      expect(isTrump('AH', NO_TRUMP)).toBeFalse();
+      expect(trickWinnerIndex(['0H', 'JH', 'AS'], NO_TRUMP)).toBe(1);
+    });
+
+    it('should still make players follow suit and go higher, but never trump', () => {
+      // the 9 can't go over the J, so any heart will do, and without a heart any card will
+      expect(getLegalCards(['JH'], ['0H', 'QH', 'AS'], NO_TRUMP)).toEqual(['QH']);
+      expect(getLegalCards(['JH'], ['AS', '7D'], NO_TRUMP)).toEqual(['AS', '7D']);
+    });
+
+    it('should let a player who took one over bury an A or 10', () => {
+      expect(validateBury('AS', 'no-tricks')).toBe('');
+      expect(validateBury('AS')).not.toBe('');
+    });
+
+    it('should only allow taking over with a higher contract', () => {
+      expect(higherContracts('game')).toEqual(['no-tricks', 'all-tricks', 'no-tricks-open', 'all-tricks-open']);
+      expect(higherContracts('all-tricks')).toEqual(['no-tricks-open', 'all-tricks-open']);
+      expect(higherContracts('all-tricks-open')).toEqual([]);
+      expect(contractName('no-tricks-open')).toBe('Open No Tricks');
+    });
+
+    it('should end No Tricks on the caller\'s first trick, and All Tricks on the first trick it loses', () => {
+      expect(noTrumpResult('no-tricks', 3, 0)).toBeUndefined();
+      expect(noTrumpResult('no-tricks', 3, 1)).toBe('lost');
+      expect(noTrumpResult('no-tricks', 10, 0)).toBe('won');
+      expect(noTrumpResult('all-tricks-open', 4, 4)).toBeUndefined();
+      expect(noTrumpResult('all-tricks', 4, 3)).toBe('lost');
+      expect(noTrumpResult('all-tricks', 10, 10)).toBe('won');
     });
   });
 });

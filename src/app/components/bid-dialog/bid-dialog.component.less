@@ -119,6 +119,37 @@ h2 {
     font-weight: bold;
 }
 
+// the three contracts, side by side: one is always chosen
+.kinds {
+    display: flex;
+    gap: 0.375rem;
+    margin-bottom: 0.75rem;
+}
+
+.kind {
+    flex: 1;
+    color: green;
+    font-family: inherit;
+    font-size: 0.9375rem;
+    font-weight: bold;
+    background-color: white;
+    padding: 0.5rem 0.25rem;
+    border: 2px solid green;
+    border-radius: 0.5rem;
+    cursor: pointer;
+}
+
+.kind.chosen {
+    color: white;
+    background-color: green;
+}
+
+.contract-note {
+    margin: 0 0 0.5rem;
+    font-size: 0.875rem;
+    color: #557055;
+}
+
 .bid-button {
     display: block;
     width: 100%;
@@ -163,6 +194,20 @@ h2 {
 
     .toggle-cost {
         margin-top: 0;
+        font-size: 0.75rem;
+    }
+
+    .kinds {
+        margin-bottom: 0.375rem;
+    }
+
+    .kind {
+        font-size: 0.8125rem;
+        padding: 0.3125rem 0.25rem;
+    }
+
+    .contract-note {
+        margin-bottom: 0.25rem;
         font-size: 0.75rem;
     }
 

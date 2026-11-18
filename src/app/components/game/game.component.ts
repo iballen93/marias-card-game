@@ -8,8 +8,10 @@ import { CardAnimationService } from 'src/app/card-animation.service';
 import { ActivatedRoute } from '@angular/router';
 import { DEFAULT_GAME_MODE, GameMode, isVsPc } from 'src/app/game-mode';
 import {
-    completesMarriage, GAME_CENTS, HUNDRED_CENTS, SEVEN_CENTS, sevenOfTrump, sevenOnLastTrick, trickWinnerIndex, validateBury
+    completesMarriage, Contract, CONTRACT_CENTS, contractName, GAME_CENTS, higherContracts, HUNDRED_CENTS, isNoTrumpContract,
+    isOpenContract, NO_TRUMP, noTrumpResult, SEVEN_CENTS, sevenOfTrump, sevenOnLastTrick, trickWinnerIndex, validateBury
 } from 'src/app/rules';
+import { TakeOverOption } from 'src/app/components/take-over-dialog/take-over-dialog.component';
 import { RaiseOption } from 'src/app/components/raise-dialog/raise-dialog.component';
 import { cardName } from 'src/app/pc-brain';
 import { Trick } from 'src/app/trick';
@@ -75,6 +77,17 @@ export class GameComponent implements OnInit, OnDestroy {
     sevenCalled = false;
     // the 100 replaces the Game: the caller alone must reach 100
     hundredCalled = false;
+    // the Game, or No Tricks or All Tricks, which replace it (see rules.ts)
+    contract: Contract = 'game';
+    // after the bid, each of the others in turn may take over with a higher contract
+    takingOver = false;
+    private takeOverLeft: number[] = [];
+    // what the active player may take over with, for the pop-up
+    takeOverOptions: TakeOverOption[] = [];
+    // a player who took over buries 2 cards, and then the others may take over from them
+    private buryingAfterTakeOver = false;
+    // who called first this round: the next round passes on from them, even when someone else took over
+    private roundStarter = 1;
     // after the bid, the defenders and the caller take turns raising each announced bet (see raising.ts)
     raising = false;
     raiseTracks: RaiseTracks = startRaiseTracks(false);
@@ -162,7 +175,9 @@ export class GameComponent implements OnInit, OnDestroy {
     }
 
     isHandHidden(player: number): boolean {
-        return this.isStandard() && player !== this.HUMAN_SEAT;
+        // the open contracts are played with the caller's cards face up from the start
+        const shownOpen = isOpenContract(this.contract) && player === this.currentCaller;
+        return this.isStandard() && player !== this.HUMAN_SEAT && !shownOpen;
     }
 
     // You see your own bury while you choose it; it turns face down once the first card is led. The caller never
@@ -211,7 +226,14 @@ export class GameComponent implements OnInit, OnDestroy {
             const announcement = this.computerPlayerService.chooseAnnouncement(this.getPcView());
             this.pcExplanation = this.isStandard() ? '' : this.getPlayerTitle(this.activePlayer) + ' ' + announcement.reason;
             this.waitingForNext = this.gameMode === 'learning-pc-slow';
-            this.animateCardMoves(() => this.announce(announcement.callSeven, announcement.callHundred));
+            this.animateCardMoves(() => this.announce(announcement.callSeven, announcement.callHundred, announcement.contract));
+            return;
+        }
+        if (this.takingOver) {
+            const choice = this.computerPlayerService.chooseTakeOver(this.getPcView());
+            this.pcExplanation = this.isStandard() ? '' : this.getPlayerTitle(this.activePlayer) + ' ' + choice.reason;
+            this.waitingForNext = this.gameMode === 'learning-pc-slow';
+            this.animateCardMoves(() => this.takeOver(choice.contract));
             return;
         }
         if (this.raising) {
@@ -249,7 +271,7 @@ export class GameComponent implements OnInit, OnDestroy {
             case 'trump':
                 return true;
             case 'bury':
-                return validateBury(card.code) === '';
+                return validateBury(card.code, this.contract) === '';
             default:
                 return this.legalCards.includes(card.code);
         }
@@ -278,18 +300,20 @@ export class GameComponent implements OnInit, OnDestroy {
         return {
             seat: this.activePlayer,
             phase: this.pickingTrump ? 'trump' : this.buryingCards ? 'bury'
-                : this.announcing ? 'announce' : this.raising ? 'raise' : 'play',
+                : this.announcing ? 'announce' : this.takingOver ? 'take-over' : this.raising ? 'raise' : 'play',
             hand: this.getActivePlayerPile(),
             trick: this.allPiles.get('game') || [],
             trump: this.trump,
             caller: this.currentCaller,
             bury: this.allPiles.get('player' + this.activePlayer + 'Bury') || [],
-            tricks: this.trickHistory
+            tricks: this.trickHistory,
+            contract: this.contract
         };
     }
 
     private updateLegalCards(): void {
-        const isCardToPlay = !this.pickingTrump && !this.buryingCards && !this.announcing && !this.raising && !this.showingCompletedHand;
+        const isCardToPlay = !this.pickingTrump && !this.buryingCards && !this.announcing && !this.takingOver && !this.raising
+            && !this.showingCompletedHand;
         this.legalCards = isCardToPlay
             ? this.computerPlayerService.getLegalCards(this.allPiles.get('game'), this.getActivePlayerPile(), this.trump)
             : [];
@@ -324,6 +348,7 @@ export class GameComponent implements OnInit, OnDestroy {
     }
 
     shuffleDeck(): void {
+        this.roundStarter = this.currentCaller;
         this.deck = this.deckService.createShuffledDeck();
         this.deal([7, 5, 5]);
         this.pickingTrump = true;
@@ -381,11 +406,19 @@ export class GameComponent implements OnInit, OnDestroy {
         this.pcExplanation = '';
         this.animateCardMoves(() => {
             this.isFastPlaying = true;
-            while (!this.isOnLastHand()) {
+            // No Tricks and All Tricks can end before the last hand
+            while (!this.isOnLastHand() && !this.canPlayAgain) {
                 if (this.announcing) {
                     const isPc = this.isPcSeat(this.activePlayer);
                     const choice = isPc ? this.computerPlayerService.chooseAnnouncement(this.getPcView()) : undefined;
-                    this.announce(!!choice?.callSeven, !!choice?.callHundred);
+                    this.announce(!!choice?.callSeven, !!choice?.callHundred, choice?.contract);
+                    this.updateLegalCards();
+                    continue;
+                }
+                if (this.takingOver) {
+                    // the PC takes over by its own rule; your seat passes
+                    const isPc = this.isPcSeat(this.activePlayer);
+                    this.takeOver(isPc ? this.computerPlayerService.chooseTakeOver(this.getPcView()).contract : undefined);
                     this.updateLegalCards();
                     continue;
                 }
@@ -407,7 +440,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
     canFastPlay(): boolean {
         // a testing shortcut; Standard offers it for now too, and will stop once testing is done
-        return !this.showingCompletedHand && !this.isOnLastHand();
+        return !this.showingCompletedHand && !this.canPlayAgain && !this.isOnLastHand();
     }
 
     private isOnLastHand(): boolean {
@@ -417,7 +450,7 @@ export class GameComponent implements OnInit, OnDestroy {
     private getFastPlayCard(): Card {
         let choices: Card[] = this.getActivePlayerPile();
         if (this.buryingCards) {
-            choices = choices.filter(card => validateBury(card.code) === '');
+            choices = choices.filter(card => validateBury(card.code, this.contract) === '');
         } else if (!this.pickingTrump) {
             choices = choices.filter(card => this.legalCards.includes(card.code));
         }
@@ -426,8 +459,8 @@ export class GameComponent implements OnInit, OnDestroy {
 
     private handleCardSelected($event: Card): void {
         // the completed hand is still on the table, so ignore input until it is collected
-        // and while the caller announces and anyone raises, the cards wait
-        if (this.showingCompletedHand || this.announcing || this.raising) {
+        // and while the caller announces, anyone takes over or raises, the cards wait
+        if (this.showingCompletedHand || this.announcing || this.takingOver || this.raising) {
             return;
         }
 
@@ -463,7 +496,8 @@ export class GameComponent implements OnInit, OnDestroy {
                 this.pcExplanation = '';
             }
             // CARD PICKED HERE
-            if (this.isCardInMarriage($event.code)) {
+            // marriages only count in the Game
+            if (this.contract === 'game' && this.isCardInMarriage($event.code)) {
                 this.removeFromPlayerPile($event.code);
                 this.addToPlayerMarriagePile($event);
                 this.addToGamePile($event);
@@ -511,6 +545,15 @@ export class GameComponent implements OnInit, OnDestroy {
         // the explanation was about a card in this trick, which is now off the table
         this.pcExplanation = '';
 
+        if (isNoTrumpContract(this.contract)) {
+            const callerTricks = this.trickHistory.filter(trick => trick.winner === this.currentCaller).length;
+            const result = noTrumpResult(this.contract, this.trickHistory.length, callerTricks);
+            if (result) {
+                this.finishNoTrumpRound(result === 'won' ? undefined : this.trickHistory.length);
+            }
+            return;
+        }
+
         if (this.isRoundComplete()) {
             const { earnings, winMessage, betResult } = this.pointsService.calculateEarnings(
                 this.allPiles, this.currentCaller, this.lastTrickPlayer, this.trump, this.hundredCalled, this.raiseTracks.game.level);
@@ -533,10 +576,19 @@ export class GameComponent implements OnInit, OnDestroy {
         }
     }
 
-    // TODO don't show trump until game mode has been decided.
-    //  Game mode is decided after dealing is finished and every player starting with the caller passes (meaning normal tricks)
-    //  OR a player calls no-tricks or all-tricks. Anyone is welcome to any mode. (normal tricks < no-tricks < all-tricks)
-    // TODO after the game mode is decided, betting can commence. After betting is complete, the game can start.
+    // No Tricks or All Tricks is decided: the caller made it, or lost it on this trick
+    private finishNoTrumpRound(lostOnTrick: number | undefined): void {
+        const { earnings, winMessage, betResult } = this.pointsService.calculateNoTrumpEarnings(
+            this.contract as Exclude<Contract, 'game'>, this.currentCaller, lostOnTrick, this.raiseTracks.game.level);
+        earnings.forEach((cents, player) => this.playerToMoney.set(player, this.playerToMoney.get(player) + cents));
+        this.winMessage = winMessage;
+        // the result line already says who won, so the contract only gets a line of its own when it was raised
+        this.betResults = this.raiseTracks.game.level > 0 ? [betResult] : [];
+        this.payoutTotal = this.pointsService.describePayment(earnings.get('player' + this.currentCaller) / 2, this.currentCaller);
+        this.player1LosesMoney = earnings.get('player1') < 0;
+        this.canPlayAgain = true;
+    }
+
     pickTrump(suit: string): void {
         this.trump = suit;
         this.pickingTrump = false;
@@ -544,7 +596,7 @@ export class GameComponent implements OnInit, OnDestroy {
     }
 
     buryCard($event: Card): void {
-        this.illegalMoveMessage = this.validationService.validateBuryCard($event.code);
+        this.illegalMoveMessage = this.validationService.validateBuryCard($event.code, this.contract);
         if (this.illegalMoveMessage !== '') {
             return;
         }
@@ -559,8 +611,14 @@ export class GameComponent implements OnInit, OnDestroy {
         console.log(this.allPiles);
         if (this.allPiles.get('player' + this.activePlayer + 'Bury').length === 2) {
             this.buryingCards = false;
-            // the caller chooses the Game or the 100, and the 7 of trump too when holding it
-            this.announcing = true;
+            if (this.buryingAfterTakeOver) {
+                // whoever took over has buried, so the others may take over from them in turn
+                this.buryingAfterTakeOver = false;
+                this.startTakeOver();
+            } else {
+                // the caller chooses the contract: the Game, with the 100 and the 7 of trump, or No Tricks or All Tricks
+                this.announcing = true;
+            }
         }
     }
 
@@ -578,16 +636,78 @@ export class GameComponent implements OnInit, OnDestroy {
         return earnings;
     }
 
-    // The Game or the 100, each with or without the 7 of trump. Called by the caller's buttons, or by the PC.
-    announce(callSeven: boolean, callHundred = false): void {
+    // The Game or the 100, each with or without the 7 of trump, or No Tricks or All Tricks, which replace all of those.
+    // Called by the caller's pop-up, or by the PC.
+    announce(callSeven: boolean, callHundred = false, contract: Contract = 'game'): void {
         if (!this.announcing) {
             return;
         }
-        // only a caller holding the 7 of trump can call it
-        this.sevenCalled = callSeven && this.holdsSevenOfTrump();
-        this.hundredCalled = callHundred;
         this.announcing = false;
+        this.setContract(contract);
+        if (contract === 'game') {
+            // only a caller holding the 7 of trump can call it
+            this.sevenCalled = callSeven && this.holdsSevenOfTrump();
+            this.hundredCalled = callHundred;
+        }
+        this.startTakeOver();
+    }
+
+    // No Tricks and All Tricks have no trump, marriages, 7 or 100
+    private setContract(contract: Contract): void {
+        this.contract = contract;
+        if (isNoTrumpContract(contract)) {
+            this.trump = NO_TRUMP;
+            this.sevenCalled = false;
+            this.hundredCalled = false;
+        }
+    }
+
+    // Each of the others, starting with the one who plays after the caller, may take over with a higher contract
+    private startTakeOver(): void {
+        this.takeOverLeft = defendersInOrder(this.currentCaller);
+        this.nextTakeOver();
+    }
+
+    private nextTakeOver(): void {
+        const options = higherContracts(this.contract);
+        if (this.takeOverLeft.length && options.length) {
+            this.takingOver = true;
+            this.activePlayer = this.takeOverLeft.shift();
+            this.takeOverOptions = options.map(option => ({ contract: option, name: contractName(option), cents: CONTRACT_CENTS[option] }));
+            return;
+        }
+        // everyone passed: the contract stands, and the stakes can be raised
+        this.takingOver = false;
         this.startRaising();
+    }
+
+    // The active player takes over with this contract, or passes when there is none. Taking over means picking up the
+    // caller's 2 buried cards and burying 2, and becoming the caller.
+    takeOver(contract?: Contract): void {
+        if (!this.takingOver) {
+            return;
+        }
+        if (!contract || !higherContracts(this.contract).includes(contract)) {
+            this.nextTakeOver();
+            return;
+        }
+        const taker = this.activePlayer;
+        const buried = this.allPiles.get('player' + this.currentCaller + 'Bury') || [];
+        this.allPiles.set('player' + this.currentCaller + 'Bury', []);
+        this.allPiles.set('player' + taker, this.sortHand(this.getActivePlayerPile().concat(buried)));
+        this.currentCaller = taker;
+        this.setContract(contract);
+        this.takingOver = false;
+        this.buryingCards = true;
+        this.buryingAfterTakeOver = true;
+    }
+
+    // The pop-up only works for a player you are playing
+    takeOverFromButton(contract?: Contract): void {
+        if (this.isPcSeat(this.activePlayer)) {
+            return;
+        }
+        this.animateCardMoves(() => this.takeOver(contract));
     }
 
     private startRaising(): void {
@@ -624,12 +744,19 @@ export class GameComponent implements OnInit, OnDestroy {
     private describeRaiseOption(bet: RaiseBet): RaiseOption {
         const level = this.raiseTracks[bet].level;
         const spades = this.trump === 'SPADES' ? 2 : 1;
+        if (isNoTrumpContract(this.contract)) {
+            const price = CONTRACT_CENTS[this.contract as Exclude<Contract, 'game'>];
+            return { bet, raiseName: RAISE_NAMES[level], label: this.describeBet(bet), cents: price * raiseMultiplier(level + 1) };
+        }
         const cents = bet === 'seven' ? SEVEN_CENTS * 2 : this.hundredCalled ? HUNDRED_CENTS : GAME_CENTS;
         return { bet, raiseName: RAISE_NAMES[level], label: this.describeBet(bet), cents: cents * spades * raiseMultiplier(level + 1) };
     }
 
     private describeBet(bet: RaiseBet): string {
-        return bet === 'seven' ? 'the Called ' + this.getSevenName() : this.hundredCalled ? 'the Called 100' : 'the Game';
+        if (bet === 'seven') {
+            return 'the Called ' + this.getSevenName();
+        }
+        return isNoTrumpContract(this.contract) ? contractName(this.contract) : this.hundredCalled ? 'the Called 100' : 'the Game';
     }
 
     // What the caller bid, with how far each bet has been raised: "Player 1 bid the Game (Kontra) and the Called 7♥"
@@ -666,20 +793,21 @@ export class GameComponent implements OnInit, OnDestroy {
     }
 
     // The buttons only work for a caller you are playing
-    announceFromButton(choice: { seven: boolean; hundred: boolean }): void {
+    announceFromButton(choice: { seven: boolean; hundred: boolean; contract?: Contract }): void {
         if (this.isPcSeat(this.activePlayer)) {
             return;
         }
-        this.animateCardMoves(() => this.announce(choice.seven, choice.hundred));
+        this.animateCardMoves(() => this.announce(choice.seven, choice.hundred, choice.contract));
     }
 
     holdsSevenOfTrump(): boolean {
-        return !!this.trump && (this.getActivePlayerPile() || []).some(card => card.code === sevenOfTrump(this.trump));
+        const hand = this.getActivePlayerPile() || [];
+        return !!this.trump && this.trump !== NO_TRUMP && hand.some(card => card.code === sevenOfTrump(this.trump));
     }
 
     // the 7 of trump as players say it, such as 7♥
     getSevenName(): string {
-        return this.trump ? cardName(sevenOfTrump(this.trump)) : '';
+        return this.trump && this.trump !== NO_TRUMP ? cardName(sevenOfTrump(this.trump)) : '';
     }
 
     canBuryCard(): boolean {
@@ -714,12 +842,17 @@ export class GameComponent implements OnInit, OnDestroy {
             this.announcing = false;
             this.sevenCalled = false;
             this.hundredCalled = false;
+            this.contract = 'game';
+            this.takingOver = false;
+            this.buryingAfterTakeOver = false;
             this.raising = false;
             this.raiseTracks = startRaiseTracks(false);
             this.payoutTotal = '';
             this.betResults = [];
             this.waitingForNext = false;
             this.trickWinnerToCollect = null;
+            // the next round passes on from whoever called first, even if someone else took over
+            this.currentCaller = this.roundStarter;
             this.setToNextDealer();
             this.activePlayer = this.currentCaller;
             this.shuffleDeck();

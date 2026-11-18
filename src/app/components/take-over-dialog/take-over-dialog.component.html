@@ -1,0 +1,20 @@
+<div class="backdrop">
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="take-over-title">
+        <h2 id="take-over-title">Player {{player}}: take over?</h2>
+        <p class="bid-summary">{{bidSummary}}</p>
+        <p class="contract-note">Take over with a higher contract: you pick up the 2 buried cards, bury 2, and become the caller.</p>
+
+        <label *ngFor="let option of options" class="toggle">
+            <span class="toggle-text">
+                <span class="toggle-name">{{option.name}}</span>
+                <span class="toggle-cost">{{option.cents}}¢ per player</span>
+            </span>
+            <input type="checkbox" [class]="'take-over-toggle take-over-' + option.contract" [checked]="chosen === option.contract"
+                   (change)="setChosen(option.contract, $any($event.target).checked)">
+            <span class="switch"></span>
+        </label>
+
+        <!-- with nothing switched on, the button passes -->
+        <button type="button" class="bid-button take-over-button" (click)="submit()">{{chosen ? 'Take Over' : 'Pass'}}</button>
+    </div>
+</div>

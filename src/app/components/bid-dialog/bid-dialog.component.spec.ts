@@ -5,7 +5,7 @@ import { BidDialogComponent } from './bid-dialog.component';
 describe('BidDialogComponent', () => {
   let fixture: ComponentFixture<BidDialogComponent>;
   let component: BidDialogComponent;
-  let bids: { seven: boolean; hundred: boolean }[];
+  let bids: { seven: boolean; hundred: boolean; contract: string }[];
 
   const element = (): HTMLElement => fixture.nativeElement;
   const toggle = (selector: string) => {
@@ -43,23 +43,38 @@ describe('BidDialogComponent', () => {
     expect(element().querySelector('.hundred-cost').textContent).toBe('16¢ per player (doubled for spades)');
   });
 
+  it('should bid No Tricks or All Tricks, open or not, without the 7 or the 100', () => {
+    toggle('.seven-toggle');
+    (element().querySelector('.kind-no-tricks') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(element().querySelector('.seven-toggle')).toBeNull();
+    expect(element().querySelector('.contract-cost').textContent).toBe('6¢ per player');
+    toggle('.open-toggle');
+    expect(element().querySelector('.contract-cost').textContent).toBe('12¢ per player');
+    (element().querySelector('.kind-all-tricks') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(element().querySelector('.contract-cost').textContent).toBe('20¢ per player');
+    (element().querySelector('.bid-button') as HTMLButtonElement).click();
+    expect(bids).toEqual([{ seven: false, hundred: false, contract: 'all-tricks-open' }]);
+  });
+
   it('should bid on the Game alone when nothing is switched on', () => {
     bid();
-    expect(bids).toEqual([{ seven: false, hundred: false }]);
+    expect(bids).toEqual([{ seven: false, hundred: false, contract: 'game' }]);
   });
 
   it('should bid on the 100 and the 7 once both are switched on', () => {
     toggle('.hundred-toggle');
     toggle('.seven-toggle');
     bid();
-    expect(bids).toEqual([{ seven: true, hundred: true }]);
+    expect(bids).toEqual([{ seven: true, hundred: true, contract: 'game' }]);
   });
 
   it('should take a switch back off when it is clicked again', () => {
     toggle('.hundred-toggle');
     toggle('.hundred-toggle');
     bid();
-    expect(bids).toEqual([{ seven: false, hundred: false }]);
+    expect(bids).toEqual([{ seven: false, hundred: false, contract: 'game' }]);
   });
 
   it('should grey out the 7 switch for a caller without the 7 of trump, so it bids without it', () => {
@@ -71,6 +86,6 @@ describe('BidDialogComponent', () => {
     expect(seven.closest('.toggle').textContent).toContain('You don\'t hold the 7♦');
     toggle('.seven-toggle');
     bid();
-    expect(bids).toEqual([{ seven: false, hundred: false }]);
+    expect(bids).toEqual([{ seven: false, hundred: false, contract: 'game' }]);
   });
 });

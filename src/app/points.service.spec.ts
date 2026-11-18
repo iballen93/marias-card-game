@@ -74,6 +74,16 @@ describe('PointsService', () => {
     expect(supre.betResult.text).toBe('-128¢ Player 1 lost the Called 100 (Supre): 3 to 1');
   });
 
+  it('should pay No Tricks and All Tricks at their price, never doubled for spades, and doubled for each raise', () => {
+    const won = service.calculateNoTrumpEarnings('no-tricks', 2, undefined);
+    expect([1, 2, 3].map(player => won.earnings.get('player' + player))).toEqual([-6, 12, -6]);
+    expect(won.winMessage).toBe('Player 2 won No Tricks');
+    const lost = service.calculateNoTrumpEarnings('all-tricks-open', 1, 4, 1);
+    expect([1, 2, 3].map(player => lost.earnings.get('player' + player))).toEqual([-80, 40, 40]);
+    expect(lost.winMessage).toBe('Player 1 lost Open All Tricks on trick 4');
+    expect(lost.betResult.text).toBe('-40¢ Player 1 lost Open All Tricks (Kontra)');
+  });
+
   describe('paying the 7 of trump', () => {
     const seven = (player: number, won: boolean, called = false, cents = 2, playedLast = true) =>
       ({ card: '7H', player, won, called, playedLast, cents });

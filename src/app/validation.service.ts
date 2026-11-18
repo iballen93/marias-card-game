@@ -1,6 +1,6 @@
 import {Injectable} from '@angular/core';
 import {Card} from './components/card-pile/card-pile.component';
-import {ILLEGAL_MOVES, isTrump, validateBury, validateMove} from './rules';
+import {Contract, ILLEGAL_MOVES, isTrump, validateBury, validateMove} from './rules';
 
 // Checks the move being made on the board; the rules themselves live in rules.ts
 @Injectable({
@@ -35,7 +35,7 @@ export class ValidationService {
     return isTrump(cardCode, this.trump);
   }
 
-  validateBuryCard(cardCode: string): string {
-    return validateBury(cardCode);
+  validateBuryCard(cardCode: string, contract: Contract = 'game'): string {
+    return validateBury(cardCode, contract);
   }
 }

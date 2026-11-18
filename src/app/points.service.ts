@@ -1,7 +1,7 @@
 import {Injectable} from '@angular/core';
 import {Card} from './components/card-pile/card-pile.component';
 import {cardName} from './pc-brain';
-import {contractCents, isPointCard, marriagePoints, SevenResult} from './rules';
+import {Contract, CONTRACT_CENTS, contractCents, contractName, isPointCard, marriagePoints, SevenResult} from './rules';
 import {raiseMultiplier, raiseName} from './raising';
 
 export interface Points {
@@ -53,6 +53,19 @@ export class PointsService {
         const bet = (hundredCalled ? 'the Called 100' : 'the Game') + this.describeRaise(raises) + (hundredCalled ? score : '');
         const betResult = this.describeBet(callerPlayer, cents, bet);
         return { earnings, winMessage, betResult };
+    }
+
+    // No Tricks or All Tricks: a fixed price, doubled for each raise. lostOnTrick is the trick that broke it, if one did.
+    calculateNoTrumpEarnings(contract: Exclude<Contract, 'game'>, callerPlayer: number, lostOnTrick: number | undefined, raises = 0)
+        : { earnings: Map<string, number>; winMessage: string; betResult: BetResult } {
+        const won = lostOnTrick === undefined;
+        const cents = (won ? 1 : -1) * CONTRACT_CENTS[contract] * raiseMultiplier(raises);
+        const earnings: Map<string, number> = new Map();
+        earnings.set('player' + callerPlayer, cents * 2);
+        [1, 2, 3].filter(player => player !== callerPlayer).forEach(player => earnings.set('player' + player, -cents));
+        const name = contractName(contract);
+        const winMessage = 'Player ' + callerPlayer + (won ? ' won ' + name : ' lost ' + name + ' on trick ' + lostOnTrick);
+        return { earnings, winMessage, betResult: this.describeBet(callerPlayer, cents, name + this.describeRaise(raises)) };
     }
 
     // Who pays whom, given what each defender pays the caller (negative when the caller pays each of them)

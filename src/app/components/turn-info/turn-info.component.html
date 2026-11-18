@@ -5,6 +5,9 @@
 <div *ngIf="announcing && !canAnnounce" style="color: green; font-size: var(--message-large); background-color: white; display: inline-block; padding: var(--message-padding); border-radius: 0.625rem; font-weight: bold;">
     Player {{activePlayer}} is choosing what to bid on
 </div>
+<div *ngIf="takingOver" style="color: green; font-size: var(--message-large); background-color: white; display: inline-block; padding: var(--message-padding); border-radius: 0.625rem; font-weight: bold;">
+    Player {{activePlayer}} is deciding whether to take over
+</div>
 <div *ngIf="raising" style="color: green; font-size: var(--message-large); background-color: white; display: inline-block; padding: var(--message-padding); border-radius: 0.625rem; font-weight: bold;">
     Player {{activePlayer}} is deciding whether to raise
 </div>

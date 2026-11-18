@@ -3,8 +3,8 @@
 // and the caller wins with more points than the two defenders together. See "Measuring strength" in PC-STRATEGY.md.
 import { AnnouncementChoice, BrainChoice, BrainView } from '../pc-brain';
 import {
-    completesMarriage, contractCents, getLegalCards, HUNDRED_POINTS, isPointCard, marriagePoints, sevenOfTrump, sevenOnLastTrick,
-    trickWinnerIndex, validateBury
+    completesMarriage, Contract, contractCents, getLegalCards, HUNDRED_POINTS, isPointCard, marriagePoints, NO_TRUMP, noTrumpResult,
+    sevenOfTrump, sevenOnLastTrick, trickWinnerIndex, validateBury
 } from '../rules';
 import { seededRandom } from './seeded-random';
 
@@ -160,4 +160,39 @@ export function measure(callerName: string, callerBrain: Brain, defenderName: st
         hundredsCalledPercent: round2(100 * hundreds / rounds),
         hundredsMadePercent: hundreds ? round2(100 * hundredsMade / hundreds) : 0
     };
+}
+
+// Plays out No Tricks or All Tricks from these hands, the caller leading, until it's decided.
+// Returns the trick that broke the contract, or undefined when the caller made it.
+export function playNoTrumpRound(dealt: { [seat: number]: string[] }, caller: number, contract: Contract,
+                                 choosePlay: (view: BrainView) => BrainChoice): number | undefined {
+    const hands: { [seat: number]: string[] } = { 1: [...dealt[1]], 2: [...dealt[2]], 3: [...dealt[3]] };
+    const tricks = [];
+    let leader = caller;
+    let callerTricks = 0;
+    for (let trickNumber = 1; trickNumber <= 10; trickNumber++) {
+        const trick: string[] = [];
+        const plays = [];
+        for (let i = 0; i < 3; i++) {
+            const seat = (leader - 1 + i) % 3 + 1;
+            const view: BrainView = {
+                seat, caller, trump: NO_TRUMP, hand: [...hands[seat]], trick: [...trick], bury: [], tricks, contract
+            };
+            const card = choosePlay(view).card;
+            if (!getLegalCards(trick, hands[seat], NO_TRUMP).includes(card)) {
+                throw new Error('Played a card the rules do not allow: ' + card);
+            }
+            trick.push(card);
+            plays.push({ player: seat, card });
+            hands[seat] = hands[seat].filter(other => other !== card);
+        }
+        leader = plays[trickWinnerIndex(trick, NO_TRUMP)].player;
+        tricks.push({ plays, winner: leader });
+        callerTricks += leader === caller ? 1 : 0;
+        const result = noTrumpResult(contract, trickNumber, callerTricks);
+        if (result) {
+            return result === 'won' ? undefined : trickNumber;
+        }
+    }
+    return undefined;
 }

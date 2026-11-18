@@ -1,8 +1,8 @@
 // How the PC decides, as plain functions on card codes. It only uses what a real player would know:
 // its own hand, its own buried cards if it is the caller, every card played so far, and who has run out of a suit.
 import {
-    completesMarriage, getLegalCards, isPointCard, isTrump, marriagePoints, rankOf, rankStrength, sevenOfTrump, suitOf, trickWinnerIndex,
-    validateBury
+    completesMarriage, Contract, contractName, getLegalCards, higherContracts, isAllTricks, isPointCard, isTrump, marriagePoints, NO_TRUMP,
+    rankOf, rankStrength, sevenOfTrump, suitOf, trickWinnerIndex, validateBury
 } from './rules';
 import { RAISE_NAMES, RaiseBet } from './raising';
 
@@ -16,6 +16,8 @@ export interface BrainView {
     // this seat's own buried cards (only the caller has any)
     bury: string[];
     tricks: { plays: { player: number; card: string }[] }[];
+    // the Game unless it says otherwise
+    contract?: Contract;
 }
 
 export interface BrainChoice {
@@ -197,6 +199,8 @@ const CALL_HUNDRED_ESTIMATE = 9;
 export interface AnnouncementChoice {
     callSeven: boolean;
     callHundred: boolean;
+    // the Game unless it says otherwise
+    contract?: Contract;
     reason: string;
 }
 
@@ -212,6 +216,10 @@ export function expectedPoints(hand: string[], trump: string): number {
 
 // The caller chooses the Game or the 100, and calls the 7 of trump too when it holds it
 export function chooseAnnouncement(hand: string[], trump: string): AnnouncementChoice {
+    const noTrump = chooseNoTrumpContract(hand, trump);
+    if (noTrump) {
+        return { callSeven: false, callHundred: false, contract: noTrump.contract, reason: 'called ' + noTrump.reason };
+    }
     const trumps = hand.filter(card => isTrump(card, trump)).length;
     const holdsSeven = hand.includes(sevenOfTrump(trump));
     const seven = cardName(sevenOfTrump(trump));
@@ -242,6 +250,8 @@ export interface RaiseQuestion {
     isCaller: boolean;
     hundredCalled: boolean;
     bets: { bet: RaiseBet; level: number }[];
+    // the Game unless it says otherwise
+    contract?: Contract;
 }
 
 export interface RaiseChoice {
@@ -281,10 +291,18 @@ export function chooseRaises(question: RaiseQuestion): RaiseChoice {
     const decisions = question.bets.map(({ bet, level }) => {
         const name = RAISE_NAMES[level];
         const extra = Math.floor(level / 2);
-        const contract = bet === 'seven' ? 'the ' + seven : hundredCalled ? 'the 100' : 'the Game';
+        const noTrump = question.contract && question.contract !== 'game';
+        const contract = bet === 'seven' ? 'the ' + seven : noTrump ? contractName(question.contract) : hundredCalled ? 'the 100' : 'the Game';
         let raise: boolean;
         let why: string;
-        if (bet === 'seven' && !isCaller) {
+        if (noTrump) {
+            // the caller raises only a contract it all but can't lose; a defender can't tell from its own hand whether the
+            // caller will fail
+            const sure = isAllTricks(question.contract) ? isSureAllTricks(hand) : noTricksDanger(hand) <= RAISE_NO_TRICKS_DANGER;
+            raise = isCaller && sure;
+            why = !isCaller ? 'it can\'t tell from its own hand whether the caller will fail'
+                : sure ? 'it all but can\'t lose it' : 'it isn\'t sure enough of it';
+        } else if (bet === 'seven' && !isCaller) {
             // a caller who answered with Re is sure of the 7, so a defender's next raise needs a much stronger hand
             raise = trumps >= RAISE_SEVEN_DEFENDER_TRUMPS + extra * 2;
             why = raise ? 'with ' + trumps + ' trumps it expects to beat it on the last trick'
@@ -340,6 +358,11 @@ export function chooseTrump(hand: string[]): BrainChoice {
 }
 
 export function chooseBury(hand: string[], trump: string): BrainChoice {
+    // a hand that can't lose No Tricks or All Tricks once 2 cards are gone buries those, and calls it
+    const plan = noTrumpBuryPlan(hand, false, trump);
+    if (plan?.bury.length) {
+        return { card: plan.bury[0], reason: 'buried the ' + cardName(plan.bury[0]) + ' to set up ' + contractName(plan.contract) };
+    }
     const allowed = hand.filter(card => validateBury(card) === '');
     const keepsTrumpAndMarriages = allowed.filter(card => !isTrump(card, trump) && !completesMarriage(card, hand));
     const notTrump = allowed.filter(card => !isTrump(card, trump));
@@ -359,6 +382,9 @@ export function choosePlay(view: BrainView): BrainChoice {
     const legal = getLegalCards(view.trick, view.hand, view.trump);
     if (legal.length === 1) {
         return { card: legal[0], reason: 'played the ' + cardName(legal[0]) + ', its only legal card' };
+    }
+    if (view.trump === NO_TRUMP) {
+        return playNoTrump(view, legal);
     }
     const knowledge = new Knowledge(view);
     switch (view.trick.length) {
@@ -626,4 +652,141 @@ function lead(view: BrainView, knowledge: Knowledge, legal: string[]): BrainChoi
     }
     const spare = cheapest(legal, view);
     return { card: spare, reason: 'led the ' + cardName(spare) + ', the card it could best spare' };
+}
+
+// ---- No Tricks and All Tricks ----
+
+const noTrumpStrength = (card: string) => rankStrength(card, NO_TRUMP);
+
+// Every suit it holds runs unbroken down from the A. The caller leads the first trick, and each of those cards is the
+// highest of its suit still out, so it wins every trick and leads the next: All Tricks can't fail, even played open.
+export function isSureAllTricks(hand: string[]): boolean {
+    return SUITS.split('').every(suit => hand.filter(card => suitOf(card) === suit).map(noTrumpStrength)
+        .sort((a, b) => b - a).every((strength, index) => strength === 7 - index));
+}
+
+// The cards that could make the caller take a trick in No Tricks. A player who can go higher than the card to beat must,
+// so a card is only safe when the caller also holds every lower card of its suit: then any card a defender plays in that
+// suit is higher than all of the caller's. A gap lets a defender lead a card in it and force the caller over.
+export function noTricksDanger(hand: string[]): number {
+    return SUITS.split('').reduce((danger, suit) => danger + hand.filter(card => suitOf(card) === suit).map(noTrumpStrength)
+        .sort((a, b) => a - b).filter((strength, index) => strength > index).length, 0);
+}
+
+// Measured over 200,000 deals, played out by the PC on both sides: No Tricks is won about 93% of the time with 1 dangerous
+// card, 90% with 2, 77% with 3, 66% with 4, 59% with 5 and 48% with 6. It pays 6 cents either way, so anything over half
+// beats playing a weak hand in the Game; the PC calls it with up to 3, leaving room for defenders who play better than it
+// does, and raises it with up to 1. It never plays it open, which hasn't been measured.
+export const NO_TRICKS_DANGER = 3;
+const RAISE_NO_TRICKS_DANGER = 1;
+
+// Which cards to bury so the 10 left can't lose No Tricks or All Tricks, if any can. Burying an A or 10 is only
+// allowed after taking over, since points still count in the Game the caller might have to play.
+function noTrumpBuryPlan(hand: string[], allowPoints: boolean, gameTrump?: string)
+    : { contract: Contract; bury: string[] } | undefined {
+    const choices = hand.filter(card => allowPoints || !isPointCard(card));
+    const extra = hand.length - 10;
+    const pairs = choices.reduce((all, card, index) => all.concat(choices.slice(index + 1).map(other => [card, other])), [] as string[][]);
+    const sets: string[][] = extra === 2 ? pairs : extra === 1 ? choices.map(card => [card]) : [[]];
+    for (const contract of ['all-tricks-open', 'no-tricks'] as Contract[]) {
+        const bury = sets.find(set => chooseNoTrumpContract(hand.filter(card => !set.includes(card)), gameTrump)?.contract === contract);
+        if (bury) {
+            return { contract, bury };
+        }
+    }
+    return undefined;
+}
+
+// A caller expecting more than this many points in the Game plays the Game rather than No Tricks: up to here, the Game
+// loses money on average (see "Raising the stakes" in PC-STRATEGY.md)
+const NO_TRICKS_MAX_GAME_ESTIMATE = 5;
+
+// The No Tricks or All Tricks contract this hand should play, if any, finishing "Player 2 (PC) called ...".
+// gameTrump is the trump the caller picked: given, No Tricks only replaces a weak hand for the Game.
+function chooseNoTrumpContract(hand: string[], gameTrump?: string): { contract: Contract; reason: string } | undefined {
+    if (isSureAllTricks(hand)) {
+        return {
+            contract: 'all-tricks-open', reason: 'Open All Tricks: every suit it holds runs down from the A, so it wins every trick it leads'
+        };
+    }
+    const danger = noTricksDanger(hand);
+    const weakGame = !gameTrump || expectedPoints(hand, gameTrump) <= NO_TRICKS_MAX_GAME_ESTIMATE;
+    if (danger <= NO_TRICKS_DANGER && weakGame) {
+        const why = danger === 0 ? 'its cards are low enough in every suit to stay under the defenders'
+            : 'only ' + danger + ' of its cards could be forced to take a trick';
+        return { contract: 'no-tricks', reason: 'No Tricks: ' + why };
+    }
+    return undefined;
+}
+
+export interface TakeOverChoice {
+    contract?: Contract;
+    reason: string;
+}
+
+// A defender may take over with a higher contract; it judges its own 10 cards, since it can bury the 2 it picks up
+export function chooseTakeOver(hand: string[], current: Contract): TakeOverChoice {
+    const option = chooseNoTrumpContract(hand);
+    if (option && higherContracts(current).includes(option.contract)) {
+        return { contract: option.contract, reason: 'took over with ' + option.reason };
+    }
+    const why = option ? 'worth more than ' + contractName(current) : 'right for No Tricks or All Tricks';
+    return { reason: 'passed: its hand isn\'t ' + why };
+}
+
+// After taking over, it buries what hurts the contract most: its highest card for No Tricks, its lowest for All Tricks
+export function chooseNoTrumpBury(hand: string[], contract: Contract): BrainChoice {
+    const plan = noTrumpBuryPlan(hand, true);
+    if (plan?.contract === contract && plan.bury.length) {
+        const card = plan.bury[0];
+        return { card, reason: 'buried the ' + cardName(card) + ', which it doesn\'t need for ' + contractName(contract) };
+    }
+    const allTricks = isAllTricks(contract);
+    // bestOf picks the lowest score: the weakest card for All Tricks, the strongest for No Tricks
+    const pick = bestOf(hand, card => allTricks ? noTrumpStrength(card) : -noTrumpStrength(card));
+    return { card: pick, reason: 'buried the ' + cardName(pick) + (allTricks ? ', its weakest card' : ', its most dangerous card') };
+}
+
+// No trump, and only the tricks count. In No Tricks the caller ducks and the defenders try to make it take a trick;
+// in All Tricks the caller leads its strongest cards and the defenders try to beat one.
+function playNoTrump(view: BrainView, legal: string[]): BrainChoice {
+    const allTricks = isAllTricks(view.contract || 'no-tricks');
+    const isCaller = view.seat === view.caller;
+    // bestOf picks the lowest score
+    const highest = (cards: string[]) => bestOf(cards, option => -noTrumpStrength(option));
+    const lowest = (cards: string[]) => bestOf(cards, noTrumpStrength);
+    const choice = (pick: string, why: string) => ({ card: pick, reason: why.replace('#', 'the ' + cardName(pick)) });
+    if (!view.trick.length) {
+        if (isCaller && !allTricks) {
+            // the shortest suit leaves the defenders the most cards to play over it
+            const length = (option: string) => view.hand.filter(other => suitOf(other) === suitOf(option)).length;
+            return choice(bestOf(legal, option => length(option) * 10 + noTrumpStrength(option)),
+                'led # from its shortest suit, so the defenders have to go over it');
+        }
+        // the All Tricks caller leads its strongest card; a defender leads its lowest
+        return isCaller === allTricks ? choice(highest(legal), 'led #, its strongest card')
+            : choice(lowest(legal), 'led #, its lowest card');
+    }
+    const best = view.trick[trickWinnerIndex(view.trick, NO_TRUMP)];
+    const beats = (option: string) => suitOf(option) === suitOf(best) && noTrumpStrength(option) > noTrumpStrength(best);
+    const callerPlayed = whoPlayed(view).indexOf(view.caller);
+    const callerWinning = callerPlayed >= 0 && view.trick[callerPlayed] === best;
+    const under = legal.filter(option => !beats(option));
+    const over = legal.filter(beats);
+    if (isCaller) {
+        // No Tricks: get rid of its highest card that still stays under the trick; All Tricks never follows unless lost
+        return under.length ? choice(highest(under), 'stayed under the trick with #') : choice(lowest(legal), 'had to go over with #');
+    }
+    if (allTricks) {
+        return over.length && callerWinning ? choice(lowest(over), 'beat the caller with #') : choice(lowest(legal), 'played its lowest card, #');
+    }
+    // No Tricks defender: keep the trick low, so the caller has to go over it or win it
+    return callerWinning && under.length ? choice(highest(under), 'left the trick to the caller, playing #')
+        : choice(lowest(legal), 'played low with #, so the caller has to go over it');
+}
+
+// Who played each card of the trick on the table, in order
+function whoPlayed(view: BrainView): number[] {
+    const leader = seatAfter(view.seat, 3 - view.trick.length);
+    return view.trick.map((card, index) => seatAfter(leader, index));
 }
