@@ -252,6 +252,8 @@ export interface RaiseQuestion {
     bets: { bet: RaiseBet; level: number }[];
     // the Game unless it says otherwise
     contract?: Contract;
+    // the caller's cards, when the contract is played open and everyone can see them
+    callerHand?: string[];
 }
 
 export interface RaiseChoice {
@@ -295,13 +297,13 @@ export function chooseRaises(question: RaiseQuestion): RaiseChoice {
         const contract = bet === 'seven' ? 'the ' + seven : noTrump ? contractName(question.contract) : hundredCalled ? 'the 100' : 'the Game';
         let raise: boolean;
         let why: string;
-        if (noTrump) {
-            // the caller raises only a contract it all but can't lose; a defender can't tell from its own hand whether the
-            // caller will fail
+        if (noTrump && isCaller) {
+            // the caller raises only a contract it all but can't lose
             const sure = isAllTricks(question.contract) ? isSureAllTricks(hand) : noTricksDanger(hand) <= RAISE_NO_TRICKS_DANGER;
-            raise = isCaller && sure;
-            why = !isCaller ? 'it can\'t tell from its own hand whether the caller will fail'
-                : sure ? 'it all but can\'t lose it' : 'it isn\'t sure enough of it';
+            raise = sure;
+            why = sure ? 'it all but can\'t lose it' : 'it isn\'t sure enough of it';
+        } else if (noTrump) {
+            ({ raise, why } = judgeNoTrumpAsDefender(hand, question.contract, question.callerHand));
         } else if (bet === 'seven' && !isCaller) {
             // a caller who answered with Re is sure of the 7, so a defender's next raise needs a much stronger hand
             raise = trumps >= RAISE_SEVEN_DEFENDER_TRUMPS + extra * 2;
@@ -679,6 +681,56 @@ export function noTricksDanger(hand: string[]): number {
 // does, and raises it with up to 1. It never plays it open, which hasn't been measured.
 export const NO_TRICKS_DANGER = 3;
 const RAISE_NO_TRICKS_DANGER = 1;
+// and with 6 or more it's lost more often than won, so a defender who can see that in an open No Tricks says Kontra
+const KONTRA_OPEN_NO_TRICKS_DANGER = 6;
+
+// Whether a defender should say Kontra on No Tricks or All Tricks, judged from its own hand, and from the caller's too
+// when it's played open
+function judgeNoTrumpAsDefender(hand: string[], contract: Contract, callerHand?: string[]): { raise: boolean; why: string } {
+    if (isAllTricks(contract)) {
+        if (callerHand) {
+            const beater = beatsOpenAllTricks(hand, callerHand);
+            return beater ? { raise: true, why: 'its ' + cardName(beater.card) + ' will beat the caller\'s ' + cardName(beater.callerCard) }
+                : { raise: false, why: 'none of its cards can beat the caller\'s' };
+        }
+        // a defender's A wins a trick in any suit the caller holds, so the caller can only be safe in suits where it holds the
+        // A. With 3 aces here, the one suit left has 8 cards, and the caller holds 10: one of the 3 aces must beat it.
+        const aces = hand.filter(card => rankOf(card) === 'A').length;
+        if (aces >= 3) {
+            return { raise: true, why: 'it holds ' + aces + ' aces, so the caller must hold a suit where one of them beats it' };
+        }
+        return { raise: false, why: (aces ? 'with only ' + aces + (aces === 1 ? ' ace' : ' aces') : 'without an ace')
+            + ' it can\'t be sure the caller holds a suit it can beat' };
+    }
+    if (callerHand) {
+        const danger = noTricksDanger(callerHand);
+        const raise = danger >= KONTRA_OPEN_NO_TRICKS_DANGER;
+        return { raise, why: danger + ' of the caller\'s cards could be forced to take a trick' + (raise ? '' : ', not enough to count on it') };
+    }
+    return { raise: false, why: 'it can\'t see the caller\'s cards, and its own hand doesn\'t tell it whether the caller will have to take a trick' };
+}
+
+// With the caller's cards face up: a suit where this defender holds a card higher than one of the caller's, and enough
+// other cards of the suit to follow the caller's higher ones first without giving it up. When the caller then leads the
+// lower card, the defender has to go higher, and wins the trick.
+function beatsOpenAllTricks(hand: string[], callerHand: string[]): { card: string; callerCard: string } | undefined {
+    for (const suit of SUITS.split('')) {
+        const inSuit = (cards: string[]) => cards.filter(card => suitOf(card) === suit)
+            .sort((a, b) => noTrumpStrength(b) - noTrumpStrength(a));
+        const mine = inSuit(hand);
+        const theirs = inSuit(callerHand);
+        if (!mine.length) {
+            continue;
+        }
+        const top = mine[0];
+        const above = theirs.filter(card => noTrumpStrength(card) > noTrumpStrength(top)).length;
+        const below = theirs.filter(card => noTrumpStrength(card) < noTrumpStrength(top));
+        if (below.length && mine.length > above) {
+            return { card: top, callerCard: below[0] };
+        }
+    }
+    return undefined;
+}
 
 // Which cards to bury so the 10 left can't lose No Tricks or All Tricks, if any can. Burying an A or 10 is only
 // allowed after taking over, since points still count in the Game the caller might have to play.

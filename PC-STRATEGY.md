@@ -136,7 +136,12 @@ It pays 6 cents either way, so anything over half beats a weak hand in the Game;
 
 The caller and a player taking over hold 12 cards and bury 2, so the PC first looks for 2 cards to bury that would leave such a hand. The caller can't bury an A or 10, since it might still have to play the Game.
 
-The PC raises its own No Tricks only with at most 1 dangerous card, and All Tricks only when it's sure. As a defender it never raises them: its own hand doesn't tell it whether the caller will fail.
+The PC raises its own No Tricks only with at most 1 dangerous card, and All Tricks only when it's sure. As a defender it says Kontra when its own hand, or the caller's cards in an open contract, show the caller will fail:
+
+- **All Tricks:** a defender's A wins a trick in any suit the caller holds, since the caller has to lead that suit at some point and the defender has to go over it. So the caller can only be safe in suits where it holds the A. With 3 aces in one defender's hand, the one suit left has 8 cards and the caller holds 10, so the defender is sure to win a trick.
+- **Open All Tricks:** it checks each suit of the caller's face-up cards: a card higher than one of the caller's, with enough other cards of the suit to follow the caller's higher ones first, wins a trick.
+- **Open No Tricks:** it counts the caller's dangerous cards, and says Kontra at 6 or more, where No Tricks is lost more often than won.
+- **No Tricks:** it passes. Without seeing the caller's cards, its own hand doesn't tell it whether the caller will have to take a trick.
 
 How it plays them:
 

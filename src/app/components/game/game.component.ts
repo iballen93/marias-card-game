@@ -240,7 +240,7 @@ export class GameComponent implements OnInit, OnDestroy {
         }
         if (this.raising) {
             const bets = this.getRaisableBets().map(bet => ({ bet, level: this.raiseTracks[bet].level }));
-            const choice = this.computerPlayerService.chooseRaises(this.getPcView(), this.hundredCalled, bets);
+            const choice = this.computerPlayerService.chooseRaises(this.getPcView(), this.hundredCalled, bets, this.getOpenCallerHand());
             this.pcExplanation = this.isStandard() ? '' : this.getPlayerTitle(this.activePlayer) + ' ' + choice.reason;
             this.waitingForNext = this.gameMode === 'learning-pc-slow';
             this.animateCardMoves(() => this.raise(choice.raise));
@@ -428,7 +428,10 @@ export class GameComponent implements OnInit, OnDestroy {
                     // the PC raises by its own rule; your seat passes
                     const bets = this.getRaisableBets().map(bet => ({ bet, level: this.raiseTracks[bet].level }));
                     const isPc = this.isPcSeat(this.activePlayer);
-                    this.raise(isPc ? this.computerPlayerService.chooseRaises(this.getPcView(), this.hundredCalled, bets).raise : []);
+                    const choice = isPc
+                        ? this.computerPlayerService.chooseRaises(this.getPcView(), this.hundredCalled, bets, this.getOpenCallerHand())
+                        : undefined;
+                    this.raise(choice ? choice.raise : []);
                     this.updateLegalCards();
                     continue;
                 }
@@ -771,6 +774,11 @@ export class GameComponent implements OnInit, OnDestroy {
             return this.describeBet(bet) + (level ? ' (' + raiseName(level) + ')' : '');
         };
         return 'Player ' + this.currentCaller + ' bid ' + bets.map(withRaise).join(' and ');
+    }
+
+    // The caller's cards when the contract is played open, so everyone, the PC included, can see them
+    private getOpenCallerHand(): Card[] | undefined {
+        return isOpenContract(this.contract) ? this.allPiles.get('player' + this.currentCaller) : undefined;
     }
 
     // The bets the active player may raise now

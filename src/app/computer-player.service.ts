@@ -52,10 +52,11 @@ export class ComputerPlayerService {
     }
 
     // Which of the bets it may raise now it raises, as the caller or as a defender
-    public chooseRaises(view: PcView, hundredCalled: boolean, bets: { bet: RaiseBet; level: number }[]): RaiseChoice {
+    // callerHand: the caller's cards, when the contract is played open and the PC can see them
+    public chooseRaises(view: PcView, hundredCalled: boolean, bets: { bet: RaiseBet; level: number }[], callerHand?: Card[]): RaiseChoice {
         return chooseRaises({
             hand: view.hand.map(card => card.code), trump: view.trump, isCaller: view.seat === view.caller, hundredCalled, bets,
-            contract: view.contract
+            contract: view.contract, callerHand: callerHand?.map(card => card.code)
         });
     }
 
