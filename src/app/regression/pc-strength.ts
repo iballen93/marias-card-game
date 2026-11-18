@@ -25,6 +25,10 @@ export interface RoundResult {
     callerSevenCents: number;
     callerCents: number;
     hundredCalled: boolean;
+    // what each player held once the caller had bid, before the first card: what raising the stakes is decided on
+    bid: { caller: number; trump: string; sevenCalled: boolean; hands: { [seat: number]: string[] } };
+    // what the Game or the 100 paid the caller from each defender, before any raise (negative when the caller paid)
+    contractCentsEach: number;
 }
 
 export interface Matchup {
@@ -82,6 +86,7 @@ export function playRound(dealSeed: number, callerBrain: Brain, defenderBrain: B
     const announcement = callerBrain.chooseAnnouncement ? callerBrain.chooseAnnouncement(hands[caller], trump) : undefined;
     const sevenCalled = !!announcement?.callSeven && hands[caller].includes(sevenOfTrump(trump));
     const hundredCalled = !!announcement?.callHundred;
+    const bid = { caller, trump, sevenCalled, hands: { 1: [...hands[1]], 2: [...hands[2]], 3: [...hands[3]] } };
     const points = { 1: 0, 2: 0, 3: 0 };
     const tricks = [];
     let leader = caller;
@@ -115,8 +120,12 @@ export function playRound(dealSeed: number, callerBrain: Brain, defenderBrain: B
     const seven = sevenOnLastTrick(tricks[tricks.length - 1], trump, caller, sevenCalled);
     const callerSevenCents = !seven ? 0 : ((seven.player === caller) === seven.won ? 2 : -2) * seven.cents;
     // everything the caller collected this round from both defenders together: the Game or the 100, and the 7
-    const callerCents = 2 * contractCents(callerPoints, defenderPoints, trump, hundredCalled) + callerSevenCents;
-    return { callerPoints, defenderPoints, callerWins: callerPoints > defenderPoints, callerSevenCents, callerCents, hundredCalled };
+    const contractCentsEach = contractCents(callerPoints, defenderPoints, trump, hundredCalled);
+    const callerCents = 2 * contractCentsEach + callerSevenCents;
+    return {
+        callerPoints, defenderPoints, callerWins: callerPoints > defenderPoints, callerSevenCents, callerCents, hundredCalled, bid,
+        contractCentsEach
+    };
 }
 
 // Plays the same deals for a caller and defenders, and sums up how the caller did

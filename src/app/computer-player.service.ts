@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
 import { Card } from './components/card-pile/card-pile.component';
-import { AnnouncementChoice, chooseAnnouncement, chooseBury, choosePlay, chooseTrump } from './pc-brain';
+import { AnnouncementChoice, chooseAnnouncement, chooseBury, choosePlay, chooseRaises, chooseTrump, RaiseChoice } from './pc-brain';
+import { RaiseBet } from './raising';
 import { getLegalCards } from './rules';
 import { Trick } from './trick';
 
 // What the PC is being asked to do
-export type PcPhase = 'trump' | 'bury' | 'announce' | 'play';
+export type PcPhase = 'trump' | 'bury' | 'announce' | 'raise' | 'play';
 
 // Everything a PC seat is allowed to know when it makes a choice
 export interface PcView {
@@ -39,6 +40,13 @@ export class ComputerPlayerService {
     // The caller holds the 7 of trump and decides whether to call it
     public chooseAnnouncement(view: PcView): AnnouncementChoice {
         return chooseAnnouncement(view.hand.map(card => card.code), view.trump);
+    }
+
+    // Which of the bets it may raise now it raises, as the caller or as a defender
+    public chooseRaises(view: PcView, hundredCalled: boolean, bets: { bet: RaiseBet; level: number }[]): RaiseChoice {
+        return chooseRaises({
+            hand: view.hand.map(card => card.code), trump: view.trump, isCaller: view.seat === view.caller, hundredCalled, bets
+        });
     }
 
     public chooseMove(view: PcView): PcChoice {

@@ -15,7 +15,25 @@ describe('GameComponent', () => {
   // the caller's announcement buttons
   const GAME = { seven: false, hundred: false };
   const GAME_AND_SEVEN = { seven: true, hundred: false };
-  const announceIfAsked = () => component.announcing && component.announceFromButton(GAME);
+  // Through the raising: your seats pass, and each PC decides in its own time (so only inside fakeAsync in vs PC)
+  const passRaising = () => {
+    for (let step = 0; step < 20 && component.raising; step++) {
+      if (!component.isPcSeat(component.activePlayer)) {
+        component.raiseFromButton([]);
+      } else if (component.waitingForNext) {
+        component.next();
+      } else {
+        tick(1300);
+      }
+    }
+  };
+  // the caller's bid, then the raising
+  const announceIfAsked = () => {
+    if (component.announcing) {
+      component.announceFromButton(GAME);
+    }
+    passRaising();
+  };
 
   const startGame = async () => {
     const fixture = TestBed.createComponent(GameComponent);
@@ -120,6 +138,108 @@ describe('GameComponent', () => {
     expect(recorded).toEqual(won);
   });
 
+  describe('raising the stakes', () => {
+    // Player 1 picks trump and buries, so the bid comes next, with Player 1 as the caller
+    const startBid = async () => {
+      await startGame();
+      component.cardSelected(component.getActivePlayerPile()[0]);
+      [0, 1].forEach(() => component.cardSelected(component.getActivePlayerPile().find(c => !'A0'.includes(c.code.charAt(0)))));
+      expect(component.announcing).toBeTrue();
+    };
+    const levels = () => [component.raiseTracks.game.level, component.raiseTracks.seven.level];
+
+    it('should go from the defender after the caller, to the caller, and back to either defender, then let the caller lead', async () => {
+      await startBid();
+      component.announceFromButton(GAME);
+      expect(component.raising).toBeTrue();
+      expect(component.activePlayer).toBe(2);
+      expect(component.raiseOptions.map(option => option.raiseName + ' on ' + option.label)).toEqual(['Kontra on the Game']);
+      expect(component.legalCards).toEqual([]);
+
+      // Player 2's Kontra counts for both defenders, so it goes straight to the caller
+      component.raiseFromButton(['game']);
+      expect(component.activePlayer).toBe(1);
+      expect(component.raiseOptions.map(option => option.raiseName)).toEqual(['Re']);
+      component.raiseFromButton(['game']);
+      // either defender may say Supre: Player 2 passes, Player 3 says it
+      expect(component.activePlayer).toBe(2);
+      component.raiseFromButton([]);
+      expect(component.activePlayer).toBe(3);
+      component.raiseFromButton(['game']);
+      expect(component.activePlayer).toBe(1);
+      expect(component.raiseOptions.map(option => option.raiseName)).toEqual(['Kontra More']);
+      component.raiseFromButton([]);
+
+      expect(component.raising).toBeFalse();
+      expect(levels()).toEqual([3, 0]);
+      expect(component.activePlayer).toBe(1);
+      expect(component.legalCards.length).toBeGreaterThan(0);
+      expect(component.getBidSummary()).toBe('Player 1 bid the Game (Supre)');
+    });
+
+    it('should start play once both defenders pass', async () => {
+      await startBid();
+      component.announceFromButton(GAME);
+      component.raiseFromButton([]);
+      expect(component.activePlayer).toBe(3);
+      component.raiseFromButton([]);
+      expect(component.raising).toBeFalse();
+      expect(levels()).toEqual([0, 0]);
+      expect(component.activePlayer).toBe(1);
+    });
+
+    it('should let the second defender raise a called 7 the first one passed, and raise each bet on its own', async () => {
+      await startBid();
+      component.announcing = false;
+      component.sevenCalled = true;
+      (component as any).startRaising();
+      expect(component.raiseOptions.map(option => option.label)).toEqual(['the Game', 'the Called ' + component.getSevenName()]);
+      component.raiseFromButton(['game']);
+      expect(component.activePlayer).toBe(3);
+      expect(component.raiseOptions.map(option => option.bet)).toEqual(['seven']);
+      component.raiseFromButton(['seven']);
+      expect(component.activePlayer).toBe(1);
+      expect(component.raiseOptions.map(option => option.raiseName)).toEqual(['Re', 'Re']);
+      component.raiseFromButton(['seven']);
+      // the Game stops at Kontra, the 7 goes on to the defenders
+      expect(levels()).toEqual([1, 2]);
+      expect(component.activePlayer).toBe(2);
+      component.raiseFromButton([]);
+      component.raiseFromButton([]);
+      expect(component.raising).toBeFalse();
+    });
+
+    it('should show what each raise makes the bet worth, doubled in spades', async () => {
+      await startBid();
+      component.trump = 'SPADES';
+      component.announceFromButton({ seven: false, hundred: true });
+      expect(component.raiseOptions).toEqual([{ bet: 'game', raiseName: 'Kontra', label: 'the Called 100', cents: 32 }]);
+    });
+
+    it('should pay the Game doubled for each raise', async () => {
+      await startBid();
+      component.announceFromButton(GAME);
+      component.raiseFromButton(['game']);
+      component.raiseFromButton(['game']);
+      component.raiseFromButton([]);
+      component.raiseFromButton([]);
+      expect(levels()).toEqual([2, 0]);
+      const before = component.playerToMoney.get('player1');
+      component.fastPlayToLastHand();
+      while (!component.canPlayAgain) {
+        component.cardSelected(component.getActivePlayerPile().find(c => component.legalCards.includes(c.code)));
+        if (component.showingCompletedHand) {
+          (component as any).collectCompletedHand(component.lastTrickPlayer);
+        }
+      }
+      // the Game is 2 cents, 4 in spades, and more with a silent 100; Re makes it 4 times that, from each defender
+      const gameLine = component.betResults[0].text;
+      expect(gameLine).toMatch(/the Game \(Re\)$/);
+      const cents = Math.abs(component.playerToMoney.get('player1') - before) / 2;
+      expect(cents % 8).toBe(0);
+    });
+  });
+
   it('should offer fast play until the last hand', async () => {
     await startGame();
     expect(component.canFastPlay()).toBe(true);
@@ -166,6 +286,8 @@ describe('GameComponent', () => {
       for (let step = 0; step < 500 && !component.canPlayAgain; step++) {
         if (component.announcing && component.activePlayer === 1) {
           component.announceFromButton(GAME);
+        } else if (component.raising && component.activePlayer === 1) {
+          component.raiseFromButton([]);
         } else if (component.activePlayer === 1 && !component.showingCompletedHand) {
           const card = component.buryingCards || component.pickingTrump
             ? hand(1).find(c => !'A0'.includes(c.code.charAt(0)))
@@ -184,6 +306,8 @@ describe('GameComponent', () => {
           component.next();
         } else if (component.announcing && component.activePlayer === 1) {
           component.announceFromButton(GAME);
+        } else if (component.raising && component.activePlayer === 1) {
+          component.raiseFromButton([]);
         } else if (component.activePlayer === 1 && !component.showingCompletedHand) {
           const card = component.buryingCards || component.pickingTrump
             ? hand(1).find(c => !'A0'.includes(c.code.charAt(0)))
@@ -227,9 +351,10 @@ describe('GameComponent', () => {
       tick(PC_MOVE_MS * 2);
       expect(pile('player2Bury').length).toBe(2);
       expect(pile('player2Bury').some(card => 'A0'.includes(card.code.charAt(0)))).toBeFalse();
-      // it announces the Game or the 100 before leading
+      // it announces the Game or the 100, then everyone may raise, before it leads
       tick(PC_MOVE_MS);
       expect(component.announcing).toBeFalse();
+      passRaising();
       expect(pile('game').length).toBe(0);
       tick(PC_MOVE_MS);
       expect(pile('game').length).toBe(1);
@@ -343,11 +468,17 @@ describe('GameComponent', () => {
       component.next();
       expect(pile('player2Bury').length).toBe(2);
       expect(pile('game').length).toBe(0);
-      // it announces the Game or the 100, then leads: one Next each
+      // it announces the Game or the 100, then everyone may raise, then it leads: one Next for each PC move
       component.next();
       expect(pile('game').length).toBe(0);
-      expect(component.pcExplanation).toMatch(/the 100|the 7/);
-      component.next();
+      expect(component.pcExplanation).toMatch(/the 100|the 7|the Game/);
+      passRaising();
+      expect(pile('game').length).toBe(0);
+      if (component.waitingForNext) {
+        component.next();
+      } else {
+        tick(PC_MOVE_MS);
+      }
       expect(pile('game').length).toBe(1);
       fixture.destroy();
       tick(PC_MOVE_MS);
@@ -360,6 +491,8 @@ describe('GameComponent', () => {
       for (let step = 0; step < 500 && !(yourTurnMidTrick() && component.pcExplanation); step++) {
         if (component.announcing && component.activePlayer === 1) {
           component.announceFromButton(GAME);
+        } else if (component.raising && component.activePlayer === 1) {
+          component.raiseFromButton([]);
         } else if (component.activePlayer === 1 && !component.showingCompletedHand) {
           const card = component.buryingCards || component.pickingTrump
             ? hand(1).find(c => !'A0'.includes(c.code.charAt(0)))
@@ -446,6 +579,7 @@ describe('GameComponent', () => {
         component.announceFromButton(GAME_AND_SEVEN);
         expect(component.announcing).toBeFalse();
         expect(component.sevenCalled).toBeTrue();
+        passRaising();
         expect(component.legalCards.length).toBeGreaterThan(0);
         fixture.destroy();
       }));

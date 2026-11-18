@@ -7,9 +7,15 @@ import { ComputerPlayerService, PcView } from 'src/app/computer-player.service';
 import { CardAnimationService } from 'src/app/card-animation.service';
 import { ActivatedRoute } from '@angular/router';
 import { DEFAULT_GAME_MODE, GameMode, isVsPc } from 'src/app/game-mode';
-import { completesMarriage, sevenOfTrump, sevenOnLastTrick, trickWinnerIndex, validateBury } from 'src/app/rules';
+import {
+    completesMarriage, GAME_CENTS, HUNDRED_CENTS, SEVEN_CENTS, sevenOfTrump, sevenOnLastTrick, trickWinnerIndex, validateBury
+} from 'src/app/rules';
+import { RaiseOption } from 'src/app/components/raise-dialog/raise-dialog.component';
 import { cardName } from 'src/app/pc-brain';
 import { Trick } from 'src/app/trick';
+import {
+    defendersInOrder, raisableBets, RAISE_NAMES, RaiseBet, raiseMultiplier, raiseName, RaiseTracks, startRaiseTracks
+} from 'src/app/raising';
 
 @Component({
     selector: 'app-game',
@@ -69,6 +75,17 @@ export class GameComponent implements OnInit, OnDestroy {
     sevenCalled = false;
     // the 100 replaces the Game: the caller alone must reach 100
     hundredCalled = false;
+    // after the bid, the defenders and the caller take turns raising each announced bet (see raising.ts)
+    raising = false;
+    raiseTracks: RaiseTracks = startRaiseTracks(false);
+    // whose raise it is now: the defenders', or the caller's
+    private defendersToRaise = true;
+    // who still gets to speak on this side's turn
+    private raisersLeft: number[] = [];
+    // what the active player may raise, for the pop-up; set once per turn, so its switches keep their state
+    raiseOptions: RaiseOption[] = [];
+    // for the template: the raise a bet is on, such as Kontra
+    readonly raiseName = raiseName;
     // what the 7 of trump scored on the last trick, if it was played there
     // under the round's result: who pays whom in all, then whether the caller won or lost each bet
     payoutTotal = '';
@@ -197,6 +214,14 @@ export class GameComponent implements OnInit, OnDestroy {
             this.animateCardMoves(() => this.announce(announcement.callSeven, announcement.callHundred));
             return;
         }
+        if (this.raising) {
+            const bets = this.getRaisableBets().map(bet => ({ bet, level: this.raiseTracks[bet].level }));
+            const choice = this.computerPlayerService.chooseRaises(this.getPcView(), this.hundredCalled, bets);
+            this.pcExplanation = this.isStandard() ? '' : this.getPlayerTitle(this.activePlayer) + ' ' + choice.reason;
+            this.waitingForNext = this.gameMode === 'learning-pc-slow';
+            this.animateCardMoves(() => this.raise(choice.raise));
+            return;
+        }
         const { card, reason } = this.choosePcCard();
         // the explanations are part of Learning Mode
         this.pcExplanation = this.isStandard() ? '' : this.getPlayerTitle(this.activePlayer) + ' ' + reason;
@@ -252,7 +277,8 @@ export class GameComponent implements OnInit, OnDestroy {
     private getPcView(): PcView {
         return {
             seat: this.activePlayer,
-            phase: this.pickingTrump ? 'trump' : this.buryingCards ? 'bury' : this.announcing ? 'announce' : 'play',
+            phase: this.pickingTrump ? 'trump' : this.buryingCards ? 'bury'
+                : this.announcing ? 'announce' : this.raising ? 'raise' : 'play',
             hand: this.getActivePlayerPile(),
             trick: this.allPiles.get('game') || [],
             trump: this.trump,
@@ -263,7 +289,7 @@ export class GameComponent implements OnInit, OnDestroy {
     }
 
     private updateLegalCards(): void {
-        const isCardToPlay = !this.pickingTrump && !this.buryingCards && !this.announcing && !this.showingCompletedHand;
+        const isCardToPlay = !this.pickingTrump && !this.buryingCards && !this.announcing && !this.raising && !this.showingCompletedHand;
         this.legalCards = isCardToPlay
             ? this.computerPlayerService.getLegalCards(this.allPiles.get('game'), this.getActivePlayerPile(), this.trump)
             : [];
@@ -363,6 +389,14 @@ export class GameComponent implements OnInit, OnDestroy {
                     this.updateLegalCards();
                     continue;
                 }
+                if (this.raising) {
+                    // the PC raises by its own rule; your seat passes
+                    const bets = this.getRaisableBets().map(bet => ({ bet, level: this.raiseTracks[bet].level }));
+                    const isPc = this.isPcSeat(this.activePlayer);
+                    this.raise(isPc ? this.computerPlayerService.chooseRaises(this.getPcView(), this.hundredCalled, bets).raise : []);
+                    this.updateLegalCards();
+                    continue;
+                }
                 // in vs PC the PC seats keep playing their strategy; only your cards are picked at random
                 this.handleCardSelected(this.isPcSeat(this.activePlayer) ? this.choosePcCard().card : this.getFastPlayCard());
                 this.updateLegalCards();
@@ -392,8 +426,8 @@ export class GameComponent implements OnInit, OnDestroy {
 
     private handleCardSelected($event: Card): void {
         // the completed hand is still on the table, so ignore input until it is collected
-        // and while the caller announces, the cards wait
-        if (this.showingCompletedHand || this.announcing) {
+        // and while the caller announces and anyone raises, the cards wait
+        if (this.showingCompletedHand || this.announcing || this.raising) {
             return;
         }
 
@@ -480,15 +514,16 @@ export class GameComponent implements OnInit, OnDestroy {
         if (this.isRoundComplete()) {
             // TODO implement earningsMultiplier
             const { earnings, winMessage, betResult } = this.pointsService.calculateEarnings(
-                this.allPiles, this.currentCaller, this.lastTrickPlayer, this.trump, this.hundredCalled);
+                this.allPiles, this.currentCaller, this.lastTrickPlayer, this.trump, this.hundredCalled, this.raiseTracks.game.level);
             for (let player = 1; player <= 3; player++) {
                 const currentMoney = this.playerToMoney.get('player' + player);
                 this.playerToMoney.set('player' + player, currentMoney + earnings.get('player' + player));
             }
 
             this.winMessage = winMessage;
-            // the result line already says whether the Game was won, so only the 100 gets a line of its own
-            this.betResults = this.hundredCalled ? [betResult] : [];
+            // the result line already says whether the Game was won, so it only gets a line of its own when it was raised;
+            // the 100 always does
+            this.betResults = this.hundredCalled || this.raiseTracks.game.level > 0 ? [betResult] : [];
             const sevenEarnings = this.scoreSevenOfTrump();
             const caller = 'player' + this.currentCaller;
             // the caller collects from, or pays, both defenders together, so each defender's share is half
@@ -541,7 +576,7 @@ export class GameComponent implements OnInit, OnDestroy {
         if (!seven) {
             return undefined;
         }
-        const { earnings, betResult } = this.pointsService.calculateSevenEarnings(seven, this.currentCaller);
+        const { earnings, betResult } = this.pointsService.calculateSevenEarnings(seven, this.currentCaller, this.raiseTracks.seven.level);
         earnings.forEach((cents, player) => this.playerToMoney.set(player, this.playerToMoney.get(player) + cents));
         this.betResults.push(betResult);
         return earnings;
@@ -556,6 +591,82 @@ export class GameComponent implements OnInit, OnDestroy {
         this.sevenCalled = callSeven && this.holdsSevenOfTrump();
         this.hundredCalled = callHundred;
         this.announcing = false;
+        this.startRaising();
+    }
+
+    private startRaising(): void {
+        this.raiseTracks = startRaiseTracks(this.sevenCalled);
+        this.raising = true;
+        this.beginRaiseTurn(true);
+    }
+
+    // Hands the raising to one side, or ends it when that side has nothing it may raise
+    private beginRaiseTurn(defenders: boolean): void {
+        if (!raisableBets(this.raiseTracks, defenders).length) {
+            this.raising = false;
+            // the caller leads the first trick
+            this.activePlayer = this.currentCaller;
+            return;
+        }
+        this.defendersToRaise = defenders;
+        this.raisersLeft = defenders ? defendersInOrder(this.currentCaller) : [this.currentCaller];
+        this.nextRaiser();
+    }
+
+    // The next player on this side with something left to raise; once nobody is, whatever is left was passed
+    private nextRaiser(): void {
+        const bets = this.getRaisableBets();
+        if (this.raisersLeft.length && bets.length) {
+            this.activePlayer = this.raisersLeft.shift();
+            this.raiseOptions = bets.map(bet => this.describeRaiseOption(bet));
+            return;
+        }
+        bets.forEach(bet => this.raiseTracks[bet].open = false);
+        this.beginRaiseTurn(!this.defendersToRaise);
+    }
+
+    private describeRaiseOption(bet: RaiseBet): RaiseOption {
+        const level = this.raiseTracks[bet].level;
+        const spades = this.trump === 'SPADES' ? 2 : 1;
+        const cents = bet === 'seven' ? SEVEN_CENTS * 2 : this.hundredCalled ? HUNDRED_CENTS : GAME_CENTS;
+        return { bet, raiseName: RAISE_NAMES[level], label: this.describeBet(bet), cents: cents * spades * raiseMultiplier(level + 1) };
+    }
+
+    private describeBet(bet: RaiseBet): string {
+        return bet === 'seven' ? 'the Called ' + this.getSevenName() : this.hundredCalled ? 'the Called 100' : 'the Game';
+    }
+
+    // What the caller bid, with how far each bet has been raised: "Player 1 bid the Game (Kontra) and the Called 7♥"
+    getBidSummary(): string {
+        const bets: RaiseBet[] = this.sevenCalled ? ['game', 'seven'] : ['game'];
+        const withRaise = (bet: RaiseBet) => {
+            const level = this.raiseTracks[bet].level;
+            return this.describeBet(bet) + (level ? ' (' + raiseName(level) + ')' : '');
+        };
+        return 'Player ' + this.currentCaller + ' bid ' + bets.map(withRaise).join(' and ');
+    }
+
+    // The bets the active player may raise now
+    getRaisableBets(): RaiseBet[] {
+        return this.raising ? raisableBets(this.raiseTracks, this.defendersToRaise) : [];
+    }
+
+    // The active player raises these bets and passes the rest; [] passes them all
+    raise(bets: RaiseBet[]): void {
+        if (!this.raising) {
+            return;
+        }
+        const allowed = this.getRaisableBets();
+        bets.filter(bet => allowed.includes(bet)).forEach(bet => this.raiseTracks[bet].level++);
+        this.nextRaiser();
+    }
+
+    // The pop-up only works for a player you are playing
+    raiseFromButton(bets: RaiseBet[]): void {
+        if (this.isPcSeat(this.activePlayer)) {
+            return;
+        }
+        this.animateCardMoves(() => this.raise(bets));
     }
 
     // The buttons only work for a caller you are playing
@@ -608,6 +719,8 @@ export class GameComponent implements OnInit, OnDestroy {
             this.announcing = false;
             this.sevenCalled = false;
             this.hundredCalled = false;
+            this.raising = false;
+            this.raiseTracks = startRaiseTracks(false);
             this.payoutTotal = '';
             this.betResults = [];
             this.waitingForNext = false;

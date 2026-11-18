@@ -97,13 +97,37 @@ How the PC announces:
 | Explanation | When |
 |---|---|
 | called the 100: its marriages and point cards already add up to about *N* points | its marriages, A and 10s, plus 1 for the last trick when it holds 5 or more trumps, add up to 9 or more |
-| played the Game: its marriages and point cards add up to about *N* points, short of the 100 | otherwise |
-| ... It called the *7* too: with *N* trumps it expects to keep the *7* for the last trick | it holds the 7 of trump and 5 or more trumps |
-| ... It kept the *7* silent: with only *N* trumps, it could be beaten on the last trick | it holds the 7 of trump and fewer trumps |
+| called the *7*: with *N* trumps it expects to keep the *7* for the last trick | it holds the 7 of trump and 5 or more trumps (after the 100's reason when it called that too) |
+| kept the *7* silent: with only *N* trumps, it could be beaten on the last trick | it holds the 7 of trump and fewer trumps |
+| is playing the Game: its marriages and point cards add up to about *N* points, short of the 100 | it calls nothing extra and doesn't hold the 7 |
 
 The count leaves out points it may win from the defenders, so it is cautious. Measured with `npm run strength`, calling the 100 at 9 paid best: the PC calls it in about 7% of rounds as caller and makes it about 73% of the time against the PC. Calling at 8 or 10 paid less.
 
 **Keeping the 7.** As caller, the PC gives up the 7 of trump last, just before its point cards, so it is still there for the last trick. As a defender it does the opposite and plays the 7 early as its lowest trump: on the last trick the caller's higher trumps would usually beat it, and a beaten 7 costs the defenders. Measured with `npm run strength`, keeping the 7 as caller earns about 1.5 cents a round from the 7, while keeping it as a defender lost money.
+
+## Raising the stakes: Kontra, Re, Supre
+
+After the bid, each announced bet can be raised: the Game (or the called 100, which replaces it) and a called 7. A silent 7 can't be raised. Every raise doubles that bet, up to six raises: **Kontra, Re, Supre, Kontra More, Re More, Supre More**. The defenders make the 1st, 3rd and 5th raises and the caller the 2nd, 4th and 6th. A defender's raise counts for both defenders. On the defenders' turn, the defender who plays after the caller speaks first, and the other one only gets a say on a bet the first one passed. A side that passes a bet ends the raising on it. The rules are in `src/app/raising.ts`.
+
+How the PC raises (`chooseRaises` in `pc-brain.ts`):
+
+| Who | Bet | Raises when |
+|---|---|---|
+| caller | the Game | it expects 8 or more points (the count used for the 100 above) |
+| caller | the 100 | it expects 10 or more points |
+| caller | the 7 | it holds 6 or more trumps |
+| defender | the Game | it holds 5 or more points of its own: marriages, A and 10s |
+| defender | the 100 or the 7 | never |
+
+Each later raise by the same side asks for 1 more (the caller) or 2 more (a defender), since every raise doubles what a wrong guess costs, and a caller who answered with Re usually has the Game.
+
+Measured over 20,000 PC-against-PC rounds, grouping each hand by these counts and seeing which side won:
+
+- The caller wins the Game about 77% of the time when it expects 7 points, and 87% at 8. A called 100 it expects 10 for wins on average by far. A called 7 with 6 trumps wins about 83% of the time.
+- The defenders win the Game about 57% of the time when one of them holds 4 points of its own, and 66% at 5.
+- The defenders lose money raising a called 100 or a called 7 at every hand strength these counts can tell apart, because the PC only calls those on a strong hand. So a PC defender never raises them. A person's call isn't held to the PC's rules, so this may be too cautious against people.
+
+Played out between the PCs on both sides, the defenders say Kontra on the Game in about 37% of rounds, which costs the caller about 4.75 cents a round from each defender in those rounds. The caller answers with Re in about 6% of those, and gains about 10 cents a round from each defender there.
 
 ## Playing a card
 
@@ -182,8 +206,9 @@ These are the known gaps, roughly from most to least important.
 2. **No odds.** It treats a card as either safe (the highest left, and nobody has shown they can trump it) or not. It never weighs how likely it is that a player is out of a suit.
 3. **Planning the last trick.** It keeps trumps by giving them up late, which usually leaves one for the last trick (+1 point), but it doesn't plan for it on purpose.
 4. **Following its partner's signals.** It doesn't read anything into which low cards its partner throws.
-5. **Rules not in the game yet.** No tricks, all tricks, and raising the stakes (Kontra, Re, Supre) aren't built, so the PC has no rules for them.
+5. **Rules not in the game yet.** No tricks and all tricks aren't built, so the PC has no rules for them.
 6. **Playing against a called 7 or 100.** The defenders don't yet play differently when the caller has called the 7 or the 100, such as keeping a higher trump for the last trick, or fighting harder for points.
+7. **Raising is decided on counts alone.** It doesn't take into account who raised before it, or how the caller bid. A defender facing a Re still only looks at its own points.
 
 ## Measured strength
 

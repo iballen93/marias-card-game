@@ -65,10 +65,26 @@ describe('PointsService', () => {
     expect(service.calculatePlayerPoints(new Map(), 2, 1, 'HEARTS')).toBe(0);
   });
 
+  it('should double the Game or the 100 for every raise, and name the raise on its line', () => {
+    const won = new Map([['player1Win', cards('AS', '0S')], ['player2Win', cards('AD')]]);
+    const kontra = service.calculateEarnings(won, 1, 1, 'HEARTS', false, 1);
+    expect([1, 2, 3].map(player => kontra.earnings.get('player' + player))).toEqual([8, -4, -4]);
+    expect(kontra.betResult.text).toBe('+4¢ Player 1 won the Game (Kontra)');
+    const supre = service.calculateEarnings(won, 1, 1, 'SPADES', true, 3);
+    expect(supre.betResult.text).toBe('-128¢ Player 1 lost the Called 100 (Supre): 3 to 1');
+  });
+
   describe('paying the 7 of trump', () => {
     const seven = (player: number, won: boolean, called = false, cents = 2, playedLast = true) =>
       ({ card: '7H', player, won, called, playedLast, cents });
     const paid = (result: { earnings: Map<string, number> }) => [1, 2, 3].map(player => result.earnings.get('player' + player));
+
+    it('should double only a called 7 for every raise', () => {
+      const re = service.calculateSevenEarnings(seven(1, false, true, 4), 1, 2);
+      expect(paid(re)).toEqual([-32, 16, 16]);
+      expect(re.betResult.text).toBe('-16¢ Player 1 lost the Called 7♥ (Re)');
+      expect(paid(service.calculateSevenEarnings(seven(3, true), 1, 2))).toEqual([-4, 2, 2]);
+    });
 
     it('should have each defender pay the caller when the caller\'s 7 wins, and the reverse when it loses', () => {
       expect(paid(service.calculateSevenEarnings(seven(1, true, true, 4), 1))).toEqual([8, -4, -4]);

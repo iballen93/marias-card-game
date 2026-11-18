@@ -6,6 +6,7 @@ import { PointsComponent } from './points/points.component';
 import { CardPileComponent } from './components/card-pile/card-pile.component';
 import { TurnInfoComponent } from './components/turn-info/turn-info.component';
 import { BidDialogComponent } from './components/bid-dialog/bid-dialog.component';
+import { RaiseDialogComponent } from './components/raise-dialog/raise-dialog.component';
 import { HandComponent } from 'src/app/components/hand/hand.component';
 import { GameComponent } from 'src/app/components/game/game.component';
 import { AppRoutingModule } from 'src/app/app-routing.module';
@@ -16,6 +17,7 @@ import { GameValuesComponent } from 'src/app/components/game-values/game-values.
   declarations: [
     AppComponent,
     BidDialogComponent,
+    RaiseDialogComponent,
     CardPileComponent,
     GameComponent,
     GameValuesComponent,

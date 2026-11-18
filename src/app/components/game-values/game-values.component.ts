@@ -11,6 +11,9 @@ export class GameValuesComponent implements OnInit {
     @Input() bidMultiplier: number;
     @Input() sevenCalled = false;
     @Input() hundredCalled = false;
+    // the raise each bet is on, such as Kontra; '' before any
+    @Input() gameRaise = '';
+    @Input() sevenRaise = '';
 
     constructor() {
     }

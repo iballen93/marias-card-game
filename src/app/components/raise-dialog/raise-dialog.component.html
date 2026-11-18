@@ -1,0 +1,20 @@
+<div class="backdrop">
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="raise-title">
+        <h2 id="raise-title">Player {{player}}: raise the stakes?</h2>
+        <p class="bid-summary">{{bidSummary}}</p>
+
+        <label *ngFor="let option of options" class="toggle">
+            <span class="toggle-text">
+                <span class="toggle-name">{{option.raiseName}} on {{option.label}}</span>
+                <span class="toggle-note">Doubles the bet</span>
+                <span class="toggle-cost">{{option.cents}}¢ per player</span>
+            </span>
+            <input type="checkbox" [class]="'raise-toggle raise-' + option.bet" [checked]="isChosen(option.bet)"
+                   (change)="setChosen(option.bet, $any($event.target).checked)">
+            <span class="switch"></span>
+        </label>
+
+        <!-- with every switch off, the button passes -->
+        <button type="button" class="bid-button raise-button" (click)="submit()">{{chosen.length ? 'Raise' : 'Pass'}}</button>
+    </div>
+</div>

@@ -18,9 +18,10 @@
                           (cardSelected)="cardSelected($event)"></app-hand>
             </td>
             <td class="table-center">
-                <app-game-values class="game-values" [trump]="trump" [bidMultiplier]="bidMultiplier" [sevenCalled]="sevenCalled" [hundredCalled]="hundredCalled"></app-game-values>
+                <app-game-values class="game-values" [trump]="trump" [bidMultiplier]="bidMultiplier" [sevenCalled]="sevenCalled" [hundredCalled]="hundredCalled"
+                                 [gameRaise]="raiseName(raiseTracks.game.level)" [sevenRaise]="raiseName(raiseTracks.seven.level)"></app-game-values>
 
-                <app-turn-info class="turn-status" [class.expanded]="canPlayAgain || announcing"
+                <app-turn-info class="turn-status" [class.expanded]="canPlayAgain || announcing || raising"
                                [winMessage]="winMessage"
                                [hundredCalled]="hundredCalled"
                                [illegalMoveMessage]="illegalMoveMessage"
@@ -35,6 +36,7 @@
                                (playAgain)="playAgain()"
                                [announcing]="announcing"
                                [canAnnounce]="announcing && !isPcSeat(activePlayer)"
+                               [raising]="raising && isPcSeat(activePlayer)"
                                [payoutTotal]="payoutTotal"
                                [betResults]="betResults"
                                [player1LosesMoney]="player1LosesMoney"
@@ -91,4 +93,9 @@
                     [sevenName]="getSevenName()"
                     [trump]="trump"
                     (bid)="announceFromButton($event)"></app-bid-dialog>
+    <app-raise-dialog *ngIf="raising && !isPcSeat(activePlayer)"
+                      [player]="activePlayer"
+                      [bidSummary]="getBidSummary()"
+                      [options]="raiseOptions"
+                      (raise)="raiseFromButton($event)"></app-raise-dialog>
 </div>

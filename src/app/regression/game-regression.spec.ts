@@ -28,6 +28,11 @@ describe('Game regression', () => {
         game.announce(false);
         continue;
       }
+      if (game.raising && !game.isPcSeat(game.activePlayer)) {
+        // and it never raises the stakes
+        game.raise([]);
+        continue;
+      }
       if (game.isPcSeat(game.activePlayer)) {
         // the PC's own move, exactly as its timer would make it
         game.playPcTurn();

@@ -1,4 +1,6 @@
-import { BrainView, cardName, chooseAnnouncement, chooseBury, choosePlay, chooseTrump, expectedPoints, Knowledge } from './pc-brain';
+import {
+  BrainView, cardName, chooseAnnouncement, chooseBury, choosePlay, chooseRaises, chooseTrump, expectedPoints, Knowledge
+} from './pc-brain';
 import { getLegalCards, isPointCard, isTrump } from './rules';
 import { seededRandom } from './regression/seeded-random';
 
@@ -251,6 +253,43 @@ describe('PC brain', () => {
 
     it('should play its 7 of trump when it is the last card', () => {
       expect(choosePlay(view({ seat: 3, caller: 3, trick: ['KS', 'QS'], hand: ['7H'] })).card).toBe('7H');
+    });
+  });
+
+  describe('raising the stakes', () => {
+    // 2 aces, 2 tens and a marriage in spades: 6 points of its own
+    const strong = ['AS', '0S', 'KS', 'QS', 'AD', '0D', '8C', '9C', '7D', '8D'];
+    const weak = ['AS', '8S', '9S', 'JD', '8D', '7C', '8C', '9C', 'JC', '7D'];
+    const ask = (hand: string[], isCaller: boolean, level = 0, hundredCalled = false) => chooseRaises({
+      hand, trump: 'HEARTS', isCaller, hundredCalled, bets: [{ bet: 'game', level }]
+    });
+
+    it('should say Kontra on the Game as a defender holding 5 or more points itself', () => {
+      expect(ask(strong, false)).toEqual({ raise: ['game'], reason: 'said Kontra on the Game: it holds about 6 points itself' });
+      expect(ask(weak, false)).toEqual({ raise: [], reason: 'passed on the Game: it holds only about 1 point itself' });
+    });
+
+    it('should ask a defender for a much stronger hand to say Supre after the caller\'s Re', () => {
+      expect(ask(strong, false, 2).raise).toEqual([]);
+    });
+
+    it('should never raise a called 100 or a called 7 as a defender', () => {
+      expect(ask(strong, false, 0, true).raise).toEqual([]);
+      const seven = chooseRaises({ hand: ['AH', '0H', 'KH', ...strong.slice(3)], trump: 'HEARTS', isCaller: false, hundredCalled: false,
+        bets: [{ bet: 'seven', level: 0 }] });
+      expect(seven).toEqual({ raise: [], reason: 'passed on the 7♥: the caller only calls it on a strong hand' });
+    });
+
+    it('should answer with Re as the caller expecting 8 or more points, and with 6 trumps for the 7', () => {
+      // trump marriage (4), 2 aces and 2 tens, and the last trick with 6 trumps
+      const caller = ['KH', 'QH', 'AH', '0H', '7H', '8H', 'AS', '0S', '9C', '8D'];
+      expect(ask(caller, true, 1)).toEqual({ raise: ['game'], reason: 'said Re on the Game: it expects about 9 points' });
+      expect(ask(weak, true, 1).raise).toEqual([]);
+      const both = chooseRaises({ hand: caller, trump: 'HEARTS', isCaller: true, hundredCalled: false,
+        bets: [{ bet: 'game', level: 1 }, { bet: 'seven', level: 1 }] });
+      expect(both.raise).toEqual(['game', 'seven']);
+      expect(both.reason).toBe('said Re on the Game: it expects about 9 points. '
+        + 'It said Re on the 7♥: with 6 trumps it expects to keep it for the last trick');
     });
   });
 

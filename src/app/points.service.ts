@@ -2,6 +2,7 @@ import {Injectable} from '@angular/core';
 import {Card} from './components/card-pile/card-pile.component';
 import {cardName} from './pc-brain';
 import {contractCents, isPointCard, marriagePoints, SevenResult} from './rules';
+import {raiseMultiplier, raiseName} from './raising';
 
 export interface Points {
     totalTricks: string;
@@ -32,13 +33,14 @@ export class PointsService {
     }
 
     // The Game, or the called 100 that replaces it
+    // raises: how many times the Game or the 100 was raised, each one doubling it
     calculateEarnings(allPiles: Map<string, Card[]>, callerPlayer: number, lastTrickPlayer: number, trump: string,
-                      hundredCalled = false): { earnings: Map<string, number>; winMessage: string; betResult: BetResult } {
+                      hundredCalled = false, raises = 0): { earnings: Map<string, number>; winMessage: string; betResult: BetResult } {
         const defenders = [1, 2, 3].filter(player => player !== callerPlayer);
         const callerPoints = this.calculatePlayerPoints(allPiles, callerPlayer, lastTrickPlayer, trump);
         const defenderPoints = defenders
             .reduce((total, player) => total + this.calculatePlayerPoints(allPiles, player, lastTrickPlayer, trump), 0);
-        const cents = contractCents(callerPoints, defenderPoints, trump, hundredCalled);
+        const cents = contractCents(callerPoints, defenderPoints, trump, hundredCalled) * raiseMultiplier(raises);
 
         const earnings: Map<string, number> = new Map();
         earnings.set('player' + callerPlayer, cents * 2);
@@ -48,7 +50,8 @@ export class PointsService {
         const winMessage = 'Player ' + callerPlayer + (cents > 0 ? ' won: ' : ' lost: ') + callerPoints + ' to ' + defenderPoints;
         // a called 100 can be lost with more points than the defenders, so its line carries the score instead of the result above
         const score = ': ' + callerPoints + ' to ' + defenderPoints;
-        const betResult = this.describeBet(callerPlayer, cents, hundredCalled ? 'the Called 100' + score : 'the Game');
+        const bet = (hundredCalled ? 'the Called 100' : 'the Game') + this.describeRaise(raises) + (hundredCalled ? score : '');
+        const betResult = this.describeBet(callerPlayer, cents, bet);
         return { earnings, winMessage, betResult };
     }
 
@@ -65,6 +68,11 @@ export class PointsService {
     }
 
     // starts with what the bet paid the caller from each defender: "-8¢ Player 1 lost the Called 7♠"
+    // the raise a bet ended on, such as " (Re)"
+    private describeRaise(raises: number): string {
+        return raises > 0 ? ' (' + raiseName(raises) + ')' : '';
+    }
+
     private describeBet(callerPlayer: number, centsFromEachDefender: number, bet: string): BetResult {
         const won = centsFromEachDefender > 0;
         const cents = (won ? '+' : '-') + Math.abs(centsFromEachDefender) + '¢ ';
@@ -73,18 +81,20 @@ export class PointsService {
 
     // The 7 of trump on the last trick is paid separately from the game: by each opponent of the side that won it,
     // or to each of them when it was lost
-    calculateSevenEarnings(seven: SevenResult, callerPlayer: number): { earnings: Map<string, number>; betResult: BetResult } {
+    calculateSevenEarnings(seven: SevenResult, callerPlayer: number, raises = 0): { earnings: Map<string, number>; betResult: BetResult } {
         const defenders = [1, 2, 3].filter(player => player !== callerPlayer);
         const callerSide = seven.player === callerPlayer;
         // +1 when the caller collects, -1 when the caller pays
+        // only a called 7 can be raised
+        const cents = seven.cents * (seven.called ? raiseMultiplier(raises) : 1);
         const callerCollects = callerSide === seven.won ? 1 : -1;
         const earnings: Map<string, number> = new Map();
-        earnings.set('player' + callerPlayer, callerCollects * seven.cents * 2);
-        defenders.forEach(player => earnings.set('player' + player, -callerCollects * seven.cents));
+        earnings.set('player' + callerPlayer, callerCollects * cents * 2);
+        defenders.forEach(player => earnings.set('player' + player, -callerCollects * cents));
 
         // a defender's 7 is always silent, and its result is still told from the caller's side
-        const bet = (seven.called ? 'the Called ' : 'the Silent ') + cardName(seven.card);
-        return { earnings, betResult: this.describeBet(callerPlayer, callerCollects * seven.cents, bet) };
+        const bet = seven.called ? 'the Called ' + cardName(seven.card) + this.describeRaise(raises) : 'the Silent ' + cardName(seven.card);
+        return { earnings, betResult: this.describeBet(callerPlayer, callerCollects * cents, bet) };
     }
 
     calculatePlayerPoints(allPiles: Map<string, Card[]>, player: number, lastTrickPlayer: number, trump: string): number {

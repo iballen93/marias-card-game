@@ -4,6 +4,7 @@ import {
     completesMarriage, getLegalCards, isPointCard, isTrump, marriagePoints, rankOf, rankStrength, sevenOfTrump, suitOf, trickWinnerIndex,
     validateBury
 } from './rules';
+import { RAISE_NAMES, RaiseBet } from './raising';
 
 export interface BrainView {
     seat: number;
@@ -232,6 +233,74 @@ export function chooseAnnouncement(hand: string[], trump: string): AnnouncementC
         reason = 'is playing the Game: its marriages and point cards add up to about ' + estimate + ' points, short of the 100';
     }
     return { callSeven, callHundred, reason };
+}
+
+// What the PC is asked when it may raise the stakes: each bet it can raise now, and how many raises it already has
+export interface RaiseQuestion {
+    hand: string[];
+    trump: string;
+    isCaller: boolean;
+    hundredCalled: boolean;
+    bets: { bet: RaiseBet; level: number }[];
+}
+
+export interface RaiseChoice {
+    raise: RaiseBet[];
+    reason: string;
+}
+
+// The PC raises a bet only when its hand says that side usually wins it, and asks for a little more with each round of
+// raising, since every raise doubles what a wrong guess costs. Measured over 20,000 PC rounds (see "Raising the stakes"
+// in PC-STRATEGY.md):
+// - the caller wins the Game about 87% of the time when it expects 8 points or more, and almost always makes a called 100
+//   it expects 10 for; a called 7 with 6 trumps wins about 83% of the time
+// - the defenders win the Game about two thirds of the time when one of them holds 5 points itself
+// - but the defenders lose money raising a called 100 or a called 7 at every hand strength, since the PC only calls
+//   those on a strong hand, so a PC defender never raises them
+const RAISE_GAME_CALLER_ESTIMATE = 8;
+const RAISE_HUNDRED_CALLER_ESTIMATE = 10;
+const RAISE_SEVEN_CALLER_TRUMPS = 6;
+const RAISE_GAME_DEFENDER_POINTS = 5;
+
+// "1 point", "6 points"
+const countPoints = (points: number) => points + (points === 1 ? ' point' : ' points');
+
+export function chooseRaises(question: RaiseQuestion): RaiseChoice {
+    const { hand, trump, isCaller, hundredCalled } = question;
+    const trumps = hand.filter(card => isTrump(card, trump)).length;
+    const seven = cardName(sevenOfTrump(trump));
+    const estimate = expectedPoints(hand, trump);
+    // a defender's own marriages and aces and 10s, without the last trick
+    const ownPoints = hand.filter(card => rankOf(card) === 'K' && hand.includes('Q' + suitOf(card)))
+        .reduce((total, king) => total + marriagePoints(king, trump), 0) + hand.filter(isPointCard).length;
+
+    const decisions = question.bets.map(({ bet, level }) => {
+        const name = RAISE_NAMES[level];
+        const extra = Math.floor(level / 2);
+        const contract = bet === 'seven' ? 'the ' + seven : hundredCalled ? 'the 100' : 'the Game';
+        let raise: boolean;
+        let why: string;
+        if (!isCaller && (bet === 'seven' || hundredCalled)) {
+            raise = false;
+            why = 'the caller only calls it on a strong hand';
+        } else if (bet === 'seven') {
+            raise = trumps >= RAISE_SEVEN_CALLER_TRUMPS + extra;
+            why = raise ? 'with ' + trumps + ' trumps it expects to keep it for the last trick'
+                : 'with ' + trumps + ' trumps it isn\'t sure enough';
+        } else if (isCaller) {
+            raise = estimate >= (hundredCalled ? RAISE_HUNDRED_CALLER_ESTIMATE : RAISE_GAME_CALLER_ESTIMATE) + extra;
+            why = 'it expects about ' + countPoints(estimate) + (raise ? '' : ', not enough to raise');
+        } else {
+            // a caller who answered with Re usually has the Game, so a defender's next raise needs a much stronger hand
+            raise = ownPoints >= RAISE_GAME_DEFENDER_POINTS + extra * 2;
+            why = (raise ? 'it holds about ' : 'it holds only about ') + countPoints(ownPoints) + ' itself';
+        }
+        return { bet, raise, text: (raise ? 'said ' + name + ' on ' : 'passed on ') + contract + ': ' + why };
+    });
+    return {
+        raise: decisions.filter(decision => decision.raise).map(decision => decision.bet),
+        reason: decisions.map(decision => decision.text).join('. It ')
+    };
 }
 
 export function chooseTrump(hand: string[]): BrainChoice {
