@@ -17,7 +17,7 @@
 
 <!-- one bubble: who won, each bet the caller won or lost, then who pays whom in all -->
 <div *ngIf="winMessage != ''" class="round-result" [class.lost]="payoutTotal && player1LosesMoney">
-    <div *ngIf="!hundredCalled || !payoutTotal">{{winMessage}}</div>
+    <div *ngIf="!contractHasLine || !payoutTotal">{{winMessage}}</div>
     <div *ngFor="let bet of betResults" class="bet-result">{{bet.text}}</div>
     <div *ngIf="payoutTotal" class="payout-total">{{payoutTotal}}</div>
 </div>

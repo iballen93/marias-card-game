@@ -103,6 +103,8 @@ export class GameComponent implements OnInit, OnDestroy {
     // under the round's result: who pays whom in all, then whether the caller won or lost each bet
     payoutTotal = '';
     betResults: BetResult[] = [];
+    // the Game, the 100 or No Tricks / All Tricks got a line of its own among the bets, which replaces the result line
+    contractHasLine = false;
     // whether you, Player 1, lose money on the round in all, which colours the whole result red instead of green
     player1LosesMoney = false;
     legalCards: string[] = [];
@@ -565,7 +567,8 @@ export class GameComponent implements OnInit, OnDestroy {
             this.winMessage = winMessage;
             // the result line already says whether the Game was won, so it only gets a line of its own when it was raised;
             // the 100 always does
-            this.betResults = this.hundredCalled || this.raiseTracks.game.level > 0 ? [betResult] : [];
+            this.contractHasLine = this.hundredCalled || this.raiseTracks.game.level > 0;
+            this.betResults = this.contractHasLine ? [betResult] : [];
             const sevenEarnings = this.scoreSevenOfTrump();
             const caller = 'player' + this.currentCaller;
             // the caller collects from, or pays, both defenders together, so each defender's share is half
@@ -583,7 +586,8 @@ export class GameComponent implements OnInit, OnDestroy {
         earnings.forEach((cents, player) => this.playerToMoney.set(player, this.playerToMoney.get(player) + cents));
         this.winMessage = winMessage;
         // the result line already says who won, so the contract only gets a line of its own when it was raised
-        this.betResults = this.raiseTracks.game.level > 0 ? [betResult] : [];
+        this.contractHasLine = this.raiseTracks.game.level > 0;
+        this.betResults = this.contractHasLine ? [betResult] : [];
         this.payoutTotal = this.pointsService.describePayment(earnings.get('player' + this.currentCaller) / 2, this.currentCaller);
         this.player1LosesMoney = earnings.get('player1') < 0;
         this.canPlayAgain = true;

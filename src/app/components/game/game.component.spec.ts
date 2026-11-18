@@ -249,7 +249,8 @@ describe('GameComponent', () => {
       }
       // the Game is 2 cents, 4 in spades, and more with a silent 100; Re makes it 4 times that, from each defender
       const gameLine = component.betResults[0].text;
-      expect(gameLine).toMatch(/the Game \(Re\)$/);
+      // the Game's own line carries the score, in place of the result line
+      expect(gameLine).toMatch(/the Game \(Re\): \d+ to \d+$/);
       const cents = Math.abs(component.playerToMoney.get('player1') - before) / 2;
       expect(cents % 8).toBe(0);
     });

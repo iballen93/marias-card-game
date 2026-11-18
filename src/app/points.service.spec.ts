@@ -69,7 +69,7 @@ describe('PointsService', () => {
     const won = new Map([['player1Win', cards('AS', '0S')], ['player2Win', cards('AD')]]);
     const kontra = service.calculateEarnings(won, 1, 1, 'HEARTS', false, 1);
     expect([1, 2, 3].map(player => kontra.earnings.get('player' + player))).toEqual([8, -4, -4]);
-    expect(kontra.betResult.text).toBe('+4¢ Player 1 won the Game (Kontra)');
+    expect(kontra.betResult.text).toBe('+4¢ Player 1 won the Game (Kontra): 3 to 1');
     const supre = service.calculateEarnings(won, 1, 1, 'SPADES', true, 3);
     expect(supre.betResult.text).toBe('-128¢ Player 1 lost the Called 100 (Supre): 3 to 1');
   });
@@ -81,7 +81,7 @@ describe('PointsService', () => {
     const lost = service.calculateNoTrumpEarnings('all-tricks-open', 1, 4, 1);
     expect([1, 2, 3].map(player => lost.earnings.get('player' + player))).toEqual([-80, 40, 40]);
     expect(lost.winMessage).toBe('Player 1 lost Open All Tricks on trick 4');
-    expect(lost.betResult.text).toBe('-40¢ Player 1 lost Open All Tricks (Kontra)');
+    expect(lost.betResult.text).toBe('-40¢ Player 1 lost Open All Tricks (Kontra) on trick 4');
   });
 
   describe('paying the 7 of trump', () => {

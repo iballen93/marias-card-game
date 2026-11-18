@@ -30,8 +30,9 @@ export class TurnInfoComponent implements OnInit {
     @Input() betResults: BetResult[] = [];
     // the whole result is red when you, Player 1, lose money on the round, and green otherwise
     @Input() player1LosesMoney: boolean;
-    // the 100's own line says how it went, since "won: 5 to 4" could read as a win when the 100 was lost
-    @Input() hundredCalled: boolean;
+    // the contract has a line of its own among the bets (the 100, or a raised contract), which says how it went,
+    // so the result line above it is left out
+    @Input() contractHasLine: boolean;
     @Output() playAgain = new EventEmitter<void>();
 
     @Input() pickingTrump: boolean;

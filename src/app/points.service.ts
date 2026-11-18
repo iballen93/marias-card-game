@@ -48,9 +48,11 @@ export class PointsService {
 
         // always from the caller's side, kept short: the bets below the result say whether it was the Game or the 100
         const winMessage = 'Player ' + callerPlayer + (cents > 0 ? ' won: ' : ' lost: ') + callerPoints + ' to ' + defenderPoints;
-        // a called 100 can be lost with more points than the defenders, so its line carries the score instead of the result above
+        // when the contract gets a line of its own (the 100, or a raised Game), that line carries the score and replaces the
+        // result line above it; a called 100 can be lost with more points than the defenders, so "won: 5 to 4" would mislead
+        const ownLine = hundredCalled || raises > 0;
         const score = ': ' + callerPoints + ' to ' + defenderPoints;
-        const bet = (hundredCalled ? 'the Called 100' : 'the Game') + this.describeRaise(raises) + (hundredCalled ? score : '');
+        const bet = (hundredCalled ? 'the Called 100' : 'the Game') + this.describeRaise(raises) + (ownLine ? score : '');
         const betResult = this.describeBet(callerPlayer, cents, bet);
         return { earnings, winMessage, betResult };
     }
@@ -65,7 +67,9 @@ export class PointsService {
         [1, 2, 3].filter(player => player !== callerPlayer).forEach(player => earnings.set('player' + player, -cents));
         const name = contractName(contract);
         const winMessage = 'Player ' + callerPlayer + (won ? ' won ' + name : ' lost ' + name + ' on trick ' + lostOnTrick);
-        return { earnings, winMessage, betResult: this.describeBet(callerPlayer, cents, name + this.describeRaise(raises)) };
+        // a raised one gets a line of its own, which replaces the result line, so it says the trick too
+        const bet = name + this.describeRaise(raises) + (won ? '' : ' on trick ' + lostOnTrick);
+        return { earnings, winMessage, betResult: this.describeBet(callerPlayer, cents, bet) };
     }
 
     // Who pays whom, given what each defender pays the caller (negative when the caller pays each of them)
