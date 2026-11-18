@@ -255,12 +255,16 @@ export interface RaiseChoice {
 // - the caller wins the Game about 87% of the time when it expects 8 points or more, and almost always makes a called 100
 //   it expects 10 for; a called 7 with 6 trumps wins about 83% of the time
 // - the defenders win the Game about two thirds of the time when one of them holds 5 points itself
-// - but the defenders lose money raising a called 100 or a called 7 at every hand strength, since the PC only calls
-//   those on a strong hand, so a PC defender never raises them
+// - a called 7 or 100 depends on how the caller called it, so the defender judges its own hand against a caller who calls
+//   without the hand for it, as a person might: with 4 trumps a defender beats a called 7 about 90% of the time, and with
+//   7 points of its own it comes out ahead against a called 100. The PC's own calls rarely meet either: it calls the 7
+//   with 5 trumps, leaving a defender 3 at most.
 const RAISE_GAME_CALLER_ESTIMATE = 8;
 const RAISE_HUNDRED_CALLER_ESTIMATE = 10;
 const RAISE_SEVEN_CALLER_TRUMPS = 6;
 const RAISE_GAME_DEFENDER_POINTS = 5;
+const RAISE_HUNDRED_DEFENDER_POINTS = 7;
+const RAISE_SEVEN_DEFENDER_TRUMPS = 4;
 
 // "1 point", "6 points"
 const countPoints = (points: number) => points + (points === 1 ? ' point' : ' points');
@@ -280,9 +284,11 @@ export function chooseRaises(question: RaiseQuestion): RaiseChoice {
         const contract = bet === 'seven' ? 'the ' + seven : hundredCalled ? 'the 100' : 'the Game';
         let raise: boolean;
         let why: string;
-        if (!isCaller && (bet === 'seven' || hundredCalled)) {
-            raise = false;
-            why = 'the caller only calls it on a strong hand';
+        if (bet === 'seven' && !isCaller) {
+            // a caller who answered with Re is sure of the 7, so a defender's next raise needs a much stronger hand
+            raise = trumps >= RAISE_SEVEN_DEFENDER_TRUMPS + extra * 2;
+            why = raise ? 'with ' + trumps + ' trumps it expects to beat it on the last trick'
+                : 'with only ' + trumps + ' trumps it can\'t count on beating it';
         } else if (bet === 'seven') {
             raise = trumps >= RAISE_SEVEN_CALLER_TRUMPS + extra;
             why = raise ? 'with ' + trumps + ' trumps it expects to keep it for the last trick'
@@ -291,9 +297,10 @@ export function chooseRaises(question: RaiseQuestion): RaiseChoice {
             raise = estimate >= (hundredCalled ? RAISE_HUNDRED_CALLER_ESTIMATE : RAISE_GAME_CALLER_ESTIMATE) + extra;
             why = 'it expects about ' + countPoints(estimate) + (raise ? '' : ', not enough to raise');
         } else {
-            // a caller who answered with Re usually has the Game, so a defender's next raise needs a much stronger hand
-            raise = ownPoints >= RAISE_GAME_DEFENDER_POINTS + extra * 2;
-            why = (raise ? 'it holds about ' : 'it holds only about ') + countPoints(ownPoints) + ' itself';
+            // a caller who answered with Re usually has the bet, so a defender's next raise needs a much stronger hand
+            raise = ownPoints >= (hundredCalled ? RAISE_HUNDRED_DEFENDER_POINTS : RAISE_GAME_DEFENDER_POINTS) + extra * 2;
+            why = (raise ? 'it holds about ' : 'it holds only about ') + countPoints(ownPoints) + ' itself'
+                + (raise && hundredCalled ? ', so the caller will struggle to reach 100' : '');
         }
         return { bet, raise, text: (raise ? 'said ' + name + ' on ' : 'passed on ') + contract + ': ' + why };
     });

@@ -117,7 +117,8 @@ How the PC raises (`chooseRaises` in `pc-brain.ts`):
 | caller | the 100 | it expects 10 or more points |
 | caller | the 7 | it holds 6 or more trumps |
 | defender | the Game | it holds 5 or more points of its own: marriages, A and 10s |
-| defender | the 100 or the 7 | never |
+| defender | the 100 | it holds 7 or more points of its own |
+| defender | the 7 | it holds 4 or more trumps |
 
 Each later raise by the same side asks for 1 more (the caller) or 2 more (a defender), since every raise doubles what a wrong guess costs, and a caller who answered with Re usually has the Game.
 
@@ -125,7 +126,7 @@ Measured over 20,000 PC-against-PC rounds, grouping each hand by these counts an
 
 - The caller wins the Game about 77% of the time when it expects 7 points, and 87% at 8. A called 100 it expects 10 for wins on average by far. A called 7 with 6 trumps wins about 83% of the time.
 - The defenders win the Game about 57% of the time when one of them holds 4 points of its own, and 66% at 5.
-- The defenders lose money raising a called 100 or a called 7 at every hand strength these counts can tell apart, because the PC only calls those on a strong hand. So a PC defender never raises them. A person's call isn't held to the PC's rules, so this may be too cautious against people.
+- Against a called 7 or 100, what the defender's hand is worth depends on how the caller called it. A person may call without the hand for it, so the PC judges its own hand against a loose caller, one that calls the 7 whenever it holds it and the 100 at 6 expected points. Over 30,000 rounds against that caller, a defender with 4 trumps beats a called 7 about 90% of the time, and a defender with 7 points of its own comes out ahead against a called 100 (6 is about even, and loses clearly against the PC's own calls). Against the PC's own calls these rarely come up: the PC calls the 7 with 5 trumps, leaving a defender 3 at most, and a defender holds 7 points against a PC's called 100 in under 1% of them.
 
 Played out between the PCs on both sides, the defenders say Kontra on the Game in about 37% of rounds, which costs the caller about 4.75 cents a round from each defender in those rounds. The caller answers with Re in about 6% of those, and gains about 10 cents a round from each defender there.
 

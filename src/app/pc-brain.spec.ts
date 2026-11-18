@@ -273,11 +273,20 @@ describe('PC brain', () => {
       expect(ask(strong, false, 2).raise).toEqual([]);
     });
 
-    it('should never raise a called 100 or a called 7 as a defender', () => {
-      expect(ask(strong, false, 0, true).raise).toEqual([]);
-      const seven = chooseRaises({ hand: ['AH', '0H', 'KH', ...strong.slice(3)], trump: 'HEARTS', isCaller: false, hundredCalled: false,
+    it('should say Kontra on a called 100 as a defender holding 7 or more points itself', () => {
+      expect(ask(strong, false, 0, true)).toEqual({ raise: [], reason: 'passed on the 100: it holds only about 6 points itself' });
+      // plus the A of hearts: 7 points
+      expect(ask([...strong.slice(0, 9), 'AH'], false, 0, true)).toEqual({ raise: ['game'],
+        reason: 'said Kontra on the 100: it holds about 7 points itself, so the caller will struggle to reach 100' });
+    });
+
+    it('should say Kontra on a called 7 as a defender holding 4 or more trumps, whoever called it', () => {
+      const askSeven = (hand: string[]) => chooseRaises({ hand, trump: 'HEARTS', isCaller: false, hundredCalled: false,
         bets: [{ bet: 'seven', level: 0 }] });
-      expect(seven).toEqual({ raise: [], reason: 'passed on the 7♥: the caller only calls it on a strong hand' });
+      expect(askSeven(['AH', '0H', 'KH', ...strong.slice(3)]))
+        .toEqual({ raise: [], reason: 'passed on the 7♥: with only 3 trumps it can\'t count on beating it' });
+      expect(askSeven(['AH', '0H', 'KH', '8H', ...strong.slice(4)]))
+        .toEqual({ raise: ['seven'], reason: 'said Kontra on the 7♥: with 4 trumps it expects to beat it on the last trick' });
     });
 
     it('should answer with Re as the caller expecting 8 or more points, and with 6 trumps for the 7', () => {

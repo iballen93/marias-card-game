@@ -1162,7 +1162,7 @@ export const REGRESSION_BASELINE_PC: string[] = [
     '2ccadaf0',
     'f38a70d2',
     'b426aacd',
-    'a8628be6',
+    '01963b50',
     '07dfc69c',
     '3051e541',
     '8b5e3ee6',
