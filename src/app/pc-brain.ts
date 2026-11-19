@@ -768,7 +768,7 @@ const NO_TRICKS_MAX_GAME_ESTIMATE = 5;
 function chooseNoTrumpContract(hand: string[], gameTrump?: string): { contract: Contract; reason: string } | undefined {
     if (isSureAllTricks(hand)) {
         return {
-            contract: 'all-tricks-open', reason: 'Open All Tricks: every suit it holds runs down from the A, so it wins every trick it leads'
+            contract: 'all-tricks-open', reason: 'All Tricks Show: every suit it holds runs down from the A, so it wins every trick it leads'
         };
     }
     const danger = noTricksDanger(hand);

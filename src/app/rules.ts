@@ -197,7 +197,7 @@ const CONTRACT_NAMES: Record<Contract, string> = {
     'no-tricks': 'No Tricks',
     'all-tricks': 'All Tricks',
     'no-tricks-open': 'Open No Tricks',
-    'all-tricks-open': 'Open All Tricks'
+    'all-tricks-open': 'All Tricks Show'
 };
 
 export function contractName(contract: Contract): string {

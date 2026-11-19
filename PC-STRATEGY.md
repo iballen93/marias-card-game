@@ -114,15 +114,15 @@ After burying, the caller can play **No Tricks** (take no trick at all) or **All
 | No Tricks | 6 cents |
 | All Tricks | 10 cents |
 | Open No Tricks | 12 cents |
-| Open All Tricks | 20 cents |
+| All Tricks Show | 20 cents |
 
-Spades doesn't double these, since there's no trump. After the caller's bid, each of the others in turn, starting with the one who plays after the caller, may **take over** with a higher contract (Game < No Tricks < All Tricks < Open No Tricks < Open All Tricks). Whoever takes over picks up the caller's 2 buried cards, buries 2 (an A or 10 is allowed, since points don't count), and becomes the caller; then the others may take over from them. Once everyone passes, the stakes can be raised on the contract that stands. The rules are in `src/app/rules.ts`.
+Spades doesn't double these, since there's no trump. After the caller's bid, each of the others in turn, starting with the one who plays after the caller, may **take over** with a higher contract (Game < No Tricks < All Tricks < Open No Tricks < All Tricks Show). Whoever takes over picks up the caller's 2 buried cards, buries 2 (an A or 10 is allowed, since points don't count), and becomes the caller; then the others may take over from them. Once everyone passes, the stakes can be raised on the contract that stands. The rules are in `src/app/rules.ts`.
 
 How the PC decides (`pc-brain.ts`):
 
 | Contract | When the PC calls it, or takes over with it |
 |---|---|
-| Open All Tricks | every suit it holds runs unbroken down from the A. It leads every trick, and each card it leads is the highest of its suit still out, so it can't lose, even open. |
+| All Tricks Show | every suit it holds runs unbroken down from the A. It leads every trick, and each card it leads is the highest of its suit still out, so it can't lose, even open. |
 | No Tricks | at most 3 **dangerous cards**, and, as the caller, a hand worth 5 points or fewer in the Game |
 | All Tricks or Open No Tricks | never: not measured yet |
 
@@ -139,7 +139,7 @@ The caller and a player taking over hold 12 cards and bury 2, so the PC first lo
 The PC raises its own No Tricks only with at most 1 dangerous card, and All Tricks only when it's sure. As a defender it says Kontra when its own hand, or the caller's cards in an open contract, show the caller will fail:
 
 - **All Tricks:** a defender's A wins a trick in any suit the caller holds, since the caller has to lead that suit at some point and the defender has to go over it. So the caller can only be safe in suits where it holds the A. With 3 aces in one defender's hand, the one suit left has 8 cards and the caller holds 10, so the defender is sure to win a trick. With 2 aces the two suits left have 16 cards, so a caller with all 10 of its cards there could still win; the defender only says Kontra when it holds 7 or more of those 16 itself, leaving the caller 9 at most.
-- **Open All Tricks:** it checks each suit of the caller's face-up cards: a card higher than one of the caller's, with enough other cards of the suit to follow the caller's higher ones first, wins a trick.
+- **All Tricks Show:** it checks each suit of the caller's face-up cards: a card higher than one of the caller's, with enough other cards of the suit to follow the caller's higher ones first, wins a trick.
 - **Open No Tricks:** it counts the caller's dangerous cards, and says Kontra at 6 or more, where No Tricks is lost more often than won.
 - **No Tricks:** it passes. Without seeing the caller's cards, its own hand doesn't tell it whether the caller will have to take a trick.
 

@@ -272,7 +272,7 @@ describe('GameComponent', () => {
       expect(component.takingOver).toBeTrue();
       expect(component.activePlayer).toBe(2);
       expect(component.takeOverOptions.map(option => option.name + ' ' + option.cents))
-        .toEqual(['No Tricks 6', 'All Tricks 10', 'Open No Tricks 12', 'Open All Tricks 20']);
+        .toEqual(['No Tricks 6', 'All Tricks 10', 'Open No Tricks 12', 'All Tricks Show 20']);
 
       component.takeOverFromButton('no-tricks');
       expect(component.currentCaller).toBe(2);

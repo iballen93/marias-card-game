@@ -271,7 +271,7 @@ describe('PC brain', () => {
       expect(noTricksDanger([...safeNoTricks.slice(0, 9), '9C'])).toBe(1);
     });
 
-    it('should call Open All Tricks on a sure hand and No Tricks on a safe one, and the Game otherwise', () => {
+    it('should call All Tricks Show on a sure hand and No Tricks on a safe one, and the Game otherwise', () => {
       expect(chooseAnnouncement(sureAllTricks, 'HEARTS')).toEqual(jasmine.objectContaining({ contract: 'all-tricks-open' }));
       expect(chooseAnnouncement(safeNoTricks, 'HEARTS').contract).toBe('no-tricks');
       expect(chooseAnnouncement(safeNoTricks, 'HEARTS').reason).toBe('called No Tricks: its cards are low enough in every suit '
@@ -293,7 +293,7 @@ describe('PC brain', () => {
       // burying the J of spades instead of the K of clubs works as well
       const bury = chooseBury(twelve, 'HEARTS');
       expect(['KC', '9D', 'JS']).toContain(bury.card);
-      expect(bury.reason).toBe('buried the ' + cardName(bury.card) + ' to set up Open All Tricks');
+      expect(bury.reason).toBe('buried the ' + cardName(bury.card) + ' to set up All Tricks Show');
       expect(chooseNoTrumpBury([...safeNoTricks, 'AS', 'KH'], 'no-tricks').reason).toMatch(/doesn't need for No Tricks/);
     });
 
@@ -328,7 +328,7 @@ describe('PC brain', () => {
       it('should check the caller\'s cards in an open All Tricks, keeping a K back under the caller\'s A to beat its Q', () => {
         const caller = ['AH', 'QH', 'AS', 'KS', 'QS', 'JS', 'AD', 'KD', 'AC', 'KC'];
         expect(ask(['KH', '7H', '7S', '8S', '9S', '7D', '8D', '7C', '8C', '9C'], 'all-tricks-open', caller)).toEqual({ raise: ['game'],
-          reason: 'said Kontra on Open All Tricks: its K♥ will beat the caller\'s Q♥' });
+          reason: 'said Kontra on All Tricks Show: its K♥ will beat the caller\'s Q♥' });
         // a lone K has to go under the A, so it can't beat the Q
         expect(ask(['KH', '0S', '7S', '8S', '9S', '7D', '8D', '7C', '8C', '9C'], 'all-tricks-open', caller).raise).toEqual([]);
       });
