@@ -21,13 +21,36 @@
   --seat-padding: 12px;
   /* Room for a hand's piles: a third of the page, less the padding and a scrollbar */
   --seat-width: calc(100vw / 3 - 22px - var(--seat-padding) * 2);
+  /* The height you can actually see: Safari's and Chrome's toolbars come and go, and 100vh counts them as gone */
+  --screen-height: 100vh;
+  /* the menu bar above the board, and the status bar and home indicator on an iPad's home screen app */
+  --nav-height: 68px;
+  --board-height: calc(var(--screen-height) - var(--nav-height) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+}
+
+@supports (height: 100dvh) {
+  :root {
+    --screen-height: 100dvh;
+  }
+}
+
+/* Tablets and short desktop windows: the same table, with the cards shrunk until both rows of players fit the height.
+   Each row is about 2.44 card widths plus 154px of titles and gaps. */
+@media (min-width: 769px) and (min-height: 501px) and (max-height: 960px) {
+  :root {
+    --card-width: clamp(56px, calc((var(--board-height) - 316px) / 4.886), 90px);
+    --card-spacing: calc(var(--card-width) * 0.556);
+    --side-card-max: calc(var(--card-width) * 0.7);
+    --hand-pile-height: calc(var(--card-width) * 1.47 + 18px);
+    --side-pile-height: calc(var(--side-card-max) * 1.39 + 42px);
+  }
 }
 
 /* On phones everything is sized from --card-width, which is as large as the screen allows */
 @media (max-width: 768px), (max-height: 500px) {
   :root {
     /* Escaped because Less would otherwise work out min() itself instead of leaving it to the browser */
-    --card-width: ~"clamp(62px, min(calc((100vh - 396px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) / 6.44), 24vw), 110px)";
+    --card-width: ~"clamp(62px, min(calc((var(--screen-height) - 396px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) / 6.44), 24vw), 110px)";
     --card-spacing: calc(var(--card-width) * 0.52);
     --side-card-max: calc(var(--card-width) * 0.336);
     --card-lift: calc(var(--card-width) * 0.08);
@@ -52,12 +75,12 @@
 
 @media (max-height: 500px) and (orientation: landscape) {
   :root {
-    --card-width: clamp(54px, calc((100vh - 141px) / 4.31), 90px);
+    --card-width: clamp(54px, calc((var(--screen-height) - 141px) / 4.31), 90px);
     --side-card-max: calc(var(--card-width) * 0.62);
     --seat-width: calc((100vw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)) / 3 - 16px - var(--seat-padding) * 2);
     --side-pile-height: calc(var(--side-card-max) * 1.39 + 12px);
     /* Whatever height is left over goes to the messages above the trick */
-    --message-space: calc(100vh - var(--hand-pile-height) * 2 - var(--side-pile-height) - var(--player-title-size) * 1.5 - var(--seat-padding) - 32px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+    --message-space: calc(var(--screen-height) - var(--hand-pile-height) * 2 - var(--side-pile-height) - var(--player-title-size) * 1.5 - var(--seat-padding) - 32px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
     --pile-title-size: clamp(0.5625rem, 2.4vh, 0.75rem);
     --player-title-size: clamp(0.875rem, 3.4vh, 1.125rem);
     --message-large: clamp(0.8125rem, 3.6vh, 1.125rem);
