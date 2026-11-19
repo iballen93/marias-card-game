@@ -1,6 +1,6 @@
 <div *ngIf="trump" style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.5rem;">
     <!-- spades doubles every bet -->
-    <div *ngIf="contract === 'game'" class="value">Trump: {{ trump }}{{ trump === 'SPADES' ? ' (doubled)' : '' }}</div>
+    <div *ngIf="contract === 'game'" class="value">Trump: {{ trump }} <span *ngIf="trump === 'SPADES'" class="value-note">(doubled)</span></div>
     <div *ngIf="contract === 'game' && !hundredCalled && gameRaise" class="value">Game: {{ gameRaise }}</div>
     <!-- No Tricks and All Tricks have no trump, and replace every other bet -->
     <div *ngIf="contract !== 'game'" class="value">{{ getContractName() }}{{ gameRaise ? ', ' + gameRaise : '' }}</div>

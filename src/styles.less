@@ -34,6 +34,15 @@
   }
 }
 
+/* Tablets held upright have half the width for each player (see game.component.less) */
+@media (min-width: 769px) and (orientation: portrait) {
+  :root {
+    --seat-width: calc(50vw - 16px - var(--seat-padding) * 2);
+    /* the bet bubbles share the bottom corner with your piles */
+    --value-size: 1.125rem;
+  }
+}
+
 /* Tablets and short desktop windows: the same table, with the cards shrunk until both rows of players fit the height.
    Each row is about 2.44 card widths plus 154px of titles and gaps. */
 @media (min-width: 769px) and (min-height: 501px) and (max-height: 960px) {

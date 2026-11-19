@@ -76,15 +76,77 @@ table {
     cursor: pointer;
 }
 
-// Tablets held upright: the middle column is narrow, but below the trick there's a wide band of free space, so the
-// messages go there, clear of Players 2 and 3 beside the trick, and just above your piles
+// Tablets held upright are too narrow for three columns: Players 2 and 3 take half the width each across the top, the
+// trick and the messages go across the middle, and you along the bottom, as wide as they are
 @media (min-width: 769px) and (orientation: portrait) {
+    table {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-rows: auto 1fr auto;
+    }
+
+    tr {
+        display: contents;
+    }
+
+    td {
+        display: block;
+    }
+
+    .seat-empty {
+        display: none;
+    }
+
+    .seat-player2 {
+        grid-column: 1;
+        grid-row: 1;
+    }
+
+    .seat-player3 {
+        grid-column: 2;
+        grid-row: 1;
+    }
+
+    .table-center {
+        grid-column: 1 / span 2;
+        grid-row: 2;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: auto;
+        padding: 8px;
+        box-sizing: border-box;
+    }
+
+    .trick-pile {
+        position: static;
+        transform: none;
+        padding: 0;
+        min-height: calc(var(--card-width) * 1.4);
+        order: 1;
+    }
+
+    // just below the trick and above your piles, as on a phone, as wide as a message needs
     .turn-status {
-        padding-top: 0;
-        // below the trick, and below Players 2 and 3, which sit in the middle of the top row
-        // escaped so Less leaves max() and min() to the browser
-        top: ~"max(calc(300px + var(--card-width) * 1.4 + 16px), calc(var(--board-height) / 4 + var(--card-width) * 1.22 + 85px))";
-        width: ~"min(32rem, calc(100vw - var(--corner-gap) * 2))";
+        order: 2;
+        position: static;
+        transform: none;
+        padding: 8px 0 0;
+        width: ~"min(32rem, 100%)";
+    }
+
+    .seat-player1 {
+        grid-column: 1 / span 2;
+        grid-row: 3;
+        justify-self: center;
+        width: 50%;
+        box-sizing: border-box;
+    }
+
+    // beside your piles, wrapping to leave them the room
+    .game-values {
+        max-width: calc(25vw - env(safe-area-inset-left, 0px) - var(--corner-gap) * 2);
     }
 }
 
