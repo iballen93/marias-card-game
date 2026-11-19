@@ -833,7 +833,9 @@ describe('GameComponent', () => {
     });
 
     describe('Standard', () => {
+      // you stay the caller and lead: a PC holding a hand for No Tricks would otherwise take over on some deals
       const buryAndLead = () => {
+        spyOn(TestBed.inject(ComputerPlayerService), 'chooseTakeOver').and.returnValue({ reason: 'passed' });
         component.cardSelected(hand(1)[0]);
         [0, 1].forEach(() => component.cardSelected(hand(1).find(c => !'A0'.includes(c.code.charAt(0)))));
         announceIfAsked();
