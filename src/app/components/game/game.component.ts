@@ -445,8 +445,8 @@ export class GameComponent implements OnInit, OnDestroy {
     }
 
     canFastPlay(): boolean {
-        // a testing shortcut for the Learning modes; Standard is played out in full
-        return !this.isStandard() && !this.showingCompletedHand && !this.canPlayAgain && !this.isOnLastHand();
+        // a testing shortcut; Standard offers it for now too, and will stop once testing is done
+        return !this.showingCompletedHand && !this.canPlayAgain && !this.isOnLastHand();
     }
 
     private isOnLastHand(): boolean {

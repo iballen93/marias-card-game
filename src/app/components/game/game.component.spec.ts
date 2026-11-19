@@ -393,12 +393,6 @@ describe('GameComponent', () => {
     expect(component.canFastPlay()).toBe(true);
   });
 
-  it('should not offer fast play in Standard', async () => {
-    routeData.mode = 'standard';
-    await startGame();
-    expect(component.canFastPlay()).toBe(false);
-  });
-
   it('should keep a finished trick on the table for 1 second in Solo', fakeAsync(() => {
     const fixture = TestBed.createComponent(GameComponent);
     component = fixture.componentInstance;
