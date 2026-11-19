@@ -1,0 +1,63 @@
+name: Publish web app to GitHub Pages
+
+# Builds the game as a web app that can be added to an iPad or phone home screen and played offline
+# (see HOW-TO-INSTALL-ON-IPAD.md), and publishes it at https://iballen93.github.io/marias-card-game/
+# on every push to main.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# one publish at a time; a newer push replaces one still waiting
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # --legacy-peer-deps: the test tools' peer versions (karma-jasmine-html-reporter wants a newer jasmine-core) don't line up
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      # Angular 11's webpack needs the legacy OpenSSL provider on Node 17+
+      - name: Build the web app
+        run: npx ng build --configuration pages
+        env:
+          NODE_OPTIONS: --openssl-legacy-provider
+
+      # GitHub Pages serves 404.html for addresses it doesn't know, such as /game/standard, so it has to be the app too
+      - name: Serve the app for every address
+        run: cp dist/pages/index.html dist/pages/404.html
+
+      - name: Upload
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/pages
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publish
+        id: deployment
+        uses: actions/deploy-pages@v4

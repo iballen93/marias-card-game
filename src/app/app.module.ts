@@ -1,5 +1,6 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
+import { ServiceWorkerModule } from '@angular/service-worker';
 
 import { AppComponent } from './app.component';
 import { PointsComponent } from './points/points.component';
@@ -13,6 +14,7 @@ import { GameComponent } from 'src/app/components/game/game.component';
 import { AppRoutingModule } from 'src/app/app-routing.module';
 import { HowToPlayComponent } from 'src/app/components/how-to-play/how-to-play.component';
 import { GameValuesComponent } from 'src/app/components/game-values/game-values.component';
+import { environment } from '../environments/environment';
 
 @NgModule({
   declarations: [
@@ -30,6 +32,10 @@ import { GameValuesComponent } from 'src/app/components/game-values/game-values.
   ],
   imports: [
     AppRoutingModule, BrowserModule,
+    // only the GitHub Pages web app saves itself for offline play (see HOW-TO-INSTALL-ON-IPAD.md)
+    ServiceWorkerModule.register('ngsw-worker.js', {
+      enabled: environment.serviceWorker, registrationStrategy: 'registerWhenStable:30000'
+    }),
   ],
   providers: [],
   bootstrap: [AppComponent]
