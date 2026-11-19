@@ -311,11 +311,39 @@ describe('GameComponent', () => {
       expect(component.legalCards.length).toBe(10);
     });
 
+    it('should give your caller its buried cards back after choosing No Tricks, to bury again where an A or 10 may go', async () => {
+      await startBid();
+      const buried = component.allPiles.get('player1Bury').map(card => card.code);
+      component.announceFromButton({ seven: false, hundred: false, contract: 'no-tricks' });
+      expect(component.buryingCards).toBeTrue();
+      expect(component.takingOver).toBeFalse();
+      expect(component.activePlayer).toBe(1);
+      expect(component.allPiles.get('player1Bury')).toEqual([]);
+      expect(hand(1).length).toBe(12);
+      expect(buried.every(code => hand(1).some(card => card.code === code))).toBeTrue();
+
+      const ace = hand(1).find(card => 'A0'.includes(card.code.charAt(0)));
+      if (ace) {
+        component.cardSelected(ace);
+        expect(component.allPiles.get('player1Bury')).toContain(ace);
+      }
+      while (component.buryingCards) {
+        component.cardSelected(hand(1)[0]);
+      }
+      expect(hand(1).length).toBe(10);
+      // then the others may take over, as after any bid
+      expect(component.takingOver).toBeTrue();
+      expect(component.activePlayer).toBe(2);
+    });
+
     it('should end No Tricks or All Tricks as soon as it is decided, pay its price, and pass the next round on from the first caller',
       async () => {
         await startBid();
         component.announceFromButton({ seven: false, hundred: false, contract: 'all-tricks' });
         expect(component.trump).toBe('NONE');
+        while (component.buryingCards) {
+          component.cardSelected(hand(1)[0]);
+        }
         passTakeOver();
         while (component.raising) {
           component.raiseFromButton([]);

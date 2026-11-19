@@ -84,8 +84,9 @@ export class GameComponent implements OnInit, OnDestroy {
     private takeOverLeft: number[] = [];
     // what the active player may take over with, for the pop-up
     takeOverOptions: TakeOverOption[] = [];
-    // a player who took over buries 2 cards, and then the others may take over from them
-    private buryingAfterTakeOver = false;
+    // a player who took over buries 2 cards, as does a caller of yours who chose No Tricks or All Tricks and buries
+    // again by its rules; then the others may take over from them
+    private takeOverAfterBury = false;
     // who called first this round: the next round passes on from them, even when someone else took over
     private roundStarter = 1;
     // after the bid, the defenders and the caller take turns raising each announced bet (see raising.ts)
@@ -618,9 +619,9 @@ export class GameComponent implements OnInit, OnDestroy {
         console.log(this.allPiles);
         if (this.allPiles.get('player' + this.activePlayer + 'Bury').length === 2) {
             this.buryingCards = false;
-            if (this.buryingAfterTakeOver) {
-                // whoever took over has buried, so the others may take over from them in turn
-                this.buryingAfterTakeOver = false;
+            if (this.takeOverAfterBury) {
+                // whoever took over, or chose No Tricks or All Tricks, has buried, so the others may take over in turn
+                this.takeOverAfterBury = false;
                 this.startTakeOver();
             } else {
                 // the caller chooses the contract: the Game, with the 100 and the 7 of trump, or No Tricks or All Tricks
@@ -656,7 +657,23 @@ export class GameComponent implements OnInit, OnDestroy {
             this.sevenCalled = callSeven && this.holdsSevenOfTrump();
             this.hundredCalled = callHundred;
         }
+        if (isNoTrumpContract(contract) && !this.isPcSeat(this.currentCaller)) {
+            // your caller buried by the Game's rules, which keep the A and 10; No Tricks and All Tricks allow them, so
+            // the 2 buried cards go back into the hand to bury again. The PC already buried with its contract in mind.
+            this.rebury();
+            return;
+        }
         this.startTakeOver();
+    }
+
+    private rebury(): void {
+        const buryKey = 'player' + this.currentCaller + 'Bury';
+        const hand = this.allPiles.get('player' + this.currentCaller);
+        this.allPiles.set('player' + this.currentCaller, this.sortHand(hand.concat(this.allPiles.get(buryKey) || [])));
+        this.allPiles.set(buryKey, []);
+        this.activePlayer = this.currentCaller;
+        this.buryingCards = true;
+        this.takeOverAfterBury = true;
     }
 
     // No Tricks and All Tricks have no trump, marriages, 7 or 100
@@ -706,7 +723,7 @@ export class GameComponent implements OnInit, OnDestroy {
         this.setContract(contract);
         this.takingOver = false;
         this.buryingCards = true;
-        this.buryingAfterTakeOver = true;
+        this.takeOverAfterBury = true;
     }
 
     // The pop-up only works for a player you are playing
@@ -856,7 +873,7 @@ export class GameComponent implements OnInit, OnDestroy {
             this.hundredCalled = false;
             this.contract = 'game';
             this.takingOver = false;
-            this.buryingAfterTakeOver = false;
+            this.takeOverAfterBury = false;
             this.raising = false;
             this.raiseTracks = startRaiseTracks(false);
             this.payoutTotal = '';
