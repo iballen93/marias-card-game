@@ -11,6 +11,8 @@ export class HandComponent implements OnInit {
     @Input() playerTitle: string;
     @Input() playerMoney: number;
     @Input() playerPoints: number;
+    // only the Game counts points; No Tricks and All Tricks count tricks
+    @Input() countsPoints = true;
     @Input() isCaller = false;
     @Input() isActive = false;
     @Input() playerCards: Card[];
@@ -110,8 +112,8 @@ export class HandComponent implements OnInit {
     }
 
     getWinPileTitle(): string {
-        // a face-down win pile keeps its points secret too
-        if (this.hideWin) {
+        // a face-down win pile keeps its points secret too, and No Tricks and All Tricks have no points to show
+        if (this.hideWin || !this.countsPoints) {
             return 'Win Pile';
         }
         return `Win Pile: ${this.playerPoints} ${this.playerPoints === 1 ? 'Point' : 'Points'}`;

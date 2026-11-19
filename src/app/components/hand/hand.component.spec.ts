@@ -21,4 +21,12 @@ describe('HandComponent', () => {
     expect(hand.getWinCardPeek()).toBe('0px');
     expect(hand.getWinPileTitle()).toBe('Win Pile');
   });
+
+  it('should show points on the win pile only in the Game', () => {
+    const hand = new HandComponent();
+    hand.playerPoints = 3;
+    expect(hand.getWinPileTitle()).toBe('Win Pile: 3 Points');
+    hand.countsPoints = false;
+    expect(hand.getWinPileTitle()).toBe('Win Pile');
+  });
 });
