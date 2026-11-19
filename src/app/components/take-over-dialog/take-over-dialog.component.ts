@@ -1,5 +1,6 @@
 import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
 import { Contract } from '../../rules';
+import { formatCents } from '../../money';
 
 // One contract the player may take over with
 export interface TakeOverOption {
@@ -17,6 +18,8 @@ export interface TakeOverOption {
     styleUrls: ['./take-over-dialog.component.less']
 })
 export class TakeOverDialogComponent implements OnChanges {
+    readonly formatCents = formatCents;
+
 
     @Input() player: number;
     // what is being played now, such as "Player 1 bid the Game"

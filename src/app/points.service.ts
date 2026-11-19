@@ -3,6 +3,7 @@ import {Card} from './components/card-pile/card-pile.component';
 import {cardName} from './pc-brain';
 import {Contract, CONTRACT_CENTS, contractCents, contractName, isPointCard, marriagePoints, SevenResult} from './rules';
 import {raiseMultiplier, raiseName} from './raising';
+import { formatCents } from './money';
 
 export interface Points {
     totalTricks: string;
@@ -76,10 +77,10 @@ export class PointsService {
     describePayment(centsFromEachDefender: number, callerPlayer: number): string {
         const defenderNames = 'Players ' + [1, 2, 3].filter(player => player !== callerPlayer).join(' and ');
         if (centsFromEachDefender > 0) {
-            return defenderNames + ' each pay Player ' + callerPlayer + ' ' + centsFromEachDefender + '¢';
+            return defenderNames + ' each pay Player ' + callerPlayer + ' ' + formatCents(centsFromEachDefender);
         }
         if (centsFromEachDefender < 0) {
-            return 'Player ' + callerPlayer + ' pays ' + defenderNames + ' ' + -centsFromEachDefender + '¢ each';
+            return 'Player ' + callerPlayer + ' pays ' + defenderNames + ' ' + formatCents(centsFromEachDefender) + ' each';
         }
         return 'Nobody pays anything';
     }
@@ -92,7 +93,7 @@ export class PointsService {
 
     private describeBet(callerPlayer: number, centsFromEachDefender: number, bet: string): BetResult {
         const won = centsFromEachDefender > 0;
-        const cents = (won ? '+' : '-') + Math.abs(centsFromEachDefender) + '¢ ';
+        const cents = (won ? '+' : '-') + formatCents(centsFromEachDefender) + ' ';
         return { text: cents + 'Player ' + callerPlayer + (won ? ' won ' : ' lost ') + bet, won };
     }
 

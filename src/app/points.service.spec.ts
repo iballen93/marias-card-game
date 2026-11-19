@@ -57,6 +57,7 @@ describe('PointsService', () => {
   it('should say who pays whom', () => {
     expect(service.describePayment(4, 2)).toBe('Players 1 and 3 each pay Player 2 4¢');
     expect(service.describePayment(-8, 1)).toBe('Player 1 pays Players 2 and 3 8¢ each');
+    expect(service.describePayment(-1280, 1)).toBe('Player 1 pays Players 2 and 3 $12.80 each');
     expect(service.describePayment(0, 2)).toBe('Nobody pays anything');
   });
 
@@ -71,7 +72,7 @@ describe('PointsService', () => {
     expect([1, 2, 3].map(player => kontra.earnings.get('player' + player))).toEqual([8, -4, -4]);
     expect(kontra.betResult.text).toBe('+4¢ Player 1 won the Game (Kontra): 3 to 1');
     const supre = service.calculateEarnings(won, 1, 1, 'SPADES', true, 3);
-    expect(supre.betResult.text).toBe('-128¢ Player 1 lost the Called 100 (Supre): 3 to 1');
+    expect(supre.betResult.text).toBe('-$1.28 Player 1 lost the Called 100 (Supre): 3 to 1');
   });
 
   it('should pay No Tricks and All Tricks at their price, never doubled for spades, and doubled for each raise', () => {
@@ -82,6 +83,9 @@ describe('PointsService', () => {
     expect([1, 2, 3].map(player => lost.earnings.get('player' + player))).toEqual([-80, 40, 40]);
     expect(lost.winMessage).toBe('Player 1 lost Open All Tricks on trick 4');
     expect(lost.betResult.text).toBe('-40¢ Player 1 lost Open All Tricks (Kontra) on trick 4');
+    // Supre More: 20¢ doubled 6 times, which reads better in dollars
+    expect(service.calculateNoTrumpEarnings('all-tricks-open', 1, 1, 6).betResult.text)
+      .toBe('-$12.80 Player 1 lost Open All Tricks (Supre More) on trick 1');
   });
 
   describe('paying the 7 of trump', () => {

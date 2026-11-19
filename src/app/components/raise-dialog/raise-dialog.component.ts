@@ -1,5 +1,6 @@
 import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
 import { RaiseBet } from '../../raising';
+import { formatCents } from '../../money';
 
 // One bet the player may raise now
 export interface RaiseOption {
@@ -19,6 +20,8 @@ export interface RaiseOption {
     styleUrls: ['./raise-dialog.component.less']
 })
 export class RaiseDialogComponent implements OnChanges {
+    readonly formatCents = formatCents;
+
 
     @Input() player: number;
     // what the caller bid and how far it has been raised, such as "Player 1 bid the Game (Kontra)"

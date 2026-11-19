@@ -7,7 +7,7 @@
         <label *ngFor="let option of options" class="toggle">
             <span class="toggle-text">
                 <span class="toggle-name">{{option.name}}</span>
-                <span class="toggle-cost">{{option.cents}}¢ per player</span>
+                <span class="toggle-cost">{{formatCents(option.cents)}} per player</span>
             </span>
             <input type="checkbox" [class]="'take-over-toggle take-over-' + option.contract" [checked]="chosen === option.contract"
                    (change)="setChosen(option.contract, $any($event.target).checked)">

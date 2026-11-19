@@ -1,5 +1,6 @@
 import { ChangeDetectorRef, Component, EventEmitter, Input, Output } from '@angular/core';
 import { Contract, CONTRACT_CENTS, HUNDRED_CENTS, SEVEN_CENTS } from '../../rules';
+import { formatCents } from '../../money';
 
 // The caller's bid after burying: the Game, with the 7 of trump when they hold it and the 100 instead of the Game,
 // or No Tricks or All Tricks, open or not. Shown over a dimmed screen. Everything starts on the plain Game each time,
@@ -46,7 +47,7 @@ export class BidDialogComponent {
     // what No Tricks or All Tricks is worth per player, won or lost; there's no trump, so spades doesn't double it
     getContractCost(): string {
         const contract = this.contract;
-        return contract === 'game' ? '' : CONTRACT_CENTS[contract] + '¢ per player';
+        return contract === 'game' ? '' : formatCents(CONTRACT_CENTS[contract]) + ' per player';
     }
 
     getContractNote(): string {
@@ -81,6 +82,6 @@ export class BidDialogComponent {
 
     private describeCost(cents: number): string {
         const spades = this.trump === 'SPADES';
-        return (spades ? cents * 2 : cents) + '¢ per player' + (spades ? ' (doubled for spades)' : '');
+        return formatCents(spades ? cents * 2 : cents) + ' per player' + (spades ? ' (doubled for spades)' : '');
     }
 }

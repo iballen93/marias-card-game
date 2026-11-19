@@ -7,7 +7,7 @@
             <span class="toggle-text">
                 <span class="toggle-name">{{option.raiseName}} on {{option.label}}</span>
                 <span class="toggle-note">Doubles the bet</span>
-                <span class="toggle-cost">{{option.cents}}¢ per player</span>
+                <span class="toggle-cost">{{formatCents(option.cents)}} per player</span>
             </span>
             <input type="checkbox" [class]="'raise-toggle raise-' + option.bet" [checked]="isChosen(option.bet)"
                    (change)="setChosen(option.bet, $any($event.target).checked)">
