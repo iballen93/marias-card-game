@@ -24,7 +24,7 @@ describe('AppComponent', () => {
     (element.querySelector('.menu-toggle') as HTMLElement).click();
     fixture.detectChanges();
     const options = Array.from(element.querySelectorAll('.new-game-menu > *')).map(option => option.textContent.trim());
-    expect(options).toEqual(['New Game (Learning Mode vs PC) Slow', 'New Game (Learning Mode vs PC) Fast',
+    expect(options).toEqual(['New Game (Learning Mode vs PC)',
       'Practice (play all 3 hands)', 'New Game (Standard)']);
   });
 

@@ -4,8 +4,7 @@
         <button type="button" class="menu-toggle" aria-haspopup="true" [attr.aria-expanded]="isNewGameMenuOpen"
                 (click)="toggleNewGameMenu()">New Game ▾</button>
         <div *ngIf="isNewGameMenuOpen" class="new-game-menu" role="menu">
-            <a routerLink="/game/learning-pc-slow" role="menuitem" (click)="closeNewGameMenu()">New Game (Learning Mode vs PC) Slow</a>
-            <a routerLink="/game/learning-pc" role="menuitem" (click)="closeNewGameMenu()">New Game (Learning Mode vs PC) Fast</a>
+            <a routerLink="/game/learning-pc-slow" role="menuitem" (click)="closeNewGameMenu()">New Game (Learning Mode vs PC)</a>
             <a routerLink="/game/learning-solo" role="menuitem" (click)="closeNewGameMenu()">Practice (play all 3 hands)</a>
             <a routerLink="/game/standard" role="menuitem" (click)="closeNewGameMenu()">New Game (Standard)</a>
         </div>
