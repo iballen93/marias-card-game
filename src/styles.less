@@ -108,4 +108,7 @@ body {
 html, body {
   height: 100%;
   margin: 0;
+  /* No pull-down-to-refresh: it throws away the round in progress, and in the Android home screen app Chrome comes back
+     from it measuring the screen wrongly, so the board scrolls until the app is closed and reopened */
+  overscroll-behavior-y: none;
 }
