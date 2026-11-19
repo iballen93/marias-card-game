@@ -24,7 +24,7 @@ describe('AppComponent', () => {
     (element.querySelector('.menu-toggle') as HTMLElement).click();
     fixture.detectChanges();
     const options = Array.from(element.querySelectorAll('.new-game-menu > *')).map(option => option.textContent.trim());
-    expect(options).toEqual(['Standard Game', 'Learning Mode vs PC', 'Practice (play all 3 hands)']);
+    expect(options).toEqual(['Standard Mode vs PC', 'Learning Mode vs PC', 'Practice (play all 3 hands)']);
   });
 
   it('should close the New Game menu on a click outside it or Escape', () => {

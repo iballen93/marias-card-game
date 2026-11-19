@@ -423,6 +423,8 @@ describe('GameComponent', () => {
       fixture = TestBed.createComponent(GameComponent);
       component = fixture.componentInstance;
       spyOn(TestBed.inject(DeckService), 'preloadCardImages').and.returnValue(Promise.resolve());
+      // you stay the caller and lead: a PC holding a hand for No Tricks would otherwise take over on some deals
+      spyOn(TestBed.inject(ComputerPlayerService), 'chooseTakeOver').and.returnValue({ reason: 'passed' });
       fixture.detectChanges();
       flushMicrotasks();
     };
@@ -833,9 +835,7 @@ describe('GameComponent', () => {
     });
 
     describe('Standard', () => {
-      // you stay the caller and lead: a PC holding a hand for No Tricks would otherwise take over on some deals
       const buryAndLead = () => {
-        spyOn(TestBed.inject(ComputerPlayerService), 'chooseTakeOver').and.returnValue({ reason: 'passed' });
         component.cardSelected(hand(1)[0]);
         [0, 1].forEach(() => component.cardSelected(hand(1).find(c => !'A0'.includes(c.code.charAt(0)))));
         announceIfAsked();
