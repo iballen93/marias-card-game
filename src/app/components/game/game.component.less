@@ -76,6 +76,18 @@ table {
     cursor: pointer;
 }
 
+// Tablets held upright: the middle column is narrow, but below the trick there's a wide band of free space, so the
+// messages go there, clear of Players 2 and 3 beside the trick, and just above your piles
+@media (min-width: 769px) and (orientation: portrait) {
+    .turn-status {
+        padding-top: 0;
+        // below the trick, and below Players 2 and 3, which sit in the middle of the top row
+        // escaped so Less leaves max() and min() to the browser
+        top: ~"max(calc(300px + var(--card-width) * 1.4 + 16px), calc(var(--board-height) / 4 + var(--card-width) * 1.22 + 85px))";
+        width: ~"min(32rem, calc(100vw - var(--corner-gap) * 2))";
+    }
+}
+
 // Phones stack the players in full width rows, so each hand gets the whole screen width
 @media (max-width: 768px), (max-height: 500px) {
     table {
