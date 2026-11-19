@@ -43,19 +43,19 @@ describe('BidDialogComponent', () => {
     expect(element().querySelector('.hundred-cost').textContent).toBe('16¢ per player (doubled for spades)');
   });
 
-  it('should bid No Tricks or All Tricks, open or not, without the 7 or the 100', () => {
+  it('should bid No Tricks or All Tricks, as a Show or not, without the 7 or the 100', () => {
     toggle('.seven-toggle');
     (element().querySelector('.kind-no-tricks') as HTMLButtonElement).click();
     fixture.detectChanges();
     expect(element().querySelector('.seven-toggle')).toBeNull();
     expect(element().querySelector('.contract-cost').textContent).toBe('6¢ per player');
-    toggle('.open-toggle');
+    toggle('.show-toggle');
     expect(element().querySelector('.contract-cost').textContent).toBe('12¢ per player');
     (element().querySelector('.kind-all-tricks') as HTMLButtonElement).click();
     fixture.detectChanges();
     expect(element().querySelector('.contract-cost').textContent).toBe('20¢ per player');
     (element().querySelector('.bid-button') as HTMLButtonElement).click();
-    expect(bids).toEqual([{ seven: false, hundred: false, contract: 'all-tricks-open' }]);
+    expect(bids).toEqual([{ seven: false, hundred: false, contract: 'all-tricks-show' }]);
   });
 
   it('should bid on the Game alone when nothing is switched on', () => {

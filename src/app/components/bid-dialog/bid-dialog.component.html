@@ -13,11 +13,11 @@
             <p class="contract-note">{{getContractNote()}}</p>
             <label class="toggle">
                 <span class="toggle-text">
-                    <span class="toggle-name">Play it open</span>
+                    <span class="toggle-name">Show</span>
                     <span class="toggle-note">Your cards face up from the start, for double</span>
                     <span class="toggle-cost contract-cost">{{getContractCost()}}</span>
                 </span>
-                <input type="checkbox" class="open-toggle" [checked]="open" (change)="setOpen($any($event.target).checked)">
+                <input type="checkbox" class="show-toggle" [checked]="show" (change)="setShow($any($event.target).checked)">
                 <span class="switch"></span>
             </label>
         </ng-container>

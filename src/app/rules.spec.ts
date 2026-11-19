@@ -136,17 +136,17 @@ describe('rules', () => {
     });
 
     it('should only allow taking over with a higher contract', () => {
-      expect(higherContracts('game')).toEqual(['no-tricks', 'all-tricks', 'no-tricks-open', 'all-tricks-open']);
-      expect(higherContracts('all-tricks')).toEqual(['no-tricks-open', 'all-tricks-open']);
-      expect(higherContracts('all-tricks-open')).toEqual([]);
-      expect(contractName('no-tricks-open')).toBe('Open No Tricks');
+      expect(higherContracts('game')).toEqual(['no-tricks', 'all-tricks', 'no-tricks-show', 'all-tricks-show']);
+      expect(higherContracts('all-tricks')).toEqual(['no-tricks-show', 'all-tricks-show']);
+      expect(higherContracts('all-tricks-show')).toEqual([]);
+      expect(contractName('no-tricks-show')).toBe('No Tricks Show');
     });
 
     it('should end No Tricks on the caller\'s first trick, and All Tricks on the first trick it loses', () => {
       expect(noTrumpResult('no-tricks', 3, 0)).toBeUndefined();
       expect(noTrumpResult('no-tricks', 3, 1)).toBe('lost');
       expect(noTrumpResult('no-tricks', 10, 0)).toBe('won');
-      expect(noTrumpResult('all-tricks-open', 4, 4)).toBeUndefined();
+      expect(noTrumpResult('all-tricks-show', 4, 4)).toBeUndefined();
       expect(noTrumpResult('all-tricks', 4, 3)).toBe('lost');
       expect(noTrumpResult('all-tricks', 10, 10)).toBe('won');
     });

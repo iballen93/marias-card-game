@@ -5,7 +5,7 @@ import { formatCents } from '../../money';
 // One contract the player may take over with
 export interface TakeOverOption {
     contract: Contract;
-    // as players say it, such as Open No Tricks
+    // as players say it, such as No Tricks Show
     name: string;
     // what it's worth from each player, won or lost
     cents: number;

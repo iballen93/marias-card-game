@@ -20,7 +20,7 @@ describe('TakeOverDialogComponent', () => {
       bidSummary: 'Player 2 bid No Tricks',
       options: [
         { contract: 'all-tricks', name: 'All Tricks', cents: 10 },
-        { contract: 'no-tricks-open', name: 'Open No Tricks', cents: 12 }
+        { contract: 'no-tricks-show', name: 'No Tricks Show', cents: 12 }
       ]
     });
     fixture.componentInstance.ngOnChanges();
@@ -33,7 +33,7 @@ describe('TakeOverDialogComponent', () => {
     expect(element().querySelector('h2').textContent).toBe('Player 3: take over?');
     expect(element().querySelector('.bid-summary').textContent).toBe('Player 2 bid No Tricks');
     const texts = (selector: string) => Array.from(element().querySelectorAll(selector)).map(text => text.textContent.trim());
-    expect(texts('.toggle-name')).toEqual(['All Tricks', 'Open No Tricks']);
+    expect(texts('.toggle-name')).toEqual(['All Tricks', 'No Tricks Show']);
     expect(texts('.toggle-cost')).toEqual(['10¢ per player', '12¢ per player']);
   });
 
@@ -45,10 +45,10 @@ describe('TakeOverDialogComponent', () => {
 
   it('should take over with one contract at most, switching any other off', () => {
     toggle('all-tricks');
-    toggle('no-tricks-open');
+    toggle('no-tricks-show');
     expect((element().querySelector('.take-over-all-tricks') as HTMLInputElement).checked).toBeFalse();
     expect(button().textContent).toBe('Take Over');
     button().click();
-    expect(answers).toEqual(['no-tricks-open']);
+    expect(answers).toEqual(['no-tricks-show']);
   });
 });

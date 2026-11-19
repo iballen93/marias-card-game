@@ -272,7 +272,7 @@ describe('PC brain', () => {
     });
 
     it('should call All Tricks Show on a sure hand and No Tricks on a safe one, and the Game otherwise', () => {
-      expect(chooseAnnouncement(sureAllTricks, 'HEARTS')).toEqual(jasmine.objectContaining({ contract: 'all-tricks-open' }));
+      expect(chooseAnnouncement(sureAllTricks, 'HEARTS')).toEqual(jasmine.objectContaining({ contract: 'all-tricks-show' }));
       expect(chooseAnnouncement(safeNoTricks, 'HEARTS').contract).toBe('no-tricks');
       expect(chooseAnnouncement(safeNoTricks, 'HEARTS').reason).toBe('called No Tricks: its cards are low enough in every suit '
         + 'to stay under the defenders');
@@ -305,7 +305,7 @@ describe('PC brain', () => {
     });
 
     describe('saying Kontra as a defender', () => {
-      type NoTrump = 'no-tricks' | 'all-tricks' | 'no-tricks-open' | 'all-tricks-open';
+      type NoTrump = 'no-tricks' | 'all-tricks' | 'no-tricks-show' | 'all-tricks-show';
       const ask = (hand: string[], contract: NoTrump, callerHand?: string[]) => chooseRaises({
         hand, trump: 'NONE', isCaller: false, hundredCalled: false, bets: [{ bet: 'game', level: 0 }], contract, callerHand
       });
@@ -325,18 +325,18 @@ describe('PC brain', () => {
         expect(ask(['AH', 'AD', '7S', '8S', '9S', '7C', '8C', '9C', '7H', '8H'], 'all-tricks').raise).toEqual([]);
       });
 
-      it('should check the caller\'s cards in an open All Tricks, keeping a K back under the caller\'s A to beat its Q', () => {
+      it('should check the caller\'s cards in All Tricks Show, keeping a K back under the caller\'s A to beat its Q', () => {
         const caller = ['AH', 'QH', 'AS', 'KS', 'QS', 'JS', 'AD', 'KD', 'AC', 'KC'];
-        expect(ask(['KH', '7H', '7S', '8S', '9S', '7D', '8D', '7C', '8C', '9C'], 'all-tricks-open', caller)).toEqual({ raise: ['game'],
+        expect(ask(['KH', '7H', '7S', '8S', '9S', '7D', '8D', '7C', '8C', '9C'], 'all-tricks-show', caller)).toEqual({ raise: ['game'],
           reason: 'said Kontra on All Tricks Show: its K♥ will beat the caller\'s Q♥' });
         // a lone K has to go under the A, so it can't beat the Q
-        expect(ask(['KH', '0S', '7S', '8S', '9S', '7D', '8D', '7C', '8C', '9C'], 'all-tricks-open', caller).raise).toEqual([]);
+        expect(ask(['KH', '0S', '7S', '8S', '9S', '7D', '8D', '7C', '8C', '9C'], 'all-tricks-show', caller).raise).toEqual([]);
       });
 
-      it('should count the caller\'s dangerous cards in an open No Tricks, and pass on a closed one it can\'t see', () => {
+      it('should count the caller\'s dangerous cards in No Tricks Show, and pass on a closed one it can\'t see', () => {
         const risky = ['AH', 'KH', 'AS', 'KS', 'AD', 'KD', 'AC', 'KC', 'QC', 'JC'];
-        expect(ask(['7H'], 'no-tricks-open', risky).raise).toEqual(['game']);
-        expect(ask(['7H'], 'no-tricks-open', ['7S', '8S', '9S', '0S', '7H', '8H', '7D', '8D', '9D', '7C']).raise).toEqual([]);
+        expect(ask(['7H'], 'no-tricks-show', risky).raise).toEqual(['game']);
+        expect(ask(['7H'], 'no-tricks-show', ['7S', '8S', '9S', '0S', '7H', '8H', '7D', '8D', '9D', '7C']).raise).toEqual([]);
         expect(ask(['7H'], 'no-tricks').reason).toBe('passed on No Tricks: it can\'t see the caller\'s cards, and its own hand doesn\'t '
           + 'tell it whether the caller will have to take a trick');
       });

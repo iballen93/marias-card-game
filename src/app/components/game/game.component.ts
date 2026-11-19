@@ -9,7 +9,7 @@ import { ActivatedRoute } from '@angular/router';
 import { DEFAULT_GAME_MODE, GameMode, isVsPc } from 'src/app/game-mode';
 import {
     completesMarriage, Contract, CONTRACT_CENTS, contractName, GAME_CENTS, higherContracts, HUNDRED_CENTS, isNoTrumpContract,
-    isOpenContract, NO_TRUMP, noTrumpResult, SEVEN_CENTS, sevenOfTrump, sevenOnLastTrick, trickWinnerIndex, validateBury
+    isShowContract, NO_TRUMP, noTrumpResult, SEVEN_CENTS, sevenOfTrump, sevenOnLastTrick, trickWinnerIndex, validateBury
 } from 'src/app/rules';
 import { TakeOverOption } from 'src/app/components/take-over-dialog/take-over-dialog.component';
 import { RaiseOption } from 'src/app/components/raise-dialog/raise-dialog.component';
@@ -178,9 +178,9 @@ export class GameComponent implements OnInit, OnDestroy {
     }
 
     isHandHidden(player: number): boolean {
-        // the open contracts are played with the caller's cards face up from the start
-        const shownOpen = isOpenContract(this.contract) && player === this.currentCaller;
-        return this.isStandard() && player !== this.HUMAN_SEAT && !shownOpen;
+        // the Show contracts are played with the caller's cards face up from the start
+        const shownFaceUp = isShowContract(this.contract) && player === this.currentCaller;
+        return this.isStandard() && player !== this.HUMAN_SEAT && !shownFaceUp;
     }
 
     // You see your own bury while you choose it; it turns face down once the first card is led. The caller never
@@ -793,9 +793,9 @@ export class GameComponent implements OnInit, OnDestroy {
         return 'Player ' + this.currentCaller + ' bid ' + bets.map(withRaise).join(' and ');
     }
 
-    // The caller's cards when the contract is played open, so everyone, the PC included, can see them
+    // The caller's cards when the contract is a Show, so everyone, the PC included, can see them
     private getOpenCallerHand(): Card[] | undefined {
-        return isOpenContract(this.contract) ? this.allPiles.get('player' + this.currentCaller) : undefined;
+        return isShowContract(this.contract) ? this.allPiles.get('player' + this.currentCaller) : undefined;
     }
 
     // The bets the active player may raise now

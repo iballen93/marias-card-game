@@ -107,24 +107,24 @@ The count leaves out points it may win from the defenders, so it is cautious. Me
 
 ## No Tricks and All Tricks
 
-After burying, the caller can play **No Tricks** (take no trick at all) or **All Tricks** (take every trick) instead of the Game, either one open (cards face up from the start) for double. There's no trump, the 10 drops below the J (A K Q J 10 9 8 7), marriages, the 7 and the 100 don't count, and the round ends as soon as it's decided. Players still have to follow suit and go higher if they can. The caller leads.
+After burying, the caller can play **No Tricks** (take no trick at all) or **All Tricks** (take every trick) instead of the Game, either one as a Show (cards face up from the start) for double. There's no trump, the 10 drops below the J (A K Q J 10 9 8 7), marriages, the 7 and the 100 don't count, and the round ends as soon as it's decided. Players still have to follow suit and go higher if they can. The caller leads.
 
 | Contract | Worth, from each defender |
 |---|---|
 | No Tricks | 6 cents |
 | All Tricks | 10 cents |
-| Open No Tricks | 12 cents |
+| No Tricks Show | 12 cents |
 | All Tricks Show | 20 cents |
 
-Spades doesn't double these, since there's no trump. After the caller's bid, each of the others in turn, starting with the one who plays after the caller, may **take over** with a higher contract (Game < No Tricks < All Tricks < Open No Tricks < All Tricks Show). Whoever takes over picks up the caller's 2 buried cards, buries 2 (an A or 10 is allowed, since points don't count), and becomes the caller; then the others may take over from them. Once everyone passes, the stakes can be raised on the contract that stands. The rules are in `src/app/rules.ts`.
+Spades doesn't double these, since there's no trump. After the caller's bid, each of the others in turn, starting with the one who plays after the caller, may **take over** with a higher contract (Game < No Tricks < All Tricks < No Tricks Show < All Tricks Show). Whoever takes over picks up the caller's 2 buried cards, buries 2 (an A or 10 is allowed, since points don't count), and becomes the caller; then the others may take over from them. Once everyone passes, the stakes can be raised on the contract that stands. The rules are in `src/app/rules.ts`.
 
 How the PC decides (`pc-brain.ts`):
 
 | Contract | When the PC calls it, or takes over with it |
 |---|---|
-| All Tricks Show | every suit it holds runs unbroken down from the A. It leads every trick, and each card it leads is the highest of its suit still out, so it can't lose, even open. |
+| All Tricks Show | every suit it holds runs unbroken down from the A. It leads every trick, and each card it leads is the highest of its suit still out, so it can't lose, even as a Show. |
 | No Tricks | at most 3 **dangerous cards**, and, as the caller, a hand worth 5 points or fewer in the Game |
-| All Tricks or Open No Tricks | never: not measured yet |
+| All Tricks or No Tricks Show | never: not measured yet |
 
 A card is **dangerous** in No Tricks when the PC doesn't hold every lower card of its suit. Since a player who can go higher than the card to beat must, a gap lets a defender lead a card in it and force the PC over. Measured over 200,000 deals, played out by the PC on both sides, No Tricks is won about:
 
@@ -136,11 +136,11 @@ It pays 6 cents either way, so anything over half beats a weak hand in the Game;
 
 The caller and a player taking over hold 12 cards and bury 2, so the PC first looks for 2 cards to bury that would leave such a hand. The caller can't bury an A or 10, since it might still have to play the Game.
 
-The PC raises its own No Tricks only with at most 1 dangerous card, and All Tricks only when it's sure. As a defender it says Kontra when its own hand, or the caller's cards in an open contract, show the caller will fail:
+The PC raises its own No Tricks only with at most 1 dangerous card, and All Tricks only when it's sure. As a defender it says Kontra when its own hand, or the caller's cards in a Show contract, show the caller will fail:
 
 - **All Tricks:** a defender's A wins a trick in any suit the caller holds, since the caller has to lead that suit at some point and the defender has to go over it. So the caller can only be safe in suits where it holds the A. With 3 aces in one defender's hand, the one suit left has 8 cards and the caller holds 10, so the defender is sure to win a trick. With 2 aces the two suits left have 16 cards, so a caller with all 10 of its cards there could still win; the defender only says Kontra when it holds 7 or more of those 16 itself, leaving the caller 9 at most.
 - **All Tricks Show:** it checks each suit of the caller's face-up cards: a card higher than one of the caller's, with enough other cards of the suit to follow the caller's higher ones first, wins a trick.
-- **Open No Tricks:** it counts the caller's dangerous cards, and says Kontra at 6 or more, where No Tricks is lost more often than won.
+- **No Tricks Show:** it counts the caller's dangerous cards, and says Kontra at 6 or more, where No Tricks is lost more often than won.
 - **No Tricks:** it passes. Without seeing the caller's cards, its own hand doesn't tell it whether the caller will have to take a trick.
 
 How it plays them:
@@ -252,7 +252,7 @@ These are the known gaps, roughly from most to least important.
 2. **No odds.** It treats a card as either safe (the highest left, and nobody has shown they can trump it) or not. It never weighs how likely it is that a player is out of a suit.
 3. **Planning the last trick.** It keeps trumps by giving them up late, which usually leaves one for the last trick (+1 point), but it doesn't plan for it on purpose.
 4. **Following its partner's signals.** It doesn't read anything into which low cards its partner throws.
-5. **No Tricks and All Tricks are basic.** It only plays All Tricks when it can't lose, which is very rare, and never plays Open No Tricks. Its No Tricks play doesn't track which cards are still out.
+5. **No Tricks and All Tricks are basic.** It only plays All Tricks when it can't lose, which is very rare, and never plays No Tricks Show. Its No Tricks play doesn't track which cards are still out.
 6. **Playing against a called 7 or 100.** The defenders don't yet play differently when the caller has called the 7 or the 100, such as keeping a higher trump for the last trick, or fighting harder for points.
 7. **Raising is decided on counts alone.** It doesn't take into account who raised before it, or how the caller bid. A defender facing a Re still only looks at its own points.
 

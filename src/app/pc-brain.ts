@@ -252,7 +252,7 @@ export interface RaiseQuestion {
     bets: { bet: RaiseBet; level: number }[];
     // the Game unless it says otherwise
     contract?: Contract;
-    // the caller's cards, when the contract is played open and everyone can see them
+    // the caller's cards, when the contract is a Show and everyone can see them
     callerHand?: string[];
 }
 
@@ -661,7 +661,7 @@ function lead(view: BrainView, knowledge: Knowledge, legal: string[]): BrainChoi
 const noTrumpStrength = (card: string) => rankStrength(card, NO_TRUMP);
 
 // Every suit it holds runs unbroken down from the A. The caller leads the first trick, and each of those cards is the
-// highest of its suit still out, so it wins every trick and leads the next: All Tricks can't fail, even played open.
+// highest of its suit still out, so it wins every trick and leads the next: All Tricks can't fail, even as a Show.
 export function isSureAllTricks(hand: string[]): boolean {
     return SUITS.split('').every(suit => hand.filter(card => suitOf(card) === suit).map(noTrumpStrength)
         .sort((a, b) => b - a).every((strength, index) => strength === 7 - index));
@@ -678,14 +678,14 @@ export function noTricksDanger(hand: string[]): number {
 // Measured over 200,000 deals, played out by the PC on both sides: No Tricks is won about 93% of the time with 1 dangerous
 // card, 90% with 2, 77% with 3, 66% with 4, 59% with 5 and 48% with 6. It pays 6 cents either way, so anything over half
 // beats playing a weak hand in the Game; the PC calls it with up to 3, leaving room for defenders who play better than it
-// does, and raises it with up to 1. It never plays it open, which hasn't been measured.
+// does, and raises it with up to 1. It never plays it as a Show, which hasn't been measured.
 export const NO_TRICKS_DANGER = 3;
 const RAISE_NO_TRICKS_DANGER = 1;
-// and with 6 or more it's lost more often than won, so a defender who can see that in an open No Tricks says Kontra
+// and with 6 or more it's lost more often than won, so a defender who can see that in No Tricks Show says Kontra
 const KONTRA_OPEN_NO_TRICKS_DANGER = 6;
 
 // Whether a defender should say Kontra on No Tricks or All Tricks, judged from its own hand, and from the caller's too
-// when it's played open
+// when it's a Show
 function judgeNoTrumpAsDefender(hand: string[], contract: Contract, callerHand?: string[]): { raise: boolean; why: string } {
     if (isAllTricks(contract)) {
         if (callerHand) {
@@ -750,7 +750,7 @@ function noTrumpBuryPlan(hand: string[], allowPoints: boolean, gameTrump?: strin
     const extra = hand.length - 10;
     const pairs = choices.reduce((all, card, index) => all.concat(choices.slice(index + 1).map(other => [card, other])), [] as string[][]);
     const sets: string[][] = extra === 2 ? pairs : extra === 1 ? choices.map(card => [card]) : [[]];
-    for (const contract of ['all-tricks-open', 'no-tricks'] as Contract[]) {
+    for (const contract of ['all-tricks-show', 'no-tricks'] as Contract[]) {
         const bury = sets.find(set => chooseNoTrumpContract(hand.filter(card => !set.includes(card)), gameTrump)?.contract === contract);
         if (bury) {
             return { contract, bury };
@@ -768,7 +768,7 @@ const NO_TRICKS_MAX_GAME_ESTIMATE = 5;
 function chooseNoTrumpContract(hand: string[], gameTrump?: string): { contract: Contract; reason: string } | undefined {
     if (isSureAllTricks(hand)) {
         return {
-            contract: 'all-tricks-open', reason: 'All Tricks Show: every suit it holds runs down from the A, so it wins every trick it leads'
+            contract: 'all-tricks-show', reason: 'All Tricks Show: every suit it holds runs down from the A, so it wins every trick it leads'
         };
     }
     const danger = noTricksDanger(hand);

@@ -79,12 +79,12 @@ describe('PointsService', () => {
     const won = service.calculateNoTrumpEarnings('no-tricks', 2, undefined);
     expect([1, 2, 3].map(player => won.earnings.get('player' + player))).toEqual([-6, 12, -6]);
     expect(won.winMessage).toBe('Player 2 won No Tricks');
-    const lost = service.calculateNoTrumpEarnings('all-tricks-open', 1, 4, 1);
+    const lost = service.calculateNoTrumpEarnings('all-tricks-show', 1, 4, 1);
     expect([1, 2, 3].map(player => lost.earnings.get('player' + player))).toEqual([-80, 40, 40]);
     expect(lost.winMessage).toBe('Player 1 lost All Tricks Show on trick 4');
     expect(lost.betResult.text).toBe('-40¢ Player 1 lost All Tricks Show (Kontra) on trick 4');
     // Supre More: 20¢ doubled 6 times, which reads better in dollars
-    expect(service.calculateNoTrumpEarnings('all-tricks-open', 1, 1, 6).betResult.text)
+    expect(service.calculateNoTrumpEarnings('all-tricks-show', 1, 1, 6).betResult.text)
       .toBe('-$12.80 Player 1 lost All Tricks Show (Supre More) on trick 1');
   });
 

@@ -16,7 +16,7 @@ export class GameValuesComponent implements OnInit {
     @Input() gameRaise = '';
     @Input() sevenRaise = '';
 
-    // No Tricks or All Tricks, open or not
+    // No Tricks or All Tricks, as a Show or not
     getContractName(): string {
         return contractName(this.contract);
     }

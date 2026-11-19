@@ -178,26 +178,26 @@ export function sevenOnLastTrick(lastTrick: { plays: { player: number; card: str
 
 // What the caller plays. The Game is played with trump, marriages, the 7 and the 100. No Tricks and All Tricks replace
 // all of that: no trump, and only tricks count. The caller must take no trick at all, or every trick, and the round ends
-// as soon as that fails. The open versions are played with the caller's cards face up from the start, and pay double.
-export type Contract = 'game' | 'no-tricks' | 'all-tricks' | 'no-tricks-open' | 'all-tricks-open';
+// as soon as that fails. The Show versions are played with the caller's cards face up from the start, and pay double.
+export type Contract = 'game' | 'no-tricks' | 'all-tricks' | 'no-tricks-show' | 'all-tricks-show';
 
 // Weakest first: a player can only take over with a contract further along
-export const CONTRACTS: Contract[] = ['game', 'no-tricks', 'all-tricks', 'no-tricks-open', 'all-tricks-open'];
+export const CONTRACTS: Contract[] = ['game', 'no-tricks', 'all-tricks', 'no-tricks-show', 'all-tricks-show'];
 
 // Paid by each defender to the caller, or by the caller to each defender. Spades doesn't double these: there's no trump.
 export const CONTRACT_CENTS: Record<Exclude<Contract, 'game'>, number> = {
     'no-tricks': 6,
     'all-tricks': 10,
-    'no-tricks-open': 12,
-    'all-tricks-open': 20
+    'no-tricks-show': 12,
+    'all-tricks-show': 20
 };
 
 const CONTRACT_NAMES: Record<Contract, string> = {
     game: 'the Game',
     'no-tricks': 'No Tricks',
     'all-tricks': 'All Tricks',
-    'no-tricks-open': 'Open No Tricks',
-    'all-tricks-open': 'All Tricks Show'
+    'no-tricks-show': 'No Tricks Show',
+    'all-tricks-show': 'All Tricks Show'
 };
 
 export function contractName(contract: Contract): string {
@@ -208,12 +208,12 @@ export function isNoTrumpContract(contract: Contract): boolean {
     return contract !== 'game';
 }
 
-export function isOpenContract(contract: Contract): boolean {
-    return contract === 'no-tricks-open' || contract === 'all-tricks-open';
+export function isShowContract(contract: Contract): boolean {
+    return contract === 'no-tricks-show' || contract === 'all-tricks-show';
 }
 
 export function isAllTricks(contract: Contract): boolean {
-    return contract === 'all-tricks' || contract === 'all-tricks-open';
+    return contract === 'all-tricks' || contract === 'all-tricks-show';
 }
 
 // The contracts a player may take over with

@@ -3,7 +3,7 @@ import { Contract, CONTRACT_CENTS, HUNDRED_CENTS, SEVEN_CENTS } from '../../rule
 import { formatCents } from '../../money';
 
 // The caller's bid after burying: the Game, with the 7 of trump when they hold it and the 100 instead of the Game,
-// or No Tricks or All Tricks, open or not. Shown over a dimmed screen. Everything starts on the plain Game each time,
+// or No Tricks or All Tricks, as a Show or not. Shown over a dimmed screen. Everything starts on the plain Game each time,
 // so Bid on its own plays just the Game.
 export type ContractKind = 'game' | 'no-tricks' | 'all-tricks';
 @Component({
@@ -23,7 +23,7 @@ export class BidDialogComponent {
     ];
     kind: ContractKind = 'game';
     // No Tricks and All Tricks played with the caller's cards face up
-    open = false;
+    show = false;
     seven = false;
     hundred = false;
 
@@ -35,13 +35,13 @@ export class BidDialogComponent {
         this.changeDetector.detectChanges();
     }
 
-    setOpen(on: boolean): void {
-        this.open = on;
+    setShow(on: boolean): void {
+        this.show = on;
         this.changeDetector.detectChanges();
     }
 
     get contract(): Contract {
-        return this.kind === 'game' ? 'game' : (this.kind + (this.open ? '-open' : '')) as Contract;
+        return this.kind === 'game' ? 'game' : (this.kind + (this.show ? '-show' : '')) as Contract;
     }
 
     // what No Tricks or All Tricks is worth per player, won or lost; there's no trump, so spades doesn't double it

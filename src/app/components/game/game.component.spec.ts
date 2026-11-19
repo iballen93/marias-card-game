@@ -251,8 +251,11 @@ describe('GameComponent', () => {
       const gameLine = component.betResults[0].text;
       // the Game's own line carries the score, in place of the result line
       expect(gameLine).toMatch(/the Game \(Re\): \d+ to \d+$/);
-      const cents = Math.abs(component.playerToMoney.get('player1') - before) / 2;
+      // read the Game's own amount: a silent 7 of trump on the last trick is paid on a line of its own, unraised
+      const [, dollars, plainCents] = gameLine.match(/^[+-](?:\$(\d+\.\d\d)|(\d+)¢)/);
+      const cents = dollars ? Math.round(+dollars * 100) : +plainCents;
       expect(cents % 8).toBe(0);
+      expect(component.playerToMoney.get('player1')).not.toBe(before);
     });
   });
 
@@ -272,7 +275,7 @@ describe('GameComponent', () => {
       expect(component.takingOver).toBeTrue();
       expect(component.activePlayer).toBe(2);
       expect(component.takeOverOptions.map(option => option.name + ' ' + option.cents))
-        .toEqual(['No Tricks 6', 'All Tricks 10', 'Open No Tricks 12', 'All Tricks Show 20']);
+        .toEqual(['No Tricks 6', 'All Tricks 10', 'No Tricks Show 12', 'All Tricks Show 20']);
 
       component.takeOverFromButton('no-tricks');
       expect(component.currentCaller).toBe(2);
@@ -295,7 +298,7 @@ describe('GameComponent', () => {
       // then the others may take over from Player 2, starting with the one after it
       expect(component.takingOver).toBeTrue();
       expect(component.activePlayer).toBe(3);
-      expect(component.takeOverOptions.map(option => option.contract)).toEqual(['all-tricks', 'no-tricks-open', 'all-tricks-open']);
+      expect(component.takeOverOptions.map(option => option.contract)).toEqual(['all-tricks', 'no-tricks-show', 'all-tricks-show']);
       component.takeOverFromButton();
       expect(component.activePlayer).toBe(1);
       component.takeOverFromButton();
@@ -374,12 +377,12 @@ describe('GameComponent', () => {
         expect(component.contract).toBe('game');
       });
 
-    it('should show the caller\'s hand in Standard when the contract is played open', async () => {
+    it('should show the caller\'s hand in Standard when the contract is a Show', async () => {
       await startBid();
       component.gameMode = 'standard';
       component.currentCaller = 2;
       expect(component.isHandHidden(2)).toBeTrue();
-      component.contract = 'no-tricks-open';
+      component.contract = 'no-tricks-show';
       expect(component.isHandHidden(2)).toBeFalse();
       expect(component.isHandHidden(3)).toBeTrue();
     });
