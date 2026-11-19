@@ -45,5 +45,5 @@ The service worker only runs on `localhost` or HTTPS.
 - **No screen lock to landscape.** iPads can't lock a web app's orientation. Held upright, the game uses its portrait
   layout; on an iPad mini (narrower than 768px) it asks you to rotate, as phones do.
 - **Money and the round in progress aren't saved** between launches, the same as in the browser.
-- The icons in `src/assets/icons/` were made from the game's own King and Queen of hearts (MIT licensed, see
+- The icons in `src/assets/icons/` were made from the game's own 10 and A of hearts (MIT licensed, see
   `src/assets/cards/LICENSE.txt`).
